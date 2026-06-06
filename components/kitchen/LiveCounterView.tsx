@@ -1,0 +1,269 @@
+"use client";
+
+import { memo, useMemo, useState, useEffect, useCallback } from "react";
+import { ChefHat, RefreshCw } from "lucide-react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useKitchenOrders, KITCHEN_ORDERS_QUERY_KEY } from "@/hooks/useKitchenOrders";
+import { api } from "@/lib/axios";
+import { getCategoryCapacity, partitionLiveQueue } from "@/lib/liveQueue";
+import { LiveOrderSection } from "@/components/kitchen/LiveOrderSection";
+import { OrderCardSkeleton } from "@/components/kitchen/orders/OrderCardSkeleton";
+import { ConnectionStatus } from "@/components/kitchen/layout/ConnectionStatus";
+import { cn } from "@/lib/utils";
+import type { Category, ApiSuccess, KitchenOrder } from "@/types";
+
+export function LiveCounterView() {
+  const { data: orders = [], isLoading: ordersLoading, isError: ordersError } = useKitchenOrders();
+  const queryClient = useQueryClient();
+
+  // Fetch categories dynamically
+  const { data: categories = [], isLoading: categoriesLoading, isError: categoriesError } = useQuery<Category[]>({
+    queryKey: ["admin-categories-live"],
+    queryFn: async () => {
+      const res = await api.get<ApiSuccess<Category[]>>("/menu/admin/categories");
+      return res.data.data;
+    }
+  });
+
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+
+  // Default to the first category once categories load
+  useEffect(() => {
+    if (categories.length > 0 && !selectedCategoryId) {
+      // Find category with highest order count, or default to first
+      const counts = categories.map((c: Category) => {
+        const count = orders.flatMap((o: KitchenOrder) => o.items)
+          .filter((i: any) => (i.menuItem as any)?.categoryId === c.id)
+          .reduce((s: number, i: any) => s + i.quantity, 0);
+        return { id: c.id, count };
+      });
+      const topCat = counts.sort((a: { count: number }, b: { count: number }) => b.count - a.count)[0];
+      setSelectedCategoryId(topCat?.id || categories[0].id);
+    }
+  }, [categories, orders, selectedCategoryId]);
+
+  const selectedCategory = useMemo(() => {
+    return categories.find((c: Category) => c.id === selectedCategoryId) || categories[0];
+  }, [categories, selectedCategoryId]);
+
+  const capacity = useMemo(() => {
+    return selectedCategory ? getCategoryCapacity(selectedCategory.name) : 8;
+  }, [selectedCategory]);
+
+  const { current, upcoming } = useMemo(() => {
+    if (!selectedCategory) return { current: [], upcoming: [] };
+    return partitionLiveQueue(orders, selectedCategory.id, capacity);
+  }, [orders, selectedCategory, capacity]);
+
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: KITCHEN_ORDERS_QUERY_KEY });
+    queryClient.invalidateQueries({ queryKey: ["admin-categories-live"] });
+  }, [queryClient]);
+
+  // Aggregate item count for active categories
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const cat of categories) {
+      counts[cat.id] = orders
+        .flatMap((o: KitchenOrder) => o.items)
+        .filter((i: any) => (i.menuItem as any)?.categoryId === cat.id)
+        .reduce((s: number, i: any) => s + i.quantity, 0);
+    }
+    return counts;
+  }, [categories, orders]);
+
+  const isLoading = ordersLoading || categoriesLoading;
+  const isError = ordersError || categoriesError;
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden px-5 py-5 lg:px-6 lg:py-6">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-shrink-0 pb-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#D9B872]/10 border border-[#D9B872]/20">
+            <ChefHat className="h-4.5 w-4.5 text-[#D9B872]" />
+          </div>
+          <div>
+            <div className="label-xs mb-0.5">Kitchen</div>
+            <h2 className="text-xl font-semibold tracking-tight text-fg">
+              Live Counter
+            </h2>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <ConnectionStatus />
+          <button
+            onClick={handleRefresh}
+            className={cn(
+              "flex items-center gap-1.5 h-8 px-3 rounded-lg border border-white/[0.08]",
+              "bg-white/[0.03] text-white/50 hover:bg-white/[0.07] hover:text-white/80",
+              "text-xs font-medium transition-colors"
+            )}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Category Tabs */}
+      {categories.length > 0 && (
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-4 flex-shrink-0">
+          {categories.map((cat: Category) => {
+            const isActive = selectedCategoryId === cat.id;
+            const count = categoryCounts[cat.id] || 0;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategoryId(cat.id)}
+                className={cn(
+                  "flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 border",
+                  isActive
+                    ? "bg-[#D9B872]/10 border-[#D9B872]/30 text-[#D9B872] shadow-sm shadow-[#D9B872]/5"
+                    : "bg-white/[0.02] border-white/[0.06] text-white/60 hover:bg-white/[0.05] hover:text-white/80"
+                )}
+              >
+                {cat.name}
+                {count > 0 && (
+                  <span
+                    className={cn(
+                      "px-1.5 py-0.5 rounded-full text-[9px] font-bold transition-colors",
+                      isActive
+                        ? "bg-[#D9B872]/20 text-[#D9B872]"
+                        : "bg-white/[0.08] text-white/40"
+                    )}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {selectedCategory && (
+        <CapBar current={current} categoryId={selectedCategory.id} capacity={capacity} />
+      )}
+
+      <div className="flex-1 overflow-y-auto scrollbar-thin mt-5">
+        {isLoading ? (
+          <LoadingSkeleton />
+        ) : isError ? (
+          <ErrorState onRetry={handleRefresh} />
+        ) : selectedCategory ? (
+          <div className="relative grid grid-cols-1 xl:grid-cols-2 gap-8 pb-6 items-start">
+            <LiveOrderSection variant="current" orders={current} categoryId={selectedCategory.id} capacity={capacity} />
+            <div className="hidden xl:block absolute top-0 bottom-6 left-1/2 -translate-x-1/2 w-px bg-white/[0.06]" aria-hidden />
+            <LiveOrderSection variant="upcoming" orders={upcoming} categoryId={selectedCategory.id} capacity={capacity} />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 text-center text-white/30 text-xs">
+            No categories available to display in Live Counter.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Memoized capacity progress bar
+const CapBar = memo(function CapBar({
+  current,
+  categoryId,
+  capacity,
+}: {
+  current: KitchenOrder[];
+  categoryId: string;
+  capacity: number;
+}) {
+  const currentQty = useMemo(() => {
+    return (current || [])
+      .flatMap((o) => o.items)
+      .filter((i) => (i.menuItem as any)?.categoryId === categoryId)
+      .reduce((s, i) => s + i.quantity, 0);
+  }, [current, categoryId]);
+
+  const pct = Math.min(100, (currentQty / capacity) * 100);
+  const isFull = currentQty >= capacity;
+
+  return (
+    <div className="flex-shrink-0 rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
+          Current Batch Capacity
+        </span>
+        <span
+          className={cn(
+            "text-sm font-black tabular-nums",
+            isFull ? "text-[#D9B872]" : "text-white/60"
+          )}
+        >
+          {currentQty}
+          <span className="text-xs font-medium text-white/30">
+            {" "}/ {capacity}
+          </span>
+        </span>
+      </div>
+      <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+        <div
+          className={cn(
+            "h-full rounded-full transition-all duration-500",
+            isFull ? "bg-[#D9B872]" : "bg-[#D9B872]/50"
+          )}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      {isFull && (
+        <p className="text-[10px] text-[#D9B872]/70 mt-1.5 font-medium">
+          Batch full — new orders flow to Upcoming
+        </p>
+      )}
+    </div>
+  );
+});
+
+function LoadingSkeleton() {
+  return (
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="space-y-4">
+        <div className="h-4 w-20 rounded bg-white/[0.06] animate-pulse" />
+        <div className="h-24 rounded-xl bg-white/[0.03] border border-white/[0.06] animate-pulse" />
+        {[...Array(2)].map((_, i) => (
+          <OrderCardSkeleton key={i} />
+        ))}
+      </div>
+      <div className="space-y-4">
+        <div className="h-4 w-20 rounded bg-white/[0.06] animate-pulse" />
+        <div className="h-24 rounded-xl bg-white/[0.03] border border-white/[0.06] animate-pulse" />
+        {[...Array(2)].map((_, i) => (
+          <OrderCardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex flex-col items-center gap-4 rounded-xl border border-white/[0.08] bg-white/[0.02] py-16 text-center">
+      <ChefHat className="h-8 w-8 text-white/20" />
+      <div>
+        <p className="text-sm font-medium text-white/50">
+          Failed to load live counter orders
+        </p>
+        <p className="text-xs text-white/30 mt-1">
+          Check your connection and try again
+        </p>
+      </div>
+      <button
+        onClick={onRetry}
+        className="flex items-center gap-1.5 rounded-lg bg-white/8 px-4 py-2 text-xs font-medium text-white/70 hover:bg-white/12 transition-colors border border-white/10"
+      >
+        <RefreshCw className="h-3.5 w-3.5" />
+        Retry
+      </button>
+    </div>
+  );
+}
