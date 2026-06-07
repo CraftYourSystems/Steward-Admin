@@ -39,7 +39,8 @@ export function OAuthButtons({ apiUrl }: OAuthButtonsProps) {
     setLoading(true);
     // Redirect to backend OAuth initiation endpoint
     // The backend will redirect back to /login#access_token=...&refresh_token=...
-    window.location.href = `${base}/v1/auth/google`;
+    const redirectUri = typeof window !== "undefined" ? window.location.origin : "";
+    window.location.href = `${base}/v1/auth/google?redirect_uri=${encodeURIComponent(redirectUri)}`;
   };
 
   return (
