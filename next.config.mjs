@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
   async rewrites() {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
     const targetUrl = backendUrl.endsWith('/v1') ? backendUrl.slice(0, -3) : backendUrl;
