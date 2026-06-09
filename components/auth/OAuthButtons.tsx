@@ -31,9 +31,8 @@ interface OAuthButtonsProps {
 export function OAuthButtons({ apiUrl }: OAuthButtonsProps) {
   const [loading, setLoading] = useState(false);
 
-  const safeProcessEnv = typeof process !== "undefined" ? process.env : {};
   const base = apiUrl
-    ?? safeProcessEnv.NEXT_PUBLIC_API_URL?.replace(/\/v\d+\/?$/, "")
+    ?? (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_URL : undefined)?.replace(/\/v\d+\/?$/, "")
     ?? "http://localhost:4000";
 
   const handleGoogleSignIn = () => {

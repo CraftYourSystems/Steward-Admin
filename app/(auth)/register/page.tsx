@@ -85,8 +85,7 @@ export default function RegisterPage() {
 
   const handleGoogleRegister = () => {
     setGoogleLoading(true);
-    const safeProcessEnv = typeof process !== "undefined" ? process.env : {};
-    const base = safeProcessEnv.NEXT_PUBLIC_API_URL?.replace(/\/v\d+\/?$/, '') ?? 'http://localhost:4000';
+    const base = (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_URL : undefined)?.replace(/\/v\d+\/?$/, '') ?? 'http://localhost:4000';
     const redirectUri = typeof window !== 'undefined' ? window.location.origin : '';
     window.location.href = `${base}/v1/auth/google?intent=register&redirect_uri=${encodeURIComponent(redirectUri)}`;
   };
