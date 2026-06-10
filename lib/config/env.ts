@@ -17,8 +17,8 @@ function validate(name: string, value: string | undefined, fallback: string): st
   }
   if (isProd && (val.includes("localhost") || val.includes("127.0.0.1"))) {
     // Only throw during the local build/prerender phase to prevent deploying a bad build.
-    // Never crash the runtime in the cloud (where process.env.CF_PAGES is active) or in the browser.
-    if (typeof window === "undefined" && !process.env.CF_PAGES) {
+    // Never crash the runtime in the cloud (where process.env.CF_PAGES is active), in the browser, or in GitHub Actions.
+    if (typeof window === "undefined" && !process.env.CF_PAGES && !process.env.GITHUB_ACTIONS) {
       throw new Error(`[Steward] CRITICAL: Environment variable ${name} points to localhost in a production build.`);
     } else {
       console.warn(`[Steward] WARNING: Environment variable ${name} points to localhost in production: ${val}`);
