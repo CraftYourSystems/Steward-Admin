@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
-import { BanknoteIcon, RefreshCw, CheckCircle2, Clock, ShoppingBag, Utensils, Package } from "lucide-react";
+import { BanknoteIcon, RefreshCw, CheckCircle2, Clock, ShoppingBag, Utensils, Package, X } from "lucide-react";
 import api from "@/lib/axios";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,10 +41,11 @@ const STATUS_STYLES: Record<string, string> = {
   PREPARING: "bg-amber-500/10 text-amber-400 border-amber-500/20",
   READY:     "bg-success/10 text-success border-success/20",
   DELIVERED: "bg-fg-subtle/10 text-fg-subtle border-fg-subtle/20",
+  CANCELLED: "bg-danger/10 text-danger border-danger/20",
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  NEW: "New", PREPARING: "Preparing", READY: "Ready", DELIVERED: "Delivered",
+  NEW: "New", PREPARING: "Preparing", READY: "Ready", DELIVERED: "Delivered", CANCELLED: "Cancelled",
 };
 
 const ORDER_TYPE_ICON: Record<string, React.ElementType> = {
@@ -127,19 +128,42 @@ function OrderCard({
             {formatCurrency(Number(order.totalAmount))}
           </div>
         </div>
-        <Button
-          size="sm"
-          onClick={onPay}
-          disabled={isPaying}
-          className="gap-1.5 bg-success hover:bg-success/90 text-white border-0"
-        >
-          {isPaying ? (
-            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <CheckCircle2 className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-2">
+          {order.status === "CANCELLED" && (
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={onPay}
+              disabled={isPaying}
+              className="gap-1.5 bg-danger hover:bg-danger/90 text-white border-0"
+            >
+              {isPaying ? (
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <X className="h-3.5 w-3.5" />
+              )}
+              Delete
+            </Button>
           )}
-          {isPaying ? "Processing…" : "Mark as Paid"}
-        </Button>
+          <Button
+            size="sm"
+            onClick={onPay}
+            disabled={isPaying || order.status === "CANCELLED"}
+            className={cn(
+              "gap-1.5 border-0",
+              order.status === "CANCELLED"
+                ? "bg-white/10 text-white/40 cursor-not-allowed hover:bg-white/10"
+                : "bg-success hover:bg-success/90 text-white"
+            )}
+          >
+            {isPaying && order.status !== "CANCELLED" ? (
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            )}
+            {isPaying && order.status !== "CANCELLED" ? "Processing…" : "Mark as Paid"}
+          </Button>
+        </div>
       </div>
     </div>
   );
