@@ -105,7 +105,11 @@ export function useKitchenSocket({ enabled = true }: UseKitchenSocketOptions = {
   // stale handlers captured at effect-mount time.
   const events = useMemo(() => ({
     "kitchen:new_order": handleNewOrder,
+    "order_created": handleNewOrder,
     "order:updated": handleOrderUpdated,
+    "order_updated": handleOrderUpdated,
+    "order:cancelled": handleOrderUpdated,
+    "order_cancelled": handleOrderUpdated,
     "item:availability_changed": invalidateMenuItems,
   }), [handleNewOrder, handleOrderUpdated, invalidateMenuItems]);
 

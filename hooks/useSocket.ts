@@ -67,7 +67,11 @@ export function useSocket({ enabled = true }: UseSocketOptions = {}) {
 
   const events = useMemo(() => ({
     "order:updated": handleOrderUpdated,
+    "order_updated": handleOrderUpdated,
+    "order:cancelled": handleOrderUpdated,
+    "order_cancelled": handleOrderUpdated,
     "order:created": handleOrderCreated,
+    "order_created": handleOrderCreated,
     "item:availability_changed": invalidateMenuItems,
   }), [handleOrderUpdated, handleOrderCreated, invalidateMenuItems]);
 
