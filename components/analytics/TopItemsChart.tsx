@@ -6,7 +6,6 @@ import type { TopItem } from "@/types";
 import {
   BarChart,
   Bar,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,7 +13,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const COLORS = ["#8B5CF6", "#7C3AED", "#A78BFA", "#C4B5FD", "#DDD6FE"];
+const ACCENT = "#8B5CF6";
 const GRID = "#232328";
 const AXIS = "#71717A";
 
@@ -51,25 +50,48 @@ export const TopItemsChart = memo(function TopItemsChart({ data, loading }: TopI
         <div className="label-xs mb-1">Top Items</div>
         <p className="text-[11px] text-fg-subtle">Most ordered in period</p>
       </div>
+
       {loading ? (
-        <Skeleton className="h-56 w-full" />
+        <Skeleton className="h-48 sm:h-56 w-full" />
       ) : !formatted || formatted.length === 0 ? (
-        <div className="flex h-56 flex-col items-center justify-center gap-2">
-          <p className="text-[13px] font-medium text-fg-muted">No orders yet</p>
-          <p className="text-[11px] text-fg-subtle">Top items will appear once orders come in</p>
+        /* ── Ghost empty state ──────────────────────────────────────────── */
+        <div className="relative h-48 sm:h-56 w-full">
+          {/* Ghost vertical grid lines */}
+          <div className="absolute inset-0 flex justify-between px-2 pointer-events-none">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-full border-l border-dashed border-border/60" />
+            ))}
+          </div>
+          {/* Ghost bar stubs */}
+          <div className="absolute inset-y-4 left-[110px] right-4 flex flex-col justify-around pointer-events-none gap-2">
+            {[60, 85, 45, 70, 35].map((w, i) => (
+              <div
+                key={i}
+                className="h-4 rounded-r-md bg-accent/[0.08]"
+                style={{ width: `${w}%` }}
+              />
+            ))}
+          </div>
+          {/* Centered overlay message */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+            <p className="text-[13px] font-medium text-fg-muted">No orders yet</p>
+            <p className="text-[11px] text-fg-subtle">Top items appear once orders come in</p>
+          </div>
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={formatted} layout="vertical" margin={{ top: 0, right: 10, bottom: 0, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={GRID} horizontal={false} />
-            <XAxis type="number" tick={{ fontSize: 11, fill: AXIS }} axisLine={false} tickLine={false} />
-            <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "#A1A1AA" }} width={110} axisLine={false} tickLine={false} />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
-            <Bar dataKey="qty" radius={[0, 4, 4, 0]} maxBarSize={22}>
-              {formatted?.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        /* ── Live chart ─────────────────────────────────────────────────── */
+        <div className="h-48 sm:h-56">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={formatted} layout="vertical" margin={{ top: 0, right: 10, bottom: 0, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID} horizontal={false} />
+              <XAxis type="number" tick={{ fontSize: 11, fill: AXIS }} axisLine={false} tickLine={false} />
+              <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "#A1A1AA" }} width={110} axisLine={false} tickLine={false} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+              {/* Single consistent accent color — no 5-shade rainbow */}
+              <Bar dataKey="qty" radius={[0, 4, 4, 0]} maxBarSize={22} fill={ACCENT} fillOpacity={0.85} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       )}
     </div>
   );

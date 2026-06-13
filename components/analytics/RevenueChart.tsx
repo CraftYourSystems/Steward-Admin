@@ -9,7 +9,7 @@ import type { RevenueDataPoint } from "@/types";
 
 const AreaChart = dynamic(
   () => import("recharts").then((m) => m.AreaChart as any),
-  { ssr: false, loading: () => <Skeleton className="h-56 w-full" /> }
+  { ssr: false, loading: () => <Skeleton className="h-48 sm:h-56 w-full" /> }
 ) as any;
 const Area = dynamic(() => import("recharts").then((m) => m.Area as any), { ssr: false }) as any;
 const XAxis = dynamic(() => import("recharts").then((m) => m.XAxis as any), { ssr: false }) as any;
@@ -55,7 +55,8 @@ export const RevenueChart = memo(function RevenueChart({ data, loading }: Revenu
 
   return (
     <div className="rounded-xl border border-border bg-surface p-4">
-      <div className="mb-4 flex items-center justify-between">
+      {/* Header */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="label-xs mb-1">Revenue Trend</div>
           <p className="text-[11px] text-fg-subtle">Daily revenue over period</p>
@@ -65,32 +66,70 @@ export const RevenueChart = memo(function RevenueChart({ data, loading }: Revenu
           <span className="text-[11px] text-fg-muted font-medium">Revenue</span>
         </div>
       </div>
+
       {loading ? (
-        <Skeleton className="h-56 w-full" />
+        <Skeleton className="h-48 sm:h-56 w-full" />
       ) : !formatted || formatted.length === 0 ? (
-        <div className="flex h-56 flex-col items-center justify-center gap-2">
-          <p className="text-[13px] font-medium text-fg-muted">No revenue data</p>
-          <p className="text-[11px] text-fg-subtle">Try selecting a wider date range</p>
+        /* ── Ghost empty state ──────────────────────────────────────────── */
+        <div className="relative h-48 sm:h-56 w-full">
+          {/* Ghost dashed grid lines */}
+          <div className="absolute inset-0 flex flex-col justify-between py-2 pointer-events-none">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="w-full border-t border-dashed border-border/60" />
+            ))}
+          </div>
+          {/* Ghost flat baseline */}
+          <div className="absolute bottom-8 left-0 right-0 h-px bg-accent/20" />
+          {/* Ghost Y-axis labels */}
+          <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between pointer-events-none">
+            {["—", "—", "—", "—"].map((l, i) => (
+              <span key={i} className="text-[10px] text-fg-subtle/40 pl-1">{l}</span>
+            ))}
+          </div>
+          {/* Centered overlay message */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+            <p className="text-[13px] font-medium text-fg-muted">No revenue data</p>
+            <p className="text-[11px] text-fg-subtle">Try selecting a wider date range</p>
+          </div>
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={220}>
-          <AreaChart data={formatted} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
-            <defs>
-              <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={ACCENT} stopOpacity={0.25} />
-                <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
-            <XAxis dataKey="label" tick={{ fontSize: 11, fill: AXIS }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: AXIS }} axisLine={false} tickLine={false}
-              tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}k`} />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: ACCENT, strokeWidth: 1, strokeDasharray: "4 4" }} />
-            <Area type="monotone" dataKey="revenue" stroke={ACCENT} strokeWidth={2}
-              fill="url(#revenueGrad)" dot={false}
-              activeDot={{ r: 4, fill: ACCENT, strokeWidth: 2, stroke: "#0B0B0F" }} />
-          </AreaChart>
-        </ResponsiveContainer>
+        /* ── Live chart ─────────────────────────────────────────────────── */
+        <div className="h-48 sm:h-56">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={formatted} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+              <defs>
+                <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={ACCENT} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
+              <XAxis
+                dataKey="label"
+                interval="preserveStartEnd"
+                tick={{ fontSize: 10, fill: AXIS }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: AXIS }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}k`}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: ACCENT, strokeWidth: 1, strokeDasharray: "4 4" }} />
+              <Area
+                type="monotone"
+                dataKey="revenue"
+                stroke={ACCENT}
+                strokeWidth={2}
+                fill="url(#revenueGrad)"
+                dot={false}
+                activeDot={{ r: 4, fill: ACCENT, strokeWidth: 2, stroke: "#0B0B0F" }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       )}
     </div>
   );

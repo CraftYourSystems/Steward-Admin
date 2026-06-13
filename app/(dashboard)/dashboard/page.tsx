@@ -78,7 +78,7 @@ function writeDismissed() {
   try { localStorage.setItem(ONBOARDING_KEY, "true"); } catch { /* quota */ }
 }
 
-const ChartSkeleton = () => <Skeleton className="h-56 w-full rounded-xl bg-surface-2" />;
+const ChartSkeleton = () => <Skeleton className="h-48 sm:h-56 w-full rounded-xl bg-surface-2" />;
 
 export default function DashboardPage() {
   const user       = useAuthStore((s) => s.user);
@@ -215,7 +215,7 @@ export default function DashboardPage() {
   return (
     <div className="px-3 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6 space-y-4 sm:space-y-5 max-w-[1400px] mx-auto">
 
-      {/* ── Header ───────────────────────────────────────────────────────────────── */}
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-1 border-b border-border">
         <div className="min-w-0">
           <div className="label-xs mb-1">{restaurant?.name ?? "Restaurant"}</div>
@@ -232,7 +232,6 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-
           {/* Manual refresh button */}
           <button
             onClick={handleManualRefresh}
@@ -242,10 +241,31 @@ export default function DashboardPage() {
           >
             <RefreshCw className={cn("h-3.5 w-3.5", (isRefreshing || summary.isFetching) && "animate-spin")} />
           </button>
-
           <RangeToggle />
         </div>
       </div>
+
+      {/* ── Live Status Strip ────────────────────────────────────────────────
+           Renders only when there are active orders in the kitchen.
+      ──────────────────────────────────────────────────────────────────────── */}
+      {liveActiveCount > 0 && (
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-[12px] text-fg-muted">
+          <span className="relative flex h-2 w-2 shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+          </span>
+          <span>
+            <span className="font-semibold text-fg">{liveActiveCount}</span>
+            {" "}active {liveActiveCount === 1 ? "order" : "orders"} in kitchen right now
+          </span>
+          <Link
+            href="/orders"
+            className="ml-auto text-[11px] text-accent hover:underline underline-offset-2"
+          >
+            View →
+          </Link>
+        </div>
+      )}
 
       {/* ── Onboarding Checklist ─────────────────────────────────────────────
            Only shown for brand-new restaurants (no menu items yet).
@@ -314,23 +334,84 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* ── Section label ─────────────────────────────────────────────────── */}
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
+        Performance
+      </p>
 
-
-      {/* ── KPI Cards ─────────────────────────────────────────────────────────────── */}
-      {/* Revenue spans full width on mobile, then joins 2-col on sm, 5-col on xl */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {/* Revenue — full-width hero card on mobile */}
-        <div className="col-span-2 sm:col-span-2 lg:col-span-1">
-          <KpiCard
-            title="Revenue"
-            value={d ? formatCurrency(d.totalRevenue) : "₹0.00"}
-            icon={IndianRupee}
-            loading={loading}
-            accent="accent"
-            size="lg"
-            description={activeRange === "today" ? "today so far" : undefined}
-          />
+      {/* ── KPI Cards — Mobile (sm:hidden) ──────────────────────────────────
+           Revenue is full-width hero; remaining 4 are a horizontal scroll strip.
+      ──────────────────────────────────────────────────────────────────────── */}
+      <div className="sm:hidden space-y-3">
+        {/* Revenue — full-width hero */}
+        <KpiCard
+          title="Revenue"
+          value={d ? formatCurrency(d.totalRevenue) : "₹0.00"}
+          icon={IndianRupee}
+          loading={loading}
+          accent="accent"
+          size="lg"
+          description={activeRange === "today" ? "today so far" : undefined}
+        />
+        {/* Horizontal scroll row for secondary KPIs */}
+        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-3 px-3 pb-2 [&::-webkit-scrollbar]:hidden">
+          <div className="min-w-[148px] snap-start shrink-0">
+            <KpiCard
+              title="Orders"
+              value={d ? String(d.totalOrders) : "0"}
+              icon={ShoppingBag}
+              loading={loading}
+              accent="info"
+            />
+          </div>
+          <div className="min-w-[148px] snap-start shrink-0">
+            <KpiCard
+              title="Completed"
+              value={d ? String(d.completedOrders) : "0"}
+              icon={CheckCircle2}
+              loading={loading}
+              accent="success"
+              description={
+                d && d.totalOrders > 0
+                  ? `${((d.completedOrders / d.totalOrders) * 100).toFixed(0)}% completion`
+                  : undefined
+              }
+            />
+          </div>
+          <div className="min-w-[148px] snap-start shrink-0">
+            <KpiCard
+              title="Cancel Rate"
+              value={cancelRate ? `${cancelRate}%` : "0.0%"}
+              icon={XCircle}
+              loading={loading}
+              accent="danger"
+              alertWhen={(v) => parseFloat(v) > 10}
+            />
+          </div>
+          <div className="min-w-[148px] snap-start shrink-0">
+            <KpiCard
+              title="Avg Prep Time"
+              value={d ? `${d.avgPrepTimeMins.toFixed(0)}m` : "0m"}
+              icon={Clock}
+              loading={loading}
+              accent="warning"
+            />
+          </div>
         </div>
+      </div>
+
+      {/* ── KPI Cards — sm and above (hidden on mobile) ──────────────────────
+           5-column grid identical to what was there before.
+      ──────────────────────────────────────────────────────────────────────── */}
+      <div className="hidden sm:grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <KpiCard
+          title="Revenue"
+          value={d ? formatCurrency(d.totalRevenue) : "₹0.00"}
+          icon={IndianRupee}
+          loading={loading}
+          accent="accent"
+          description={activeRange === "today" ? "today so far" : undefined}
+        />
         <KpiCard
           title="Orders"
           value={d ? String(d.totalOrders) : "0"}
@@ -356,6 +437,7 @@ export default function DashboardPage() {
           icon={XCircle}
           loading={loading}
           accent="danger"
+          alertWhen={(v) => parseFloat(v) > 10}
         />
         <KpiCard
           title="Avg Prep Time"
@@ -365,6 +447,11 @@ export default function DashboardPage() {
           accent="warning"
         />
       </div>
+
+      {/* ── Section label ─────────────────────────────────────────────────── */}
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
+        Trends
+      </p>
 
       {/* ── Charts ─────────────────────────────────────────────────────────── */}
       <div className="grid gap-3 lg:grid-cols-2">
@@ -376,48 +463,52 @@ export default function DashboardPage() {
         </Suspense>
       </div>
 
-      {/* ── Hourly Distribution ───────────────────────────────────────────────────────── */}
+      {/* ── Hourly Distribution ──────────────────────────────────────────────── */}
       {hourlyData && hourlyData.length > 0 && (
         <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex flex-wrap items-center gap-1.5 mb-4">
             <BarChart3 className="h-4 w-4 text-accent" />
             <span className="text-[13px] font-semibold text-fg">Orders by Hour</span>
-            <span className="hidden sm:inline text-[11px] text-fg-subtle ml-1">Peak activity distribution</span>
+            <span className="text-[11px] text-fg-subtle">Peak activity distribution</span>
           </div>
-          <div className="flex items-end gap-0.5 sm:gap-1 h-20 sm:h-24">
-            {Array.from({ length: 24 }, (_, hour) => {
-              const entry = hourlyData.find((h: HourlyDataPoint) => h.hour === hour);
-              const count = entry?.count ?? 0;
-              const pct = (count / maxHourly) * 100;
-              const isPeak = count === maxHourly && maxHourly > 0;
-              return (
-                <div key={hour} className="flex flex-col items-center gap-1 flex-1 group">
-                  <div
-                    className={cn(
-                      "w-full rounded-t-sm transition-all duration-300",
-                      isPeak ? "bg-accent" : count > 0 ? "bg-accent/40" : "bg-surface-3",
+          <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden -mx-1">
+            <div className="flex items-end gap-1 h-28 min-w-[480px] px-1">
+              {Array.from({ length: 24 }, (_, hour) => {
+                const entry = hourlyData.find((h: HourlyDataPoint) => h.hour === hour);
+                const count = entry?.count ?? 0;
+                const pct = (count / maxHourly) * 100;
+                const isPeak = count === maxHourly && maxHourly > 0;
+                return (
+                  <div key={hour} className="flex flex-col items-center gap-1 flex-1 group">
+                    <div
+                      className={cn(
+                        "w-full rounded-t-sm transition-all duration-300",
+                        isPeak ? "bg-accent" : count > 0 ? "bg-accent/40" : "bg-surface-3",
+                      )}
+                      style={{ height: `${Math.max(pct, count > 0 ? 8 : 4)}%` }}
+                      title={`${hour}:00 — ${count} orders`}
+                    />
+                    {hour % 6 === 0 && (
+                      <span className="sm:hidden text-[7px] text-fg-subtle num">{hour}h</span>
                     )}
-                    style={{ height: `${Math.max(pct, count > 0 ? 8 : 4)}%` }}
-                    title={`${hour}:00 — ${count} orders`}
-                  />
-                  {hour % 6 === 0 && (
-                    <span className="sm:hidden text-[7px] text-fg-subtle num">{hour}h</span>
-                  )}
-                  {hour % 4 === 0 && (
-                    <span className="hidden sm:inline text-[8px] text-fg-subtle num">{hour}h</span>
-                  )}
-                </div>
-              );
-            })}
+                    {hour % 4 === 0 && (
+                      <span className="hidden sm:inline text-[8px] text-fg-subtle num">{hour}h</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
 
+      {/* ── Section label ─────────────────────────────────────────────────── */}
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
+        Recent Activity
+      </p>
+
       {/* ── Order List ─────────────────────────────────────────────────────── */}
-      <div className="space-y-3">
-        <h3 className="text-[15px] font-semibold text-fg">Order List</h3>
-        <RecentOrdersTable params={params} activeRange={activeRange} />
-      </div>
+      <RecentOrdersTable params={params} activeRange={activeRange} />
     </div>
   );
 }

@@ -11,6 +11,8 @@ interface KpiCardProps {
   trend?: { value: number; label?: string };
   accent?: "accent" | "info" | "success" | "danger" | "warning";
   size?: "default" | "lg";
+  /** If provided and returns true, the value text turns text-danger */
+  alertWhen?: (value: string) => boolean;
 }
 
 const accentMap = {
@@ -34,16 +36,19 @@ function KpiSkeleton({ isLg }: { isLg?: boolean }) {
 // Memoized — only re-renders when its own props change
 export const KpiCard = memo(function KpiCard({
   title, value, icon: Icon, description, loading,
-  accent = "accent", trend, size = "default",
+  accent = "accent", trend, size = "default", alertWhen,
 }: KpiCardProps) {
   const { text, glow, icon: iconBg } = accentMap[accent];
   const isLg = size === "lg";
+  const isAlert = !loading && alertWhen ? alertWhen(value) : false;
 
   return (
     <div
       className={cn(
         "group relative overflow-hidden rounded-xl border border-border bg-surface",
-        isLg ? "p-5" : "p-4",
+        // lg: accent top border for hero treatment
+        isLg && "border-t-2 border-t-accent/40",
+        isLg ? "p-6" : "p-4",
         "transition-all duration-200",
         "hover:border-border-strong",
         // Subtle inner top highlight for gloss effect
@@ -58,7 +63,8 @@ export const KpiCard = memo(function KpiCard({
         <div className={cn(
           "grid place-items-center rounded-lg border transition-colors",
           isLg ? "h-8 w-8" : "h-7 w-7",
-          iconBg
+          // lg cards keep their accent badge; secondary cards use neutral
+          isLg ? iconBg : "bg-surface-2 border-border"
         )}>
           <Icon className={cn(isLg ? "h-4 w-4" : "h-3.5 w-3.5", text)} />
         </div>
@@ -70,9 +76,11 @@ export const KpiCard = memo(function KpiCard({
       ) : (
         <>
           <div className={cn(
-            isLg ? "text-[28px] sm:text-[32px]" : "text-[22px] sm:text-[24px]",
-            "font-semibold tracking-tight text-fg num leading-none",
-            "transition-colors duration-150"
+            isLg ? "text-[36px]" : "text-[22px] sm:text-[24px]",
+            "font-semibold tracking-tight num leading-none",
+            "transition-colors duration-150",
+            // alertWhen overrides value color to danger
+            isAlert ? "text-danger" : "text-fg"
           )}>
             {value}
           </div>
@@ -101,12 +109,12 @@ export const KpiCard = memo(function KpiCard({
         </>
       )}
 
-      {/* Decorative corner gradient — very subtle */}
+      {/* Decorative corner gradient — always visible at 30% on lg, hover only otherwise */}
       <div
         className={cn(
-          "pointer-events-none absolute right-0 top-0 h-16 w-16 opacity-0",
-          "group-hover:opacity-100 transition-opacity duration-300",
-          "rounded-bl-[40px]"
+          "pointer-events-none absolute right-0 top-0 h-16 w-16 transition-opacity duration-300",
+          "rounded-bl-[40px]",
+          isLg ? "opacity-30 group-hover:opacity-60" : "opacity-0 group-hover:opacity-100"
         )}
         style={{
           background: `radial-gradient(circle at top right, var(--tw-shadow-color, rgba(139,92,246,0.08)), transparent 70%)`,
