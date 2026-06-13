@@ -213,9 +213,15 @@ export default function KitchenHomePage() {
     staleTime: 60_000,
   });
 
-  const newOrders = useMemo(() => queueOrders.filter((o: any) => o.status === "NEW"), [queueOrders]);
-  const preparingOrders = useMemo(() => queueOrders.filter((o: any) => o.status === "PREPARING"), [queueOrders]);
-  const readyOrders = useMemo(() => queueOrders.filter((o: any) => o.status === "READY"), [queueOrders]);
+  const activeOrders = useMemo(() => {
+    return queueOrders.filter(
+      (o: any) => o.status === "NEW" || o.status === "PREPARING" || o.status === "READY"
+    );
+  }, [queueOrders]);
+
+  const newOrders = useMemo(() => activeOrders.filter((o: any) => o.status === "NEW"), [activeOrders]);
+  const preparingOrders = useMemo(() => activeOrders.filter((o: any) => o.status === "PREPARING"), [activeOrders]);
+  const readyOrders = useMemo(() => activeOrders.filter((o: any) => o.status === "READY"), [activeOrders]);
   const queueCount = newOrders.length + preparingOrders.length;
 
   const unavailableCount = useMemo(() => menuItems.filter((i: any) => !i.isAvailable).length, [menuItems]);
@@ -369,7 +375,7 @@ export default function KitchenHomePage() {
               <span className="text-[13px] font-semibold text-fg">Active Orders</span>
               {!queueLoading && (
                 <span className="text-[10px] text-fg-subtle bg-surface-3 border border-border rounded-full px-1.5 py-0.5 num">
-                  {queueOrders.length}
+                  {activeOrders.length}
                 </span>
               )}
             </div>
@@ -382,7 +388,7 @@ export default function KitchenHomePage() {
               Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="h-11 rounded-lg bg-surface-2 animate-shimmer" />
               ))
-            ) : queueOrders.length === 0 ? (
+            ) : activeOrders.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-12 text-center">
                 <CheckCircle2 className="h-8 w-8 text-success/40" />
                 <p className="text-[13px] font-medium text-fg-muted">All clear!</p>
@@ -390,7 +396,7 @@ export default function KitchenHomePage() {
               </div>
             ) : (
               // Sort: urgent first (NEW > PREPARING > READY), then by createdAt
-              [...queueOrders]
+              [...activeOrders]
                 .sort((a: any, b: any) => {
                   const priority = { NEW: 0, PREPARING: 1, READY: 2 };
                   const pa = priority[a.status as keyof typeof priority] ?? 3;
@@ -451,7 +457,7 @@ export default function KitchenHomePage() {
               { label: "Preparing", count: preparingOrders.length, color: "bg-info", textColor: "text-info" },
               { label: "Ready", count: readyOrders.length, color: "bg-success", textColor: "text-success" },
             ].map((lane) => {
-              const total = queueOrders.length || 1;
+              const total = activeOrders.length || 1;
               const pct = Math.round((lane.count / total) * 100);
               return (
                 <div key={lane.label} className="space-y-1">
