@@ -51,8 +51,20 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const originalRequest = error.config;
+    const isPublicAuthEndpoint =
+      originalRequest.url &&
+      (originalRequest.url.includes('/auth/login') ||
+        originalRequest.url.includes('/auth/staff-login') ||
+        originalRequest.url.includes('/auth/exchange') ||
+        originalRequest.url.includes('/auth/refresh') ||
+        originalRequest.url.includes('/auth/owner-register') ||
+        originalRequest.url.includes('/auth/forgot-password') ||
+        originalRequest.url.includes('/auth/reset-password') ||
+        originalRequest.url.includes('/auth/resend-verification') ||
+        originalRequest.url.includes('/auth/verify-email') ||
+        originalRequest.url.includes('/auth/google'));
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isPublicAuthEndpoint) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
