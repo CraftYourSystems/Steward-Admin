@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import VerifyEmailContent from './VerifyEmailContent';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 
 export default function VerifyEmailPage() {
