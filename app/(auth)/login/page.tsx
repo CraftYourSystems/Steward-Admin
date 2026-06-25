@@ -2,7 +2,6 @@ import { Suspense } from 'react';
 import LoginPageContent from './LoginPageContent';
 
 export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
 
 function LoginFallback() {
   return (

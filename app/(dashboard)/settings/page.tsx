@@ -3,7 +3,6 @@ import { Loader2 } from "lucide-react";
 import SettingsPageContent from "./SettingsPageContent";
 
 export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
 
 
 export default function SettingsPage() {
