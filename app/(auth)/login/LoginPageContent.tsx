@@ -1,7 +1,5 @@
 'use client';
 
-console.log("[DIAGNOSTIC] LoginPageContent.tsx module loaded");
-
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -135,11 +133,8 @@ function RightPanel() {
 }
 
 export default function LoginPageContent() {
-  console.log("[DIAGNOSTIC] LoginPageContent component execution started");
   const router = useRouter();
-  console.log("[DIAGNOSTIC] LoginPageContent immediately before useSearchParams()");
   const searchParams = useSearchParams();
-  console.log("[DIAGNOSTIC] LoginPageContent immediately after useSearchParams()");
   const { accessToken, user, setAuth } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState<AuthTab>(AUTH_TABS.ADMIN);

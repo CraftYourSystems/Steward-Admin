@@ -4,7 +4,6 @@ import LoginPageContent from './LoginPageContent';
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
 
-
 function LoginFallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg text-fg">
@@ -14,7 +13,6 @@ function LoginFallback() {
 }
 
 export default function LoginPage() {
-  console.log("[DIAGNOSTIC] LoginPage server component executing (before Suspense/JSX return)");
   return (
     <Suspense fallback={<LoginFallback />}>
       <LoginPageContent />

@@ -32,6 +32,12 @@ interface AuthStore {
   user: User | null;
   /** Non-sensitive restaurant info — persisted alongside user */
   restaurant: Restaurant | null;
+  /**
+   * True once the store has been initialised on the client and localStorage
+   * values have been read. False during SSR. Used by useRequireAuth to prevent
+   * redirecting to /login before hydration completes.
+   */
+  isHydrated: boolean;
 
   /** Called after a successful email/password login or silent refresh. */
   setAuth: (token: string, user: User, restaurant?: Restaurant | null | undefined, refreshToken?: string | null) => void;
@@ -39,6 +45,8 @@ interface AuthStore {
   setAccessToken: (token: string, refreshToken?: string | null) => void;
   /** Hard logout — clears all client state and storage. */
   clearAuth: () => void;
+  /** Mark the store as hydrated (called once, client-side, after mount). */
+  setHydrated: () => void;
 }
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────
@@ -74,9 +82,17 @@ function remove(key: string): void {
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 export const useAuthStore = create<AuthStore>((set) => ({
+  // ── Initial state read from localStorage (client-only) ─────────────────────
+  // accessToken is intentionally kept in localStorage so a hard refresh doesn't
+  // require an immediate network round-trip (the 401 interceptor will re-issue
+  // it silently if it is expired). If you prefer a purely in-memory token for
+  // better XSS posture, set this to `null` and rely on the cold-start path.
   accessToken: read<string>(TOKEN_STORAGE_KEY),
   user: read<User>(USER_STORAGE_KEY),
   restaurant: read<Restaurant>(RESTAURANT_STORAGE_KEY),
+  // isHydrated starts false so SSR/edge renders never attempt redirects.
+  // setHydrated() is called once by useRequireAuth on the first client mount.
+  isHydrated: false,
 
   setAuth: (token, user, restaurant = undefined, refreshToken = null) => {
     write(TOKEN_STORAGE_KEY, token);
@@ -113,4 +129,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
     remove(RESTAURANT_STORAGE_KEY);
     set({ accessToken: null, user: null, restaurant: null });
   },
+
+  setHydrated: () => set({ isHydrated: true }),
 }));

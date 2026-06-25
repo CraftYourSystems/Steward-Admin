@@ -32,68 +32,62 @@ api.interceptors.request.use((config) => {
 });
 
 let isRefreshing = false;
-let failedQueue: any[] = [];
+let failedQueue: { resolve: (v: unknown) => void; reject: (e: unknown) => void }[] = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
+    if (error) prom.reject(error);
+    else prom.resolve(token);
   });
   failedQueue = [];
 };
 
 // ── Response interceptor: silent token refresh on 401 ────────────────────────
+//
+// Uses the shared silentRefresh() singleton from lib/auth/refresh so that the
+// 401 retry path and the cold-start recovery path in useRequireAuth share one
+// deduplication mechanism — only one /auth/refresh call ever runs at a time.
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const originalRequest = error.config;
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        return new Promise(function (resolve, reject) {
+        return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then((token) => {
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return api(originalRequest);
           })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
+          .catch((err) => Promise.reject(err));
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
-      return new Promise(function (resolve, reject) {
-        const localRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('auth-refresh-token') : null;
-        axios
-          .post(
-            `${API_BASE_URL}/auth/refresh`,
-            { refreshToken: localRefreshToken },
-            { withCredentials: true, headers: getCsrfHeader() }
-          )
-          .then(({ data }) => {
-            const newAccessToken: string = data.data.accessToken;
-            const newRefreshToken: string = data.data.refreshToken;
-            useAuthStore.getState().setAccessToken(newAccessToken, newRefreshToken);
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-            processQueue(null, newAccessToken);
+      // Dynamic import avoids a circular dependency at module initialisation
+      // (refresh.ts imports useAuthStore which imports nothing from axios.ts).
+      const { silentRefresh } = await import('@/lib/auth/refresh');
+
+      return new Promise((resolve, reject) => {
+        silentRefresh()
+          .then((payload) => {
+            const newToken = payload.accessToken;
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            processQueue(null, newToken);
             resolve(api(originalRequest));
           })
           .catch((err) => {
             processQueue(err, null);
-            const refreshStatus = err?.response?.status;
-            if (!refreshStatus || refreshStatus === 401 || refreshStatus === 403) {
-              // Only force logout when the server explicitly rejects the refresh token.
-              // No response (network error / server sleeping) — leave the user alone.
-              if (refreshStatus) {
-                useAuthStore.getState().clearAuth();
-                if (typeof window !== "undefined") {
-                  window.location.href = "/login";
-                }
+            const refreshStatus = (err as any)?.response?.status;
+            if (refreshStatus === 401 || refreshStatus === 403) {
+              // Server explicitly rejected the refresh token — force re-login.
+              // No response (network error) → leave the user alone.
+              useAuthStore.getState().clearAuth();
+              if (typeof window !== 'undefined') {
+                window.location.href = '/login';
               }
             }
             reject(err);
