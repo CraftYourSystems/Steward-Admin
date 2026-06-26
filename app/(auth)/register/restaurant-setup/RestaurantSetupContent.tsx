@@ -179,7 +179,6 @@ export default function RestaurantSetupContent() {
         data.data.accessToken,
         { ...data.data.user, restaurantId: data.data.user.restaurantId } as any,
         data.data.restaurant,
-        (data.data as any).refreshToken,
       );
 
       toast.success(`Welcome! "${data.data.restaurant.name}" is ready.`);
