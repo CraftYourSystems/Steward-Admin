@@ -40,9 +40,9 @@ interface AuthStore {
   isHydrated: boolean;
 
   /** Called after a successful email/password login or silent refresh. */
-  setAuth: (token: string, user: User, restaurant?: Restaurant | null | undefined, refreshToken?: string | null) => void;
+  setAuth: (token: string, user: User, restaurant?: Restaurant | null | undefined) => void;
   /** Called by the silent-refresh interceptor — only updates the token. */
-  setAccessToken: (token: string, refreshToken?: string | null) => void;
+  setAccessToken: (token: string) => void;
   /** Hard logout — clears all client state and storage. */
   clearAuth: () => void;
   /** Mark the store as hydrated (called once, client-side, after mount). */
@@ -81,21 +81,27 @@ function remove(key: string): void {
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
+// Temporary legacy token cleanup for returning users
+if (typeof window !== 'undefined') {
+  try {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+  } catch {
+    // Ignore
+  }
+}
+
 export const useAuthStore = create<AuthStore>((set) => ({
   // ── Initial state read from localStorage (client-only) ─────────────────────
-  // accessToken is intentionally kept in localStorage so a hard refresh doesn't
-  // require an immediate network round-trip (the 401 interceptor will re-issue
-  // it silently if it is expired). If you prefer a purely in-memory token for
-  // better XSS posture, set this to `null` and rely on the cold-start path.
-  accessToken: read<string>(TOKEN_STORAGE_KEY),
+  // accessToken is in-memory only. Legacy keys are cleared on startup.
+  accessToken: null,
   user: read<User>(USER_STORAGE_KEY),
   restaurant: read<Restaurant>(RESTAURANT_STORAGE_KEY),
   // isHydrated starts false so SSR/edge renders never attempt redirects.
   // setHydrated() is called once by useRequireAuth on the first client mount.
   isHydrated: false,
 
-  setAuth: (token, user, restaurant = undefined, refreshToken = null) => {
-    write(TOKEN_STORAGE_KEY, token);
+  setAuth: (token, user, restaurant = undefined) => {
     write(USER_STORAGE_KEY, user);
     if (restaurant !== undefined) {
       if (restaurant) {
@@ -104,9 +110,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
         remove(RESTAURANT_STORAGE_KEY);
       }
     }
-    if (refreshToken) {
-      write(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
-    }
     set((state) => ({
       accessToken: token,
       user,
@@ -114,11 +117,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     }));
   },
 
-  setAccessToken: (token, refreshToken = null) => {
-    write(TOKEN_STORAGE_KEY, token);
-    if (refreshToken) {
-      write(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
-    }
+  setAccessToken: (token) => {
     set({ accessToken: token });
   },
 

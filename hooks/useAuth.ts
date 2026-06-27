@@ -95,6 +95,10 @@ export function useRequireAuth(options: UseRequireAuthOptions = {}) {
   const [isColdStarting, setIsColdStarting] = useState(false);
   const [isSlowConnection, setIsSlowConnection] = useState(false);
 
+  // ── Eager pending session restoration state ───────────────────────────────
+  const eagerRefreshAttempted = useRef(false);
+  const [isRestoringSession, setIsRestoringSession] = useState(false);
+
   // ── Step 1: Hydrate the store on first client mount ───────────────────────
   useEffect(() => {
     if (!isHydrated) {
@@ -137,11 +141,44 @@ export function useRequireAuth(options: UseRequireAuthOptions = {}) {
     return () => clearTimeout(slowTimer);
   }, [isHydrated, isAuthenticated, redirectIfAuthenticated]);
 
+  // ── Step 2.5: Eager pending session restoration ───────────────────────────
+  // Runs when the user is cached but the access token is null in memory.
+  // Eagerly attempts silent refresh before rendering layout children.
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (!isPendingRefresh) return;
+    if (redirectIfAuthenticated) return;
+    if (eagerRefreshAttempted.current) return;
+    eagerRefreshAttempted.current = true;
+
+    setIsRestoringSession(true);
+    const slowTimer = setTimeout(() => setIsSlowConnection(true), 5_000);
+
+    silentRefresh()
+      .catch((err) => {
+        const status = err?.response?.status;
+        if (status === 401 || status === 403) {
+          console.warn('[Steward] Eager session restoration rejected, redirecting to login.');
+          useAuthStore.getState().clearAuth();
+        } else {
+          console.warn('[Steward] Eager session restoration network error, keeping state:', err?.message ?? err);
+        }
+      })
+      .finally(() => {
+        clearTimeout(slowTimer);
+        setIsSlowConnection(false);
+        setIsRestoringSession(false);
+      });
+
+    return () => clearTimeout(slowTimer);
+  }, [isHydrated, isPendingRefresh, redirectIfAuthenticated]);
+
   // ── Step 3: Redirect logic ────────────────────────────────────────────────
-  // Only fires after hydration AND after any cold-start attempt has settled.
+  // Only fires after hydration AND after any cold-start/eager-start attempt has settled.
   useEffect(() => {
     if (!isHydrated) return;       // wait for localStorage read
     if (isColdStarting) return;    // wait for cold-start refresh attempt
+    if (isRestoringSession) return; // wait for eager session restoration
 
     if (redirectIfAuthenticated && isAuthenticated && user) {
       router.replace(getRedirectPath(user.role));
@@ -152,14 +189,15 @@ export function useRequireAuth(options: UseRequireAuthOptions = {}) {
       const callbackUrl = encodeURIComponent(pathname ?? '/dashboard');
       router.replace(`${redirectTo}?next=${callbackUrl}`);
     }
-  }, [isHydrated, isColdStarting, isAuthenticated, redirectIfAuthenticated, redirectTo, router, pathname, user]);
+  }, [isHydrated, isColdStarting, isRestoringSession, isAuthenticated, redirectIfAuthenticated, redirectTo, router, pathname, user]);
 
   return {
-    /** True once hydration + any cold-start attempt have settled. */
-    isReady: isHydrated && !isColdStarting,
+    /** True once hydration + any cold-start/eager-start attempts have settled. */
+    isReady: isHydrated && !isColdStarting && !isRestoringSession && (!isPendingRefresh || eagerRefreshAttempted.current),
     isAuthenticated,
     isPendingRefresh,
     isColdStarting,
+    isRestoringSession,
     isSlowConnection,
     user,
   };

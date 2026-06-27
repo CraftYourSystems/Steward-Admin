@@ -46,15 +46,10 @@ let activeRefreshPromise: Promise<RefreshPayload> | null = null;
 export function silentRefresh(): Promise<RefreshPayload> {
   if (activeRefreshPromise) return activeRefreshPromise;
 
-  const localRefreshToken =
-    typeof window !== 'undefined'
-      ? localStorage.getItem('auth-refresh-token')
-      : null;
-
   activeRefreshPromise = axios
     .post<{ data: RefreshPayload }>(
       `${API_BASE_URL}/auth/refresh`,
-      localRefreshToken ? { refreshToken: localRefreshToken } : {},
+      {},
       { withCredentials: true, headers: getCsrfHeader() },
     )
     .then(({ data }) => {
@@ -70,13 +65,12 @@ export function silentRefresh(): Promise<RefreshPayload> {
               payload.accessToken,
               payload.user,
               payload.restaurant ?? undefined,
-              payload.refreshToken ?? null,
             );
         } else {
           // Token-only response — just update the token (user stays from localStorage).
           useAuthStore
             .getState()
-            .setAccessToken(payload.accessToken, payload.refreshToken ?? null);
+            .setAccessToken(payload.accessToken);
         }
       }
 
