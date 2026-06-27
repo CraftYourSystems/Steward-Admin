@@ -190,6 +190,83 @@ export interface DateRange {
   to: Date | undefined;
 }
 
+// ── Advanced Analytics ────────────────────────────────────────────────────────
+
+export interface ItemPerformanceItem {
+  menuItemId: string;
+  name: string;
+  totalQuantity: number;
+  totalRevenue: number;
+  percentage: number;
+}
+
+export interface ItemPerformanceData {
+  bestSellers: ItemPerformanceItem[];
+  worstSellers: ItemPerformanceItem[];
+  totalItemsSold: number;
+}
+
+export interface InsightsDayStats {
+  orders: number;
+  revenue: number;
+  completed: number;
+  cancelled: number;
+  avgPrepMins: number;
+  avgOrderValue: number;
+}
+
+export interface TodaysInsightsData {
+  today: InsightsDayStats;
+  yesterday: InsightsDayStats;
+  changes: {
+    revenue: number;
+    orders: number;
+    avgPrepMins: number;
+    avgOrderValue: number;
+  };
+}
+
+export interface PeakHourEntry {
+  hour: number;
+  orders: number;
+  revenue: number;
+  isPeak: boolean;
+  isQuiet: boolean;
+}
+
+export interface PeakHourData {
+  distribution: PeakHourEntry[];
+  peakHour: number | null;
+  peakOrders: number;
+  peakRevenue: number;
+  quietHours: number[];
+  avgOrdersPerHour: number;
+}
+
+export interface HealthScoreData {
+  score: number;
+  grade: string;
+  breakdown: {
+    cancellation: { score: number; max: number; rate: number };
+    prepTime: { score: number; max: number; avgMins: number };
+    salesTrend: {
+      score: number;
+      max: number;
+      thisWeekRevenue: number;
+      lastWeekRevenue: number;
+      growthPct: number | null;
+    };
+  };
+  periodLabel: string;
+}
+
+export interface ItemCombination {
+  itemA: { id: string; name: string };
+  itemB: { id: string; name: string };
+  frequency: number;
+  percentage: number;
+}
+
 // ─── Kitchen ─────────────────────────────────────────────────────────────────
 
 export interface KitchenOrderItem {

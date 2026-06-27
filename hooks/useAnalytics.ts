@@ -7,6 +7,11 @@ import type {
   RevenueDataPoint,
   TopItem,
   HourlyDataPoint,
+  ItemPerformanceData,
+  TodaysInsightsData,
+  PeakHourData,
+  HealthScoreData,
+  ItemCombination,
   ApiSuccess,
 } from "@/types";
 
@@ -87,5 +92,85 @@ export function useHourlyData(params: DateParams) {
     },
     staleTime: ANALYTICS_STALE_TIME,
     gcTime:    ANALYTICS_GC_TIME,
+  });
+}
+
+export function useItemPerformance(params: DateParams, activeRange?: string) {
+  const isToday = activeRange === "today";
+  return useQuery({
+    queryKey: ["analytics-item-performance", params],
+    queryFn: async () => {
+      const { data } = await api.get<ApiSuccess<ItemPerformanceData>>(
+        "/admin/analytics/item-performance",
+        { params }
+      );
+      return data.data;
+    },
+    staleTime:       isToday ? TODAY_STALE_TIME : ANALYTICS_STALE_TIME,
+    gcTime:          ANALYTICS_GC_TIME,
+    refetchInterval: isToday ? TODAY_REFETCH_MS : false,
+  });
+}
+
+export function useTodaysInsights() {
+  return useQuery({
+    queryKey: ["analytics-insights"],
+    queryFn: async () => {
+      const { data } = await api.get<ApiSuccess<TodaysInsightsData>>(
+        "/admin/analytics/insights"
+      );
+      return data.data;
+    },
+    staleTime:       TODAY_STALE_TIME,
+    gcTime:          ANALYTICS_GC_TIME,
+    refetchInterval: TODAY_REFETCH_MS,
+  });
+}
+
+export function usePeakHour(params: DateParams, activeRange?: string) {
+  const isToday = activeRange === "today";
+  return useQuery({
+    queryKey: ["analytics-peak-hour", params],
+    queryFn: async () => {
+      const { data } = await api.get<ApiSuccess<PeakHourData>>(
+        "/admin/analytics/peak-hour",
+        { params }
+      );
+      return data.data;
+    },
+    staleTime:       isToday ? TODAY_STALE_TIME : ANALYTICS_STALE_TIME,
+    gcTime:          ANALYTICS_GC_TIME,
+    refetchInterval: isToday ? TODAY_REFETCH_MS : false,
+  });
+}
+
+export function useHealthScore() {
+  return useQuery({
+    queryKey: ["analytics-health-score"],
+    queryFn: async () => {
+      const { data } = await api.get<ApiSuccess<HealthScoreData>>(
+        "/admin/analytics/health-score"
+      );
+      return data.data;
+    },
+    staleTime: ANALYTICS_STALE_TIME,
+    gcTime:    ANALYTICS_GC_TIME,
+  });
+}
+
+export function useItemCombinations(params: DateParams, activeRange?: string) {
+  const isToday = activeRange === "today";
+  return useQuery({
+    queryKey: ["analytics-combinations", params],
+    queryFn: async () => {
+      const { data } = await api.get<ApiSuccess<ItemCombination[]>>(
+        "/admin/analytics/combinations",
+        { params }
+      );
+      return data.data;
+    },
+    staleTime:       isToday ? TODAY_STALE_TIME : ANALYTICS_STALE_TIME,
+    gcTime:          ANALYTICS_GC_TIME,
+    refetchInterval: isToday ? TODAY_REFETCH_MS : false,
   });
 }

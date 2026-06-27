@@ -2,18 +2,25 @@
 
 import { useState, useMemo, useCallback, Suspense, lazy } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { subDays, startOfDay, endOfDay, format } from "date-fns";
+import { subDays, startOfDay, endOfDay } from "date-fns";
 import {
   IndianRupee, ShoppingBag, CheckCircle2, XCircle, Clock,
-  ArrowRight, X, RefreshCw, Zap, BarChart3,
+  ArrowRight, X, RefreshCw, Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { KpiCard } from "@/components/analytics/KpiCard";
-import type { AnalyticsSummary, HourlyDataPoint } from "@/types";
+import type { AnalyticsSummary } from "@/types";
 import { RecentOrdersTable } from "@/components/analytics/RecentOrdersTable";
+import { TodaysInsights } from "@/components/analytics/TodaysInsights";
+import { BestWorstSellers } from "@/components/analytics/BestWorstSellers";
+import { PeakHourIntelligence } from "@/components/analytics/PeakHourIntelligence";
+import { HealthScoreCard } from "@/components/analytics/HealthScoreCard";
+import { ItemCombinations } from "@/components/analytics/ItemCombinations";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useAnalyticsSummary, useRevenueData, useTopItems,
+  useTodaysInsights, useItemPerformance, usePeakHour,
+  useHealthScore, useItemCombinations,
 } from "@/hooks/useAnalytics";
 import { useAuthStore } from "@/stores/auth.store";
 import { useSettingsStore } from "@/stores/settings.store";
@@ -104,9 +111,14 @@ export default function DashboardPage() {
   const params  = useMemo(() => getRange(activeRange), [activeRange]);
 
   // Pass activeRange to hooks so they can use a shorter staleTime + auto-poll.
-  const summary  = useAnalyticsSummary(params, activeRange);
-  const revenue  = useRevenueData(params, activeRange);
-  const topItems = useTopItems(params, activeRange);
+  const summary          = useAnalyticsSummary(params, activeRange);
+  const revenue          = useRevenueData(params, activeRange);
+  const topItems         = useTopItems(params, activeRange);
+  const insights         = useTodaysInsights();
+  const itemPerformance  = useItemPerformance(params, activeRange);
+  const peakHour         = usePeakHour(params, activeRange);
+  const healthScore      = useHealthScore();
+  const combinations     = useItemCombinations(params, activeRange);
 
   // ── Menu items (for onboarding check) ─────────────────────────────────────
   const menuQuery = useQuery({
@@ -156,20 +168,7 @@ export default function DashboardPage() {
     staleTime: 20_000,
   });
 
-  // Hourly distribution
-  const { data: hourlyData } = useQuery<HourlyDataPoint[]>({
-    queryKey: ["analytics-hourly", params],
-    queryFn: async () => {
-      const { data } = await api.get<any>("/admin/analytics/hourly", { params });
-      return data.data as HourlyDataPoint[];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
 
-  const maxHourly = useMemo(() => {
-    if (!hourlyData || hourlyData.length === 0) return 1;
-    return Math.max(...hourlyData.map((h: HourlyDataPoint) => h.count), 1);
-  }, [hourlyData]);
 
   /**
    * Show onboarding banner only when:
@@ -184,10 +183,17 @@ export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const handleManualRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    await queryClient.invalidateQueries({ queryKey: ["analytics-summary"] });
-    await queryClient.invalidateQueries({ queryKey: ["analytics-revenue"] });
-    await queryClient.invalidateQueries({ queryKey: ["analytics-top-items"] });
-    await queryClient.invalidateQueries({ queryKey: ["recent-orders-table"] });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["analytics-summary"] }),
+      queryClient.invalidateQueries({ queryKey: ["analytics-revenue"] }),
+      queryClient.invalidateQueries({ queryKey: ["analytics-top-items"] }),
+      queryClient.invalidateQueries({ queryKey: ["recent-orders-table"] }),
+      queryClient.invalidateQueries({ queryKey: ["analytics-insights"] }),
+      queryClient.invalidateQueries({ queryKey: ["analytics-item-performance"] }),
+      queryClient.invalidateQueries({ queryKey: ["analytics-peak-hour"] }),
+      queryClient.invalidateQueries({ queryKey: ["analytics-health-score"] }),
+      queryClient.invalidateQueries({ queryKey: ["analytics-combinations"] }),
+    ]);
     setIsRefreshing(false);
   }, [queryClient]);
 
@@ -448,6 +454,9 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* ── Today's Insights Banner ─────────────────────────────────────────── */}
+      <TodaysInsights data={insights.data} loading={insights.isLoading} />
+
       {/* ── Section label ─────────────────────────────────────────────────── */}
       <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
         Trends
@@ -463,44 +472,27 @@ export default function DashboardPage() {
         </Suspense>
       </div>
 
-      {/* ── Hourly Distribution ──────────────────────────────────────────────── */}
-      {hourlyData && hourlyData.length > 0 && (
-        <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
-          <div className="flex flex-wrap items-center gap-1.5 mb-4">
-            <BarChart3 className="h-4 w-4 text-accent" />
-            <span className="text-[13px] font-semibold text-fg">Orders by Hour</span>
-            <span className="text-[11px] text-fg-subtle">Peak activity distribution</span>
-          </div>
-          <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden -mx-1">
-            <div className="flex items-end gap-1 h-28 min-w-[480px] px-1">
-              {Array.from({ length: 24 }, (_, hour) => {
-                const entry = hourlyData.find((h: HourlyDataPoint) => h.hour === hour);
-                const count = entry?.count ?? 0;
-                const pct = (count / maxHourly) * 100;
-                const isPeak = count === maxHourly && maxHourly > 0;
-                return (
-                  <div key={hour} className="flex flex-col items-center gap-1 flex-1 group">
-                    <div
-                      className={cn(
-                        "w-full rounded-t-sm transition-all duration-300",
-                        isPeak ? "bg-accent" : count > 0 ? "bg-accent/40" : "bg-surface-3",
-                      )}
-                      style={{ height: `${Math.max(pct, count > 0 ? 8 : 4)}%` }}
-                      title={`${hour}:00 — ${count} orders`}
-                    />
-                    {hour % 6 === 0 && (
-                      <span className="sm:hidden text-[7px] text-fg-subtle num">{hour}h</span>
-                    )}
-                    {hour % 4 === 0 && (
-                      <span className="hidden sm:inline text-[8px] text-fg-subtle num">{hour}h</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Section label ─────────────────────────────────────────────────── */}
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
+        Menu Performance
+      </p>
+
+      {/* ── Best / Worst Sellers ────────────────────────────────────────────── */}
+      <BestWorstSellers data={itemPerformance.data} loading={itemPerformance.isLoading} />
+
+      {/* ── Health Score & Combinations (side by side on lg) ────────────────── */}
+      <div className="grid gap-3 lg:grid-cols-2">
+        <HealthScoreCard data={healthScore.data} loading={healthScore.isLoading} />
+        <ItemCombinations data={combinations.data} loading={combinations.isLoading} />
+      </div>
+
+      {/* ── Section label ─────────────────────────────────────────────────── */}
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
+        Peak Hours
+      </p>
+
+      {/* ── Peak Hour Intelligence ──────────────────────────────────────────── */}
+      <PeakHourIntelligence data={peakHour.data} loading={peakHour.isLoading} />
 
       {/* ── Section label ─────────────────────────────────────────────────── */}
       <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
