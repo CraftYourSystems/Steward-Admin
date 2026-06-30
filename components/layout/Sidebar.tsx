@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, UtensilsCrossed, Users,
   LogOut, X, Settings, ToggleLeft, WifiOff, Kanban,
-  Soup, ClipboardList, BanknoteIcon, Home,
+  Soup, ClipboardList, BanknoteIcon, Home, BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +16,7 @@ import { hasPermission, Permissions } from "@/lib/permissions/permissions";
 
 const navAdmin = [
   { href: "/dashboard",      label: "Overview",        icon: LayoutDashboard },
+  { href: "/analytics",      label: "Analytics",       icon: BarChart3 },
   { href: "/orders",         label: "Orders",          icon: ShoppingCart },
   { href: "/pay-at-counter", label: "Pay at Counter",  icon: BanknoteIcon },
   { href: "/menu",           label: "Menu",            icon: UtensilsCrossed },

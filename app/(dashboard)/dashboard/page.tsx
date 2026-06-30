@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, Suspense, lazy } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { subDays, startOfDay, endOfDay } from "date-fns";
 import {
@@ -11,32 +11,15 @@ import Link from "next/link";
 import { KpiCard } from "@/components/analytics/KpiCard";
 import type { AnalyticsSummary } from "@/types";
 import { RecentOrdersTable } from "@/components/analytics/RecentOrdersTable";
-import { TodaysInsights } from "@/components/analytics/TodaysInsights";
-import { BestWorstSellers } from "@/components/analytics/BestWorstSellers";
-import { PeakHourIntelligence } from "@/components/analytics/PeakHourIntelligence";
-import { HealthScoreCard } from "@/components/analytics/HealthScoreCard";
-import { ItemCombinations } from "@/components/analytics/ItemCombinations";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  useAnalyticsSummary, useRevenueData, useTopItems,
-  useTodaysInsights, useItemPerformance, usePeakHour,
-  useHealthScore, useItemCombinations,
+  useAnalyticsSummary,
 } from "@/hooks/useAnalytics";
 import { useAuthStore } from "@/stores/auth.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import api from "@/lib/axios";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-
-// Lazy-load charts
-const RevenueChart = lazy(() =>
-  import("@/components/analytics/RevenueChart").then((m) => ({ default: m.RevenueChart }))
-);
-const TopItemsChart = lazy(() =>
-  import("@/components/analytics/TopItemsChart").then((m) => ({ default: m.TopItemsChart }))
-);
-
-
 
 type QuickRange = "today" | "yesterday" | "7d" | "30d";
 const ISO = (d: Date) => d.toISOString();
@@ -85,8 +68,6 @@ function writeDismissed() {
   try { localStorage.setItem(ONBOARDING_KEY, "true"); } catch { /* quota */ }
 }
 
-const ChartSkeleton = () => <Skeleton className="h-48 sm:h-56 w-full rounded-xl bg-surface-2" />;
-
 export default function DashboardPage() {
   const user       = useAuthStore((s) => s.user);
   const restaurant = useAuthStore((s) => s.restaurant);
@@ -111,14 +92,7 @@ export default function DashboardPage() {
   const params  = useMemo(() => getRange(activeRange), [activeRange]);
 
   // Pass activeRange to hooks so they can use a shorter staleTime + auto-poll.
-  const summary          = useAnalyticsSummary(params, activeRange);
-  const revenue          = useRevenueData(params, activeRange);
-  const topItems         = useTopItems(params, activeRange);
-  const insights         = useTodaysInsights();
-  const itemPerformance  = useItemPerformance(params, activeRange);
-  const peakHour         = usePeakHour(params, activeRange);
-  const healthScore      = useHealthScore();
-  const combinations     = useItemCombinations(params, activeRange);
+  const summary  = useAnalyticsSummary(params, activeRange);
 
   // ── Menu items (for onboarding check) ─────────────────────────────────────
   const menuQuery = useQuery({
@@ -168,8 +142,6 @@ export default function DashboardPage() {
     staleTime: 20_000,
   });
 
-
-
   /**
    * Show onboarding banner only when:
    * 1. Not already dismissed.
@@ -183,17 +155,8 @@ export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const handleManualRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["analytics-summary"] }),
-      queryClient.invalidateQueries({ queryKey: ["analytics-revenue"] }),
-      queryClient.invalidateQueries({ queryKey: ["analytics-top-items"] }),
-      queryClient.invalidateQueries({ queryKey: ["recent-orders-table"] }),
-      queryClient.invalidateQueries({ queryKey: ["analytics-insights"] }),
-      queryClient.invalidateQueries({ queryKey: ["analytics-item-performance"] }),
-      queryClient.invalidateQueries({ queryKey: ["analytics-peak-hour"] }),
-      queryClient.invalidateQueries({ queryKey: ["analytics-health-score"] }),
-      queryClient.invalidateQueries({ queryKey: ["analytics-combinations"] }),
-    ]);
+    await queryClient.invalidateQueries({ queryKey: ["analytics-summary"] });
+    await queryClient.invalidateQueries({ queryKey: ["recent-orders-table"] });
     setIsRefreshing(false);
   }, [queryClient]);
 
@@ -453,46 +416,6 @@ export default function DashboardPage() {
           accent="warning"
         />
       </div>
-
-      {/* ── Today's Insights Banner ─────────────────────────────────────────── */}
-      <TodaysInsights data={insights.data} loading={insights.isLoading} />
-
-      {/* ── Section label ─────────────────────────────────────────────────── */}
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
-        Trends
-      </p>
-
-      {/* ── Charts ─────────────────────────────────────────────────────────── */}
-      <div className="grid gap-3 lg:grid-cols-2">
-        <Suspense fallback={<ChartSkeleton />}>
-          <RevenueChart data={revenue.data} loading={revenue.isLoading} />
-        </Suspense>
-        <Suspense fallback={<ChartSkeleton />}>
-          <TopItemsChart data={topItems.data} loading={topItems.isLoading} />
-        </Suspense>
-      </div>
-
-      {/* ── Section label ─────────────────────────────────────────────────── */}
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
-        Menu Performance
-      </p>
-
-      {/* ── Best / Worst Sellers ────────────────────────────────────────────── */}
-      <BestWorstSellers data={itemPerformance.data} loading={itemPerformance.isLoading} />
-
-      {/* ── Health Score & Combinations (side by side on lg) ────────────────── */}
-      <div className="grid gap-3 lg:grid-cols-2">
-        <HealthScoreCard data={healthScore.data} loading={healthScore.isLoading} />
-        <ItemCombinations data={combinations.data} loading={combinations.isLoading} />
-      </div>
-
-      {/* ── Section label ─────────────────────────────────────────────────── */}
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
-        Peak Hours
-      </p>
-
-      {/* ── Peak Hour Intelligence ──────────────────────────────────────────── */}
-      <PeakHourIntelligence data={peakHour.data} loading={peakHour.isLoading} />
 
       {/* ── Section label ─────────────────────────────────────────────────── */}
       <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">

@@ -31,7 +31,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const isKitchenPath = KITCHEN_PATHS.some((p) => pathname.startsWith(p));
   const isAdmin       = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
-  const isDashboard   = pathname === "/dashboard";
+  const isDashboard   = pathname === "/dashboard" || pathname === "/analytics";
 
   useSocket({ enabled: isAdmin && isDashboard });
   useKitchenSocket({ enabled: isKitchenPath });
@@ -57,6 +57,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Per-route permission check
     const canUseAdminPage =
       (pathname.startsWith("/dashboard")     && hasPermission(user.role, Permissions.RESTAURANT_MANAGEMENT)) ||
+      (pathname.startsWith("/analytics")     && hasPermission(user.role, Permissions.RESTAURANT_MANAGEMENT)) ||
       (pathname.startsWith("/orders")        && (hasPermission(user.role, Permissions.ORDER_MANAGEMENT) || hasPermission(user.role, Permissions.ORDER_VIEW))) ||
       (pathname.startsWith("/pay-at-counter")&& hasPermission(user.role, Permissions.ORDER_MANAGEMENT)) ||
       (pathname.startsWith("/menu")          && hasPermission(user.role, Permissions.MENU_MANAGEMENT)) ||
@@ -69,6 +70,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       (pathname.startsWith("/audit")         && hasPermission(user.role, Permissions.RESTAURANT_MANAGEMENT)) ||
       // Any unlisted path is allowed through (avoids false negatives for new routes)
       (!pathname.startsWith("/dashboard")    &&
+       !pathname.startsWith("/analytics")    &&
        !pathname.startsWith("/orders")       &&
        !pathname.startsWith("/pay-at-counter")&&
        !pathname.startsWith("/menu")         &&
