@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, UtensilsCrossed, Users,
   LogOut, X, Settings, ToggleLeft, WifiOff, Kanban,
-  Soup, ClipboardList, BanknoteIcon, Home, BarChart3,
+  Soup, ClipboardList, BanknoteIcon, Home, BarChart3, ArrowLeft,
 } from "lucide-react";
+import { usePlatformStore } from "@/stores/platform.store";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useSettingsStore } from "@/stores/settings.store";
@@ -123,8 +124,11 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
   const { wsConnected } = useSettingsStore();
+  const selectedRestaurant = usePlatformStore((s) => s.selectedRestaurant);
+  const exitRestaurant = usePlatformStore((s) => s.exitRestaurant);
 
   const initials = user
     ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase()
@@ -215,6 +219,24 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-2 py-3 scrollbar-thin space-y-0">
+
+          {/* Super Admin restaurant context banner */}
+          {user?.role === "SUPER_ADMIN" && selectedRestaurant && (
+            <div className="mx-1 mb-3 rounded-lg bg-violet-500/10 border border-violet-500/20 p-2.5">
+              <p className="text-[10px] font-medium text-violet-400 uppercase tracking-wider mb-1">Viewing Restaurant</p>
+              <p className="text-xs font-semibold text-fg truncate">{selectedRestaurant.name}</p>
+              <button
+                onClick={() => {
+                  exitRestaurant();
+                  router.push("/platform");
+                }}
+                className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-violet-400 hover:text-violet-300 transition-colors"
+              >
+                <ArrowLeft className="h-3 w-3" />
+                Back to Platform
+              </button>
+            </div>
+          )}
 
           {/* ── Kitchen Staff ────────────────────────────────── */}
           {isKitchen && (

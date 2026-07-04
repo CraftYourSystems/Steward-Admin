@@ -2,6 +2,7 @@ import axios from "axios";
 import { getCsrfHeader } from "@/lib/auth/csrf";
 import { API_BASE_URL } from "@/lib/constants";
 import { useAuthStore } from "@/stores/auth.store";
+import { usePlatformStore } from "@/stores/platform.store";
 
 
 
@@ -28,6 +29,13 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   Object.assign(config.headers, getCsrfHeader());
+
+  // Super Admin: attach selected restaurant context
+  const selectedRestaurant = usePlatformStore.getState().selectedRestaurant;
+  if (selectedRestaurant) {
+    config.headers['x-restaurant-id'] = selectedRestaurant.id;
+  }
+
   return config;
 });
 

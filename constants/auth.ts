@@ -14,7 +14,7 @@ import type { UserRole } from '@/types';
 export function getRedirectPath(role: UserRole | string): string {
   switch (role) {
     case 'SUPER_ADMIN':
-      return '/audit';
+      return '/platform';
     case 'ADMIN':
       return '/dashboard';
     case 'KITCHEN_STAFF':

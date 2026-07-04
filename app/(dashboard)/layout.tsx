@@ -11,6 +11,7 @@ import { useRequireAuth } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { hasPermission, Permissions } from "@/lib/permissions/permissions";
 import { getRedirectPath } from "@/constants/auth";
+import { usePlatformStore } from "@/stores/platform.store";
 
 const ALLOWED_ROLES = ["ADMIN", "SUPER_ADMIN", "KITCHEN_STAFF", "WAITER"];
 // All paths where the kitchen socket should be active
@@ -40,6 +41,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // Only runs after the auth state has settled (isReady = true).
   useEffect(() => {
     if (!isReady || !user) return;
+
+    // Super Admin without a selected restaurant → go to platform dashboard
+    if (user.role === "SUPER_ADMIN" && !usePlatformStore.getState().selectedRestaurant) {
+      router.replace("/platform");
+      return;
+    }
 
     // Unknown role — clear and redirect
     if (!ALLOWED_ROLES.includes(user.role)) {
