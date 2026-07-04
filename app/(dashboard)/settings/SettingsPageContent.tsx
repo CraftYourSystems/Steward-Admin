@@ -18,6 +18,7 @@ import { TabPayments } from "@/components/settings/TabPayments";
 import { TabOrderTypes } from "@/components/settings/TabOrderTypes";
 import { TabCustomerExperience } from "@/components/settings/TabCustomerExperience";
 import type { RestaurantSettings } from "@/types/settings";
+import { cn } from "@/lib/utils";
 
 export default function SettingsPageContent() {
   const searchParams = useSearchParams();
@@ -134,99 +135,123 @@ export default function SettingsPageContent() {
   }
 
   return (
-    <div className="px-5 py-5 lg:px-6 lg:py-6 max-w-[860px] mx-auto">
-      {/* Page header */}
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <div>
+    <div className="flex h-[calc(100vh-48px)]">
+      {/* ── Left Sidebar (Master) ── */}
+      <div className="w-[260px] flex-shrink-0 border-r border-white/5 bg-transparent overflow-y-auto scrollbar-thin">
+        <div className="p-5">
           <div className="label-xs mb-1">Configuration</div>
-          <h2 className="text-xl font-semibold tracking-tight text-fg">Restaurant Settings</h2>
-          <p className="text-[12px] text-fg-subtle mt-1">
-            Manage your restaurant profile, branding, and operations.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {isDirty && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleReset}
-              disabled={isSaving}
-              className="text-fg-muted"
-            >
-              <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-              Reset
-            </Button>
-          )}
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={(!isDirty && !isSaved) || isSaving}
-            className={isSaved ? 'bg-success hover:bg-success/90 text-white' : ''}
-          >
-            {isSaving ? (
-              <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Saving…</>
-            ) : isSaved ? (
-              <><Check className="h-3.5 w-3.5 mr-1.5" />Saved</>
-            ) : (
-              <><Save className="h-3.5 w-3.5 mr-1.5" />Save changes</>
-            )}
-          </Button>
+          <h2 className="text-lg font-semibold tracking-tight text-fg mb-4">Settings</h2>
+          
+          <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="w-full">
+            <TabsList className="flex flex-col h-auto bg-transparent border-0 p-0 items-stretch gap-1">
+              {tabs.map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className={cn(
+                    "justify-start px-3 py-2 text-[13px] font-medium rounded-lg transition-colors border border-transparent shadow-none data-[state=active]:shadow-none",
+                    activeTab === tab.value 
+                      ? "bg-white/10 text-fg border-white/10" 
+                      : "text-fg-muted hover:bg-white/5 hover:text-fg"
+                  )}
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
       </div>
 
-      {isDirty && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/8 px-3 py-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-warning shrink-0" />
-          <span className="text-[12px] text-warning font-medium">You have unsaved changes</span>
-        </div>
-      )}
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6 flex-wrap h-auto gap-1 bg-surface border border-border p-1 rounded-lg">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className="text-[12px] font-medium data-[state=active]:bg-surface-3 data-[state=active]:text-fg rounded-md px-3 py-1.5"
+      {/* ── Right Content (Detail) ── */}
+      <div className="flex-1 overflow-y-auto scrollbar-thin bg-transparent relative">
+        {/* Sticky Header with Actions */}
+        <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-5 border-b border-white/5 bg-bg/80 backdrop-blur-md">
+          <div>
+            <h3 className="text-lg font-semibold text-fg">
+              {tabs.find(t => t.value === activeTab)?.label}
+            </h3>
+            <p className="text-[12px] text-fg-subtle">
+              Manage your {tabs.find(t => t.value === activeTab)?.label.toLowerCase()} settings.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {isDirty && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                disabled={isSaving}
+                className="text-fg-muted hover:bg-white/5"
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                Reset
+              </Button>
+            )}
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={(!isDirty && !isSaved) || isSaving}
+              className={isSaved ? 'bg-success hover:bg-success/90 text-white' : ''}
             >
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+              {isSaving ? (
+                <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Saving…</>
+              ) : isSaved ? (
+                <><Check className="h-3.5 w-3.5 mr-1.5" />Saved</>
+              ) : (
+                <><Save className="h-3.5 w-3.5 mr-1.5" />Save changes</>
+              )}
+            </Button>
+          </div>
+        </div>
 
-        <TabsContent value="general">
-          <TabGeneral settings={draft} onChange={patch} />
-        </TabsContent>
-        <TabsContent value="theme">
-          <TabTheme settings={draft} onChange={patch} />
-        </TabsContent>
-        <TabsContent value="operations">
-          <TabOperations settings={draft} onChange={patch} />
-        </TabsContent>
-        <TabsContent value="team">
-          <TabStaffNotifications settings={draft} onChange={patch} />
-        </TabsContent>
-        <TabsContent value="payments">
-          <TabPayments settings={draft} onChange={patch} />
-        </TabsContent>
-        <TabsContent value="ordering">
-          <TabOrderTypes settings={draft} onChange={patch} />
-        </TabsContent>
-        <TabsContent value="customer">
-          <TabCustomerExperience settings={draft} onChange={patch} />
-        </TabsContent>
-        <TabsContent value="branding">
-          <TabBranding settings={draft} onChange={patch} />
-        </TabsContent>
-        <TabsContent value="shifts">
-          <TabShifts />
-        </TabsContent>
-        {isAdmin && (
-          <TabsContent value="security">
-            <TabSecurity />
-          </TabsContent>
-        )}
-      </Tabs>
+        <div className="px-8 py-6 max-w-[800px]">
+          {isDirty && (
+            <div className="mb-6 flex items-center gap-3 rounded-xl border border-warning/20 bg-warning/5 px-4 py-3">
+              <span className="h-2 w-2 rounded-full bg-warning shrink-0" />
+              <span className="text-[13px] text-warning font-medium">You have unsaved changes. Remember to save before navigating away.</span>
+            </div>
+          )}
+
+          <Tabs value={activeTab} className="w-full">
+            {/* Empty TabsList to satisfy Radix UI if it requires one for accessibility, though strictly not needed if we control the state */}
+            <TabsList className="hidden" />
+
+            <TabsContent value="general" className="mt-0 focus-visible:outline-none">
+              <TabGeneral settings={draft} onChange={patch} />
+            </TabsContent>
+            <TabsContent value="theme" className="mt-0 focus-visible:outline-none">
+              <TabTheme settings={draft} onChange={patch} />
+            </TabsContent>
+            <TabsContent value="operations" className="mt-0 focus-visible:outline-none">
+              <TabOperations settings={draft} onChange={patch} />
+            </TabsContent>
+            <TabsContent value="team" className="mt-0 focus-visible:outline-none">
+              <TabStaffNotifications settings={draft} onChange={patch} />
+            </TabsContent>
+            <TabsContent value="payments" className="mt-0 focus-visible:outline-none">
+              <TabPayments settings={draft} onChange={patch} />
+            </TabsContent>
+            <TabsContent value="ordering" className="mt-0 focus-visible:outline-none">
+              <TabOrderTypes settings={draft} onChange={patch} />
+            </TabsContent>
+            <TabsContent value="customer" className="mt-0 focus-visible:outline-none">
+              <TabCustomerExperience settings={draft} onChange={patch} />
+            </TabsContent>
+            <TabsContent value="branding" className="mt-0 focus-visible:outline-none">
+              <TabBranding settings={draft} onChange={patch} />
+            </TabsContent>
+            <TabsContent value="shifts" className="mt-0 focus-visible:outline-none">
+              <TabShifts />
+            </TabsContent>
+            {isAdmin && (
+              <TabsContent value="security" className="mt-0 focus-visible:outline-none">
+                <TabSecurity />
+              </TabsContent>
+            )}
+          </Tabs>
+        </div>
+      </div>
     </div>
   );
 }

@@ -158,6 +158,19 @@ const QUICK_LINKS = [
   { label: "Menu", href: "/menu", icon: Package },
 ];
 
+const SETTING_PAGES = [
+  { label: "General Settings", href: "/settings?tab=general", keywords: ["general", "name", "profile", "restaurant"] },
+  { label: "Theme & Menu", href: "/settings?tab=theme", keywords: ["theme", "color", "layout", "menu", "appearance", "design"] },
+  { label: "Operations", href: "/settings?tab=operations", keywords: ["operations", "tax", "service charge", "prep time"] },
+  { label: "Team & Notifications", href: "/settings?tab=team", keywords: ["team", "notifications", "alerts", "email", "staff"] },
+  { label: "Payments", href: "/settings?tab=payments", keywords: ["payments", "razorpay", "upi", "cash", "gateway"] },
+  { label: "Ordering & Tables", href: "/settings?tab=ordering", keywords: ["ordering", "tables", "dine in", "takeaway", "delivery"] },
+  { label: "Customer Experience", href: "/settings?tab=customer", keywords: ["customer", "experience", "receipt"] },
+  { label: "Branding", href: "/settings?tab=branding", keywords: ["branding", "logo", "banner"] },
+  { label: "Shifts", href: "/settings?tab=shifts", keywords: ["shifts", "hours", "schedule", "timing"] },
+  { label: "Security", href: "/settings?tab=security", keywords: ["security", "password", "2fa"] },
+];
+
 function QuickLinks({ onClose }: { onClose: () => void }) {
   return (
     <>
@@ -186,17 +199,22 @@ function QuickLinks({ onClose }: { onClose: () => void }) {
 }
 
 function SearchResults({ query, onClose }: { query: string; onClose: () => void }) {
-  const { data, isLoading } = useQuery({
+  const { data: orderResults, isLoading } = useQuery({
     queryKey: ["order-search", query],
     queryFn: async () => {
       const { data } = await api.get<ApiSuccess<Order[]>>("/orders/search", {
-        params: { q: query, limit: 8 },
+        params: { q: query, limit: 5 },
       });
       return data.data ?? [];
     },
     enabled: query.length >= 2,
     staleTime: 10_000,
   });
+
+  const settingsResults = SETTING_PAGES.filter(p => 
+    p.label.toLowerCase().includes(query.toLowerCase()) || 
+    p.keywords.some(k => k.includes(query.toLowerCase()))
+  );
 
   if (isLoading) {
     return (
@@ -207,7 +225,10 @@ function SearchResults({ query, onClose }: { query: string; onClose: () => void 
     );
   }
 
-  if (!data || data.length === 0) {
+  const hasOrders = orderResults && orderResults.length > 0;
+  const hasSettings = settingsResults.length > 0;
+
+  if (!hasOrders && !hasSettings) {
     return (
       <div className="flex flex-col items-center gap-2 py-8">
         <Search className="h-8 w-8 text-fg-subtle/40" />
@@ -217,27 +238,58 @@ function SearchResults({ query, onClose }: { query: string; onClose: () => void 
   }
 
   return (
-    <ul className="space-y-0.5 p-1">
-      {data.map((order: any) => (
-        <li key={order.id}>
-          <a
-            href={`/orders?highlight=${order.id}`}
-            onClick={onClose}
-            className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-surface-2 transition-colors"
-          >
-            <div className="grid h-7 w-7 place-items-center rounded-md bg-surface-2 border border-border">
-              <ShoppingBag className="h-3.5 w-3.5 text-fg-muted" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-semibold text-fg font-mono">#{order.orderNumber}</p>
-              <p className="text-[11px] text-fg-muted truncate">
-                {order.customerName ?? "Guest"} · {order.status}
-              </p>
-            </div>
-          </a>
-        </li>
-      ))}
-    </ul>
+    <div className="max-h-[300px] overflow-y-auto scrollbar-thin space-y-4 p-1">
+      {hasSettings && (
+        <div>
+          <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">Settings</p>
+          <ul className="space-y-0.5">
+            {settingsResults.map((setting) => (
+              <li key={setting.href}>
+                <a
+                  href={setting.href}
+                  onClick={onClose}
+                  className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-surface-2 transition-colors"
+                >
+                  <div className="grid h-7 w-7 place-items-center rounded-md bg-surface-2 border border-border">
+                    <SettingsIcon className="h-3.5 w-3.5 text-fg-muted" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-medium text-fg">{setting.label}</p>
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {hasOrders && (
+        <div>
+          <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">Orders</p>
+          <ul className="space-y-0.5">
+            {orderResults.map((order: any) => (
+              <li key={order.id}>
+                <a
+                  href={`/orders?highlight=${order.id}`}
+                  onClick={onClose}
+                  className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-surface-2 transition-colors"
+                >
+                  <div className="grid h-7 w-7 place-items-center rounded-md bg-surface-2 border border-border">
+                    <ShoppingBag className="h-3.5 w-3.5 text-fg-muted" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-semibold text-fg font-mono">#{order.orderNumber}</p>
+                    <p className="text-[11px] text-fg-muted truncate">
+                      {order.customerName ?? "Guest"} · {order.status}
+                    </p>
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 

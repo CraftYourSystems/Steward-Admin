@@ -144,7 +144,7 @@ function MenuItemsTab({ categories }: { categories: Category[] }) {
         {isLoading ? (
           <div className="space-y-1.5 p-3">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full rounded-md bg-surface-2" />
+              <Skeleton key={i} className="h-14 w-full rounded-md bg-white/5" />
             ))}
           </div>
         ) : isError ? (
@@ -154,7 +154,7 @@ function MenuItemsTab({ categories }: { categories: Category[] }) {
           </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-16 text-center">
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-surface-2 border border-border">
+            <div className="grid h-10 w-10 place-items-center rounded-lg bg-white/5 border border-white/10">
               <UtensilsCrossed className="h-5 w-5 text-fg-subtle" />
             </div>
             <p className="text-[13px] font-medium text-fg">No menu items yet</p>
@@ -168,7 +168,7 @@ function MenuItemsTab({ categories }: { categories: Category[] }) {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-border bg-surface-2 hover:bg-surface-2">
+                <TableRow className="border-white/5 bg-transparent hover:bg-transparent">
                   <TableHead className="h-9 w-14 text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">Image</TableHead>
                   <TableHead className="h-9 text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">Name</TableHead>
                   <TableHead className="h-9 text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">Category</TableHead>
@@ -181,16 +181,16 @@ function MenuItemsTab({ categories }: { categories: Category[] }) {
               </TableHeader>
               <TableBody>
                 {items.map((item: MenuItem) => (
-                  <TableRow key={item.id} className="border-border hover:bg-surface-2 transition-colors">
+                  <TableRow key={item.id} className="border-white/5 hover:bg-white/5 transition-colors">
                     <TableCell className="py-2.5">
                       {item.imageUrl ? (
                         <img
                           src={item.imageUrl}
                           alt={item.name}
-                          className="h-10 w-10 rounded-lg object-cover border border-border"
+                          className="h-10 w-10 rounded-lg object-cover border border-white/10"
                         />
                       ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-2 border border-border">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/5 border border-white/10">
                           <ImageIcon className="h-4 w-4 text-fg-subtle" />
                         </div>
                       )}
@@ -211,7 +211,7 @@ function MenuItemsTab({ categories }: { categories: Category[] }) {
                       {item.prepTimeMins}m
                     </TableCell>
                     <TableCell className="py-2.5">
-                      <Badge variant="neutral" className="text-[10px]">
+                      <Badge variant="neutral" className="text-[10px] bg-white/5 border-white/10 text-fg-muted">
                         {KITCHEN_TYPE_LABELS[item.kitchenType] ?? item.kitchenType}
                       </Badge>
                     </TableCell>
@@ -225,14 +225,14 @@ function MenuItemsTab({ categories }: { categories: Category[] }) {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => { setEditItem(item); setSheetOpen(true); }}
-                          className="inline-grid h-7 w-7 place-items-center rounded-md border border-border text-fg-muted hover:bg-surface-3 hover:text-fg transition-colors"
+                          className="inline-grid h-7 w-7 place-items-center rounded-md border border-white/10 text-fg-muted hover:bg-white/10 hover:text-fg transition-colors"
                           title="Edit"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => setDeleteItem(item)}
-                          className="inline-grid h-7 w-7 place-items-center rounded-md border border-border text-fg-muted hover:bg-danger/10 hover:text-danger hover:border-danger/30 transition-colors"
+                          className="inline-grid h-7 w-7 place-items-center rounded-md border border-white/10 text-fg-muted hover:bg-danger/10 hover:text-danger hover:border-danger/30 transition-colors"
                           title="Delete"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -248,7 +248,7 @@ function MenuItemsTab({ categories }: { categories: Category[] }) {
 
         {/* Pagination */}
         {meta && meta.totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-border px-4 py-2.5">
+          <div className="flex items-center justify-between border-t border-white/5 px-4 py-2.5">
             <span className="text-[11px] text-fg-subtle num">
               Showing {(meta.page - 1) * 20 + 1}–{Math.min(meta.page * 20, meta.total)} of {meta.total}
             </span>
@@ -357,12 +357,12 @@ function CategoriesTab() {
         {isLoading ? (
           <div className="space-y-1.5 p-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full rounded-md bg-surface-2" />
+              <Skeleton key={i} className="h-12 w-full rounded-md bg-white/5" />
             ))}
           </div>
         ) : categories.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-16 text-center">
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-surface-2 border border-border">
+            <div className="grid h-10 w-10 place-items-center rounded-lg bg-white/5 border border-white/10">
               <UtensilsCrossed className="h-5 w-5 text-fg-subtle" />
             </div>
             <p className="text-[13px] font-medium text-fg">No categories yet</p>
@@ -373,7 +373,7 @@ function CategoriesTab() {
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="border-border bg-surface-2 hover:bg-surface-2">
+              <TableRow className="border-white/5 bg-transparent hover:bg-transparent">
                 <TableHead className="h-9 text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">Name</TableHead>
                 <TableHead className="h-9 text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">Description</TableHead>
                 <TableHead className="h-9 text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">Sort Order</TableHead>
@@ -382,7 +382,7 @@ function CategoriesTab() {
             </TableHeader>
             <TableBody>
               {categories.map((cat: Category) => (
-                <TableRow key={cat.id} className="border-border hover:bg-surface-2 transition-colors">
+                <TableRow key={cat.id} className="border-white/5 hover:bg-white/5 transition-colors">
                   <TableCell className="py-2.5 text-[13px] font-medium text-fg">{cat.name}</TableCell>
                   <TableCell className="py-2.5 text-[12px] text-fg-muted">
                     {cat.description ?? "—"}
@@ -392,14 +392,14 @@ function CategoriesTab() {
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => { setEditCat(cat); setSheetOpen(true); }}
-                        className="inline-grid h-7 w-7 place-items-center rounded-md border border-border text-fg-muted hover:bg-surface-3 hover:text-fg transition-colors"
+                        className="inline-grid h-7 w-7 place-items-center rounded-md border border-white/10 text-fg-muted hover:bg-white/10 hover:text-fg transition-colors"
                         title="Edit"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => setDeleteCat(cat)}
-                        className="inline-grid h-7 w-7 place-items-center rounded-md border border-border text-fg-muted hover:bg-danger/10 hover:text-danger hover:border-danger/30 transition-colors"
+                        className="inline-grid h-7 w-7 place-items-center rounded-md border border-white/10 text-fg-muted hover:bg-danger/10 hover:text-danger hover:border-danger/30 transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -481,7 +481,7 @@ export default function MenuPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="items">
-        <TabsList className="flex-wrap h-auto gap-1 bg-surface border border-border p-1 rounded-lg mb-5">
+        <TabsList className="flex-wrap h-auto gap-1 bg-white/5 p-1 rounded-xl mb-5 border border-white/5">
           {[
             { value: "items", label: "Menu Items" },
             { value: "categories", label: "Categories" },
@@ -489,7 +489,7 @@ export default function MenuPage() {
             <TabsTrigger
               key={tab.value}
               value={tab.value}
-              className="text-[12px] font-medium data-[state=active]:bg-surface-3 data-[state=active]:text-fg rounded-md px-3 py-1.5"
+              className="text-[12px] font-medium data-[state=active]:bg-white/10 data-[state=active]:text-fg rounded-lg px-4 py-1.5 transition-colors shadow-none data-[state=active]:shadow-none"
             >
               {tab.label}
             </TabsTrigger>

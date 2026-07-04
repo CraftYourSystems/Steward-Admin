@@ -43,14 +43,15 @@ const navWaiter = [
 const ROLE_CONFIGS: Record<string, {
   logoGlow: string;
   logoBg: string;
+  logoText?: string;
   statusDot: string;
   statusText: string;
   accentColor: string;
 }> = {
-  ADMIN:         { logoGlow: "rgba(139,92,246,0.35)", logoBg: "bg-accent",      statusDot: "bg-accent",    statusText: "Admin Mode",     accentColor: "hsl(262,83%,67%)" },
-  SUPER_ADMIN:   { logoGlow: "rgba(139,92,246,0.35)", logoBg: "bg-accent",      statusDot: "bg-accent",    statusText: "Super Admin",    accentColor: "hsl(262,83%,67%)" },
-  KITCHEN_STAFF: { logoGlow: "rgba(217,184,114,0.35)", logoBg: "bg-[#D9B872]",  statusDot: "bg-[#D9B872]", statusText: "Kitchen Active", accentColor: "#D9B872"          },
-  WAITER:        { logoGlow: "rgba(59,130,246,0.35)",  logoBg: "bg-info",       statusDot: "bg-info",      statusText: "On Floor",       accentColor: "hsl(217,91%,60%)" },
+  ADMIN:         { logoGlow: "rgba(255,255,255,0.35)", logoBg: "bg-white",      logoText: "text-black", statusDot: "bg-white",    statusText: "Admin Mode",     accentColor: "#ffffff" },
+  SUPER_ADMIN:   { logoGlow: "rgba(255,255,255,0.35)", logoBg: "bg-white",      logoText: "text-black", statusDot: "bg-white",    statusText: "Super Admin",    accentColor: "#ffffff" },
+  KITCHEN_STAFF: { logoGlow: "rgba(217,184,114,0.35)", logoBg: "bg-[#D9B872]",  logoText: "text-black", statusDot: "bg-[#D9B872]", statusText: "Kitchen Active", accentColor: "#D9B872" },
+  WAITER:        { logoGlow: "rgba(59,130,246,0.35)",  logoBg: "bg-info",       logoText: "text-white", statusDot: "bg-info",      statusText: "On Floor",       accentColor: "hsl(217,91%,60%)" },
 };
 
 // ─── NavLink ──────────────────────────────────────────────────────────────────
@@ -179,7 +180,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               className={cn("flex h-7 w-7 items-center justify-center rounded-md", cfg.logoBg)}
               style={{ boxShadow: `0 0 12px ${cfg.logoGlow}` }}
             >
-              <span className="text-[11px] font-bold text-white">S</span>
+              <span className={cn("text-[11px] font-bold", cfg.logoText ?? "text-white")}>S</span>
             </div>
             <div className="leading-none">
               <div className="text-[13px] font-semibold text-fg">Steward</div>
