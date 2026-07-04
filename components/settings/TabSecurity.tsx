@@ -415,6 +415,36 @@ export function TabSecurity() {
             </Button>
           </div>
 
+          {/* Delete account */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-medium text-fg">Delete account</p>
+              <p className="text-[11px] text-fg-subtle mt-0.5">
+                Permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (window.confirm("Are you sure you want to delete your account? This action is permanent and will delete all your data. This cannot be undone.")) {
+                  api
+                    .delete("/auth/me")
+                    .then(() => {
+                      toast.success("Account deleted successfully");
+                      clearAuth();
+                      window.location.href = "/login";
+                    })
+                    .catch((err) => toast.error(err?.response?.data?.message ?? "Failed to delete account"));
+                }
+              }}
+              className="shrink-0 border-danger/30 text-danger hover:bg-danger/10 hover:border-danger/50"
+            >
+              Delete account
+            </Button>
+          </div>
+
         </div>
       </section>
     </div>
