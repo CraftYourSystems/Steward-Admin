@@ -138,7 +138,7 @@ export default function SettingsPageContent() {
     <div className="flex h-[calc(100vh-48px)] flex-col bg-transparent">
       {/* ── Sticky Header with Actions & Tabs ── */}
       <div className="sticky top-0 z-10 w-full border-b border-white/5 bg-bg/80 backdrop-blur-md">
-        <div className="px-5 py-4 lg:px-8 lg:py-5 max-w-[1400px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="px-5 py-4 lg:px-8 lg:py-5 max-w-[900px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="label-xs mb-1">Configuration</div>
             <h2 className="text-xl font-semibold tracking-tight text-fg">Settings</h2>
@@ -177,7 +177,7 @@ export default function SettingsPageContent() {
         </div>
 
         {/* ── Horizontal Tabs (Glassmorphic) ── */}
-        <div className="px-5 lg:px-8 max-w-[1400px] mx-auto pb-4">
+        <div className="px-5 lg:px-8 max-w-[900px] mx-auto pb-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="flex flex-wrap h-auto gap-1 bg-white/5 p-1 rounded-xl border border-white/5 justify-start">
               {tabs.map((tab) => (
@@ -200,8 +200,8 @@ export default function SettingsPageContent() {
       </div>
 
       {/* ── Right Content (Detail) ── */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin relative p-5 lg:p-8 max-w-[1400px] mx-auto w-full">
-        <div className="max-w-[800px]">
+      <div className="flex-1 overflow-y-auto scrollbar-thin relative p-5 lg:p-8 max-w-[900px] mx-auto w-full">
+        <div className="w-full">
           {isDirty && (
             <div className="mb-6 flex items-center gap-3 rounded-xl border border-warning/20 bg-warning/5 px-4 py-3">
               <span className="h-2 w-2 rounded-full bg-warning shrink-0" />
