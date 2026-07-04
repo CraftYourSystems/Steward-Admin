@@ -3,6 +3,7 @@
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { SettingsSection, SettingsRow } from "./SettingsShell";
+import { PaymentGateways } from "./PaymentGateways";
 import type { RestaurantSettings } from "@/types/settings";
 
 interface Props {
@@ -69,6 +70,12 @@ export function TabPayments({ settings, onChange }: Props) {
           />
         </SettingsRow>
       </SettingsSection>
+
+      {settings.acceptsOnline && (
+        <div className="pt-2">
+           <PaymentGateways />
+        </div>
+      )}
 
       {/* ── Legal / tax IDs ────────────────────────────────────────────── */}
       <SettingsSection>
