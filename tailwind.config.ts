@@ -69,6 +69,8 @@ const config: Config = {
       boxShadow: {
         elevated: "0 1px 2px rgba(0,0,0,0.4), 0 0 0 1px hsl(var(--border))",
         glow: "0 0 0 1px hsl(var(--accent) / 0.4), 0 4px 16px hsl(var(--accent) / 0.15)",
+        'card': '0 2px 4px -1px rgba(0, 0, 0, 0.2), 0 1px 2px -1px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+        'card-hover': '0 4px 12px -2px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
       },
       keyframes: {
         "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },

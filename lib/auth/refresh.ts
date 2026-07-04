@@ -13,7 +13,7 @@
  */
 
 import axios from 'axios';
-import { getCsrfHeader } from '@/lib/auth/csrf';
+import { getCsrfHeader, setCsrfToken } from '@/lib/auth/csrf';
 import { API_BASE_URL } from '@/lib/constants';
 import { useAuthStore } from '@/stores/auth.store';
 import type { User } from '@/types';
@@ -28,6 +28,8 @@ export interface RefreshPayload {
   user?: User | null;
   /** Present when the backend embeds the restaurant in the refresh response. */
   restaurant?: Restaurant | null;
+  /** CSRF token provided on successful refresh */
+  csrfToken?: string;
 }
 
 // ─── In-flight deduplication ──────────────────────────────────────────────────
@@ -72,6 +74,10 @@ export function silentRefresh(): Promise<RefreshPayload> {
             .getState()
             .setAccessToken(payload.accessToken);
         }
+      }
+
+      if (payload.csrfToken) {
+        setCsrfToken(payload.csrfToken);
       }
 
       return payload;

@@ -13,6 +13,7 @@ import api from '@/lib/axios';
 import { cn } from '@/lib/utils';
 import { getRedirectPath } from '@/constants/auth';
 import { useAuthStore } from '@/stores/auth.store';
+import { setCsrfToken } from '@/lib/auth/csrf';
 import type { ApiSuccess, LoginResponse } from '@/types';
 
 type AuthTab = 'ADMIN' | 'STAFF';
@@ -181,10 +182,14 @@ export default function LoginPageContent() {
 
     const handleExchange = async () => {
       try {
-        const { data } = await api.post<ApiSuccess<{ accessToken: string; user: import('@/types').User; restaurant?: any }>>(
+        const { data } = await api.post<ApiSuccess<{ accessToken: string; user: import('@/types').User; restaurant?: any; csrfToken?: string }>>(
           '/auth/exchange',
           { code },
         );
+
+        if (data.data.csrfToken) {
+          setCsrfToken(data.data.csrfToken);
+        }
 
         setAuth(data.data.accessToken, data.data.user, data.data.restaurant ?? null);
         toast.success('Signed in with Google');
@@ -233,6 +238,9 @@ export default function LoginPageContent() {
 
       // Owner/admin login does not include a restaurant payload, so clear any
       // stale restaurant info from a previous session.
+      if (data.data.csrfToken) {
+        setCsrfToken(data.data.csrfToken);
+      }
       setAuth(data.data.accessToken, data.data.user, null);
       toast.success('Signed in successfully');
       const next = searchParams.get('next');
@@ -259,6 +267,10 @@ export default function LoginPageContent() {
         restaurantCode: values.restaurantCode,
         pin: values.pin,
       });
+
+      if (data.data.csrfToken) {
+        setCsrfToken(data.data.csrfToken);
+      }
       setAuth(data.data.accessToken, data.data.user, data.data.restaurant);
       // Remember the restaurant code so staff don't need to re-enter it next time
       saveRestaurantCode(values.restaurantCode, data.data.restaurant?.name);
@@ -353,14 +365,12 @@ export default function LoginPageContent() {
                   <p className="text-[12px] font-semibold text-fg">New restaurant?</p>
                   <p className="text-[11px] text-fg-muted mt-0.5">Get set up in under a minute.</p>
                 </div>
-                <Link href="/register">
-                  <button
-                    type="button"
-                    className="flex items-center gap-1.5 rounded-lg border border-border bg-bg px-3 py-1.5 text-[12px] font-medium text-fg hover:bg-surface-2 hover:border-border-strong transition-all whitespace-nowrap"
-                  >
-                    <Store className="h-3 w-3" />
-                    Register
-                  </button>
+                <Link
+                  href="/register"
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-bg px-3 py-1.5 text-[12px] font-medium text-fg hover:bg-surface-2 hover:border-border-strong transition-all whitespace-nowrap"
+                >
+                  <Store className="h-3 w-3" />
+                  Register
                 </Link>
               </div>
             )}

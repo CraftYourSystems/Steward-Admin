@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/stores/auth.store';
+import { setCsrfToken } from '@/lib/auth/csrf';
 import api from '@/lib/axios';
 import type { ApiSuccess } from '@/types';
 
@@ -40,6 +41,7 @@ interface RestaurantSetupResponse {
     slug: string;
     restaurantCode: string;
   };
+  csrfToken?: string;
 }
 
 function decodeJwt(token: string): { email?: string } | null {
@@ -96,10 +98,14 @@ export default function RestaurantSetupContent() {
 
     const handleExchange = async () => {
       try {
-        const { data } = await api.post<ApiSuccess<{ accessToken: string; user: any }>>(
+        const { data } = await api.post<ApiSuccess<{ accessToken: string; user: any; csrfToken?: string }>>(
           '/auth/exchange',
           { code }
         );
+
+        if (data.data.csrfToken) {
+          setCsrfToken(data.data.csrfToken);
+        }
 
         const token = data.data.accessToken;
         setOauthToken(token);
@@ -174,6 +180,10 @@ export default function RestaurantSetupContent() {
           ? { headers: { Authorization: `Bearer ${tokenToUse}` } }
           : undefined,
       );
+
+      if (data.data.csrfToken) {
+        setCsrfToken(data.data.csrfToken);
+      }
 
       setAuth(
         data.data.accessToken,

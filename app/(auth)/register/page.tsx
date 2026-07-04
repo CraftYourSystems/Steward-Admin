@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 import api from '@/lib/axios';
 import { useAuthStore } from '@/stores/auth.store';
+import { setCsrfToken } from '@/lib/auth/csrf';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,6 +41,7 @@ interface OwnerRegisterResponse {
     restaurantCode: string;
   };
   emailVerified?: boolean;
+  csrfToken?: string;
 }
 
 const GOOGLE_ICON = (
@@ -109,6 +111,10 @@ export default function RegisterPage() {
         setRegisteredEmail(values.email);
         toast.success('Verification email sent! Please check your inbox.');
         return;
+      }
+
+      if (data.data.csrfToken) {
+        setCsrfToken(data.data.csrfToken);
       }
 
       setAuth(data.data.accessToken, data.data.user, data.data.restaurant);

@@ -68,55 +68,54 @@ export function RecentOrdersTable({ params, activeRange }: RecentOrdersTableProp
   const orders = data ?? [];
 
   return (
-    <div className="rounded-xl border border-border bg-surface overflow-hidden">
-
+    <div className="card-premium overflow-hidden">
       {/* ── Block 1: Mobile card list (sm:hidden) ────────────────────────── */}
       <div className="sm:hidden">
-        {/* Mobile header */}
-        <div className="px-4 py-3 border-b border-border">
-          <span className="label-xs">Orders</span>
+        <div className="px-5 py-4 border-b border-border/50">
+          <span className="label-xs text-fg">Ledger</span>
         </div>
 
         {isLoading ? (
-          <div className="space-y-2 p-3">
+          <div className="space-y-3 p-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-lg border border-border bg-surface-2 p-3 space-y-2">
-                <Skeleton className="h-3.5 w-24" />
-                <Skeleton className="h-3 w-full" />
+              <div key={i} className="rounded-lg bg-surface p-4 space-y-3">
+                <Skeleton className="h-3 w-24 bg-surface-2" />
+                <Skeleton className="h-2 w-full bg-surface-2" />
               </div>
             ))}
           </div>
         ) : orders.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-10">
-            <p className="text-[13px] text-fg-muted">No orders in this period</p>
+          <div className="flex flex-col items-center justify-center py-12">
+            <p className="text-[13px] text-fg-muted font-medium">No transactions found</p>
           </div>
         ) : (
-          <div className="space-y-2 p-3">
+          <div className="space-y-3 p-4">
             {orders.map((order: Order) => (
               <Link
                 key={order.id}
                 href="/orders"
-                className="block rounded-lg border border-border bg-surface-2 p-3
-                           hover:border-border-strong hover:bg-surface-3 transition-colors"
+                className="block rounded-xl border border-transparent bg-surface-2 p-4
+                           hover:border-border hover:bg-surface-3 transition-standard group relative overflow-hidden"
               >
-                {/* Top row: order number + status */}
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-mono text-[13px] font-semibold text-fg">
+                <div className="flex items-center justify-between mb-2 relative z-10">
+                  <span className="font-mono text-[13px] font-semibold text-fg tracking-tight">
                     #{order.orderNumber}
                   </span>
                   <StatusBadge status={order.status} />
                 </div>
-                {/* Bottom row: metadata + amount */}
-                <div className="flex items-center justify-between text-[11px] text-fg-muted">
-                  <span>
+                <div className="flex items-center justify-between text-[11px] text-fg-muted font-medium relative z-10">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1 w-1 rounded-full bg-border-strong"></span>
                     {order.tableNumber ? `Table ${order.tableNumber}` : (order.orderType ?? "—")}
                     {" · "}
                     {order.items?.length ?? 0} item{(order.items?.length ?? 0) !== 1 ? "s" : ""}
                   </span>
-                  <span className="font-semibold text-fg num">
+                  <span className="font-semibold text-fg num tracking-tight">
                     {formatCurrency(order.totalAmount ?? 0)}
                   </span>
                 </div>
+                {/* Subtle gradient hover effect on mobile cards */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
               </Link>
             ))}
           </div>
@@ -125,55 +124,55 @@ export function RecentOrdersTable({ params, activeRange }: RecentOrdersTableProp
 
       {/* ── Block 2: Desktop table (hidden sm:block) ──────────────────────── */}
       <div className="hidden sm:block">
-        {/* Desktop header */}
-        <div className="px-4 py-3 border-b border-border flex items-center">
-          <span className="label-xs">Orders</span>
+        <div className="px-6 py-5 border-b border-border/40 flex items-center justify-between">
+          <span className="text-[12px] uppercase tracking-widest text-fg font-semibold">Ledger</span>
+          <span className="text-[11px] text-fg-muted">Showing {orders.length} recent transactions</span>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px]">
+          <table className="w-full min-w-[640px] text-left border-collapse">
             <thead>
-              <tr className="border-b border-border">
-                {["No", "ID", "Date", "Customer Name", "Location", "Amount", "Status", "Action"].map((col) => (
-                  <th key={col} className="label-xs uppercase tracking-wider">
+              <tr>
+                {["ID", "Date", "Customer", "Location", "Amount", "Status", ""].map((col, i) => (
+                  <th key={col} className={`py-3 text-[10px] uppercase tracking-widest text-fg-muted font-semibold ${i === 0 ? 'pl-6' : 'px-3'} ${i === 6 ? 'pr-6 text-right' : ''}`}>
                     {col}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border/30">
               {isLoading ? (
                 <TableSkeleton />
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-3 py-10 text-center text-[12px] text-fg-subtle">
-                    No orders in this period
+                  <td colSpan={7} className="py-16 text-center">
+                    <span className="text-[13px] text-fg-subtle font-medium">No transactions found</span>
                   </td>
                 </tr>
               ) : (
-                orders.map((order: Order, idx: number) => (
-                  <tr key={order.id} className="border-b border-border last:border-0 hover:bg-surface-2 transition-colors">
-                    <td className="px-3 py-2.5 text-[12px] text-fg-subtle tabular-nums">{idx + 1}</td>
-                    <td className="px-3 py-2.5">
-                      <span className="font-mono text-[12px] text-fg">#{order.orderNumber}</span>
+                orders.map((order: Order) => (
+                  <tr key={order.id} className="group hover:bg-surface-2/50 transition-colors duration-200 cursor-pointer">
+                    <td className="py-3 pl-6 pr-3">
+                      <span className="font-mono text-[12px] font-medium text-fg">#{order.orderNumber}</span>
                     </td>
-                    <td className="px-3 py-2.5 text-[12px] text-fg-muted whitespace-nowrap">
-                      {format(new Date(order.createdAt), "MMM do, yyyy")}
+                    <td className="px-3 py-3 text-[12px] text-fg-muted font-medium whitespace-nowrap">
+                      {format(new Date(order.createdAt), "MMM d, h:mm a")}
                     </td>
-                    <td className="px-3 py-2.5 text-[12px] text-fg">
+                    <td className="px-3 py-3 text-[12px] text-fg font-medium">
                       {order.customerName ?? "Guest"}
                     </td>
-                    <td className="px-3 py-2.5 text-[12px] text-fg-muted whitespace-nowrap">
+                    <td className="px-3 py-3 text-[12px] text-fg-muted whitespace-nowrap flex items-center gap-2">
+                       <span className="h-1.5 w-1.5 rounded-full bg-border-strong"></span>
                       {order.tableNumber ? `Table ${order.tableNumber}` : (order.orderType ?? "—")}
                     </td>
-                    <td className="px-3 py-2.5 text-[12px] text-fg tabular-nums">
+                    <td className="px-3 py-3 text-[12px] text-fg font-semibold tabular-nums">
                       {formatCurrency(order.totalAmount ?? 0)}
                     </td>
-                    <td className="px-3 py-2.5">
+                    <td className="px-3 py-3">
                       <StatusBadge status={order.status} />
                     </td>
-                    <td className="px-3 py-2.5">
-                      <Link href="/orders">
-                        <button className="grid h-6 w-6 place-items-center rounded-md hover:bg-surface-2">
+                    <td className="py-3 pr-6 pl-3 text-right">
+                      <Link href="/orders" onClick={(e) => e.stopPropagation()}>
+                        <button className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-surface-3 text-fg-muted hover:text-fg">
                           <MoreHorizontal className="h-4 w-4" />
                         </button>
                       </Link>
@@ -185,7 +184,6 @@ export function RecentOrdersTable({ params, activeRange }: RecentOrdersTableProp
           </table>
         </div>
       </div>
-
     </div>
   );
 }

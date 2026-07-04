@@ -8,8 +8,11 @@ import {
   ArrowRight, X, RefreshCw, Zap,
 } from "lucide-react";
 import Link from "next/link";
-import { KpiCard } from "@/components/analytics/KpiCard";
-import type { AnalyticsSummary } from "@/types";
+import { motion } from "framer-motion";
+import { HealthSummary } from "@/components/analytics/HealthSummary";
+import { RevenueRing } from "@/components/analytics/RevenueRing";
+import { KitchenThroughput } from "@/components/analytics/KitchenThroughput";
+import { OrderVelocityHeatmap } from "@/components/analytics/OrderVelocityHeatmap";
 import { RecentOrdersTable } from "@/components/analytics/RecentOrdersTable";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -304,126 +307,43 @@ export default function DashboardPage() {
       )}
 
       {/* ── Section label ─────────────────────────────────────────────────── */}
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
-        Performance
-      </p>
+      <motion.p 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        transition={{ delay: 0.2 }}
+        className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle pt-4"
+      >
+        Live Pulse
+      </motion.p>
 
-      {/* ── KPI Cards — Mobile (sm:hidden) ──────────────────────────────────
-           Revenue is full-width hero; remaining 4 are a horizontal scroll strip.
-      ──────────────────────────────────────────────────────────────────────── */}
-      <div className="sm:hidden space-y-3">
-        {/* Revenue — full-width hero */}
-        <KpiCard
-          title="Revenue"
-          value={d ? formatCurrency(d.totalRevenue) : "₹0.00"}
-          icon={IndianRupee}
-          loading={loading}
-          accent="accent"
-          size="lg"
-          description={activeRange === "today" ? "today so far" : undefined}
-        />
-        {/* Horizontal scroll row for secondary KPIs */}
-        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-3 px-3 pb-2 [&::-webkit-scrollbar]:hidden">
-          <div className="min-w-[148px] snap-start shrink-0">
-            <KpiCard
-              title="Orders"
-              value={d ? String(d.totalOrders) : "0"}
-              icon={ShoppingBag}
-              loading={loading}
-              accent="info"
-            />
-          </div>
-          <div className="min-w-[148px] snap-start shrink-0">
-            <KpiCard
-              title="Completed"
-              value={d ? String(d.completedOrders) : "0"}
-              icon={CheckCircle2}
-              loading={loading}
-              accent="success"
-              description={
-                d && d.totalOrders > 0
-                  ? `${((d.completedOrders / d.totalOrders) * 100).toFixed(0)}% completion`
-                  : undefined
-              }
-            />
-          </div>
-          <div className="min-w-[148px] snap-start shrink-0">
-            <KpiCard
-              title="Cancel Rate"
-              value={cancelRate ? `${cancelRate}%` : "0.0%"}
-              icon={XCircle}
-              loading={loading}
-              accent="danger"
-              alertWhen={(v) => parseFloat(v) > 10}
-            />
-          </div>
-          <div className="min-w-[148px] snap-start shrink-0">
-            <KpiCard
-              title="Avg Prep Time"
-              value={d ? `${d.avgPrepTimeMins.toFixed(0)}m` : "0m"}
-              icon={Clock}
-              loading={loading}
-              accent="warning"
-            />
-          </div>
-        </div>
-      </div>
+      {/* ── Health Summary ─────────────────────────────────────────────────── */}
+      <HealthSummary data={summary.data} loading={loading} />
 
-      {/* ── KPI Cards — sm and above (hidden on mobile) ──────────────────────
-           5-column grid identical to what was there before.
-      ──────────────────────────────────────────────────────────────────────── */}
-      <div className="hidden sm:grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <KpiCard
-          title="Revenue"
-          value={d ? formatCurrency(d.totalRevenue) : "₹0.00"}
-          icon={IndianRupee}
-          loading={loading}
-          accent="accent"
-          description={activeRange === "today" ? "today so far" : undefined}
-        />
-        <KpiCard
-          title="Orders"
-          value={d ? String(d.totalOrders) : "0"}
-          icon={ShoppingBag}
-          loading={loading}
-          accent="info"
-        />
-        <KpiCard
-          title="Completed"
-          value={d ? String(d.completedOrders) : "0"}
-          icon={CheckCircle2}
-          loading={loading}
-          accent="success"
-          description={
-            d && d.totalOrders > 0
-              ? `${((d.completedOrders / d.totalOrders) * 100).toFixed(0)}% completion`
-              : undefined
-          }
-        />
-        <KpiCard
-          title="Cancel Rate"
-          value={cancelRate ? `${cancelRate}%` : "0.0%"}
-          icon={XCircle}
-          loading={loading}
-          accent="danger"
-          alertWhen={(v) => parseFloat(v) > 10}
-        />
-        <KpiCard
-          title="Avg Prep Time"
-          value={d ? `${d.avgPrepTimeMins.toFixed(0)}m` : "0m"}
-          icon={Clock}
-          loading={loading}
-          accent="warning"
-        />
+      {/* ── Bespoke Data Visualizations ────────────────────────────────────── */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-6">
+        <RevenueRing current={d?.totalRevenue || 0} target={50000} loading={loading} />
+        <KitchenThroughput avgPrepTimeMins={d?.avgPrepTimeMins || 0} loading={loading} />
+        <OrderVelocityHeatmap totalOrders={d?.totalOrders || 0} loading={loading} />
       </div>
 
       {/* ── Section label ─────────────────────────────────────────────────── */}
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
+      <motion.p 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        transition={{ delay: 0.3 }}
+        className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle pt-6"
+      >
         Recent Activity
-      </p>
+      </motion.p>
 
       {/* ── Order List ─────────────────────────────────────────────────────── */}
-      <RecentOrdersTable params={params} activeRange={activeRange} />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
+      >
+        <RecentOrdersTable params={params} activeRange={activeRange} />
+      </motion.div>
     </div>
   );
 }

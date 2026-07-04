@@ -33,6 +33,25 @@ export interface User {
 export interface LoginResponse {
   accessToken: string;
   user: User;
+  restaurant?: {
+    id: string;
+    name: string;
+    slug: string;
+    restaurantCode?: string;
+  };
+  csrfToken?: string;
+}
+
+export interface StaffLoginResponse {
+  accessToken: string;
+  user: User;
+  restaurant: {
+    id: string;
+    name: string;
+    slug: string;
+    restaurantCode: string;
+  };
+  csrfToken?: string;
 }
 
 // ─── API Envelope ─────────────────────────────────────────────────────────────

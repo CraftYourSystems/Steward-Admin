@@ -12,6 +12,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { hasPermission, Permissions } from "@/lib/permissions/permissions";
 import { getRedirectPath } from "@/constants/auth";
 import { usePlatformStore } from "@/stores/platform.store";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 
 const ALLOWED_ROLES = ["ADMIN", "SUPER_ADMIN", "KITCHEN_STAFF", "WAITER"];
 // All paths where the kitchen socket should be active
@@ -121,6 +122,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Header onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto scrollbar-thin">
           <ErrorBoundary>
+            <OnboardingWizard />
             {children}
           </ErrorBoundary>
         </main>
