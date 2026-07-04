@@ -13,8 +13,8 @@ export function HealthSummary({ data, loading }: HealthSummaryProps) {
   if (loading) {
     return (
       <div className="flex flex-col space-y-4">
-        <div className="h-8 w-2/3 animate-shimmer rounded-lg bg-surface-2" />
-        <div className="h-4 w-1/2 animate-shimmer rounded-lg bg-surface-2" />
+        <div className="h-8 w-2/3 animate-shimmer rounded-lg bg-white/5" />
+        <div className="h-4 w-1/2 animate-shimmer rounded-lg bg-white/5" />
       </div>
     );
   }
@@ -61,7 +61,7 @@ export function HealthSummary({ data, loading }: HealthSummaryProps) {
       </div>
 
       <div className="flex items-center gap-3 self-start">
-        <div className="flex items-center gap-2 text-[13px] font-medium text-fg-subtle bg-surface-2 px-3 py-1.5 rounded-full border border-border shadow-sm">
+        <div className="flex items-center gap-2 text-[13px] font-medium text-fg-subtle bg-white/5 px-3 py-1.5 rounded-full border border-white/10 shadow-sm">
           <span className="relative flex h-2 w-2">
             <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${state === 'optimal' ? 'bg-success' : state === 'warning' ? 'bg-warning' : 'bg-danger'}`} />
             <span className={`relative inline-flex h-2 w-2 rounded-full ${state === 'optimal' ? 'bg-success' : state === 'warning' ? 'bg-warning' : 'bg-danger'}`} />

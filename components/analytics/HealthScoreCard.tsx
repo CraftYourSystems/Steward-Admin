@@ -82,7 +82,7 @@ function BreakdownRow({
             {score}/{max}
           </span>
         </div>
-        <div className="h-1.5 w-full rounded-full bg-surface-3 overflow-hidden">
+        <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
           <div
             className={cn(
               "h-full rounded-full transition-all duration-500",
@@ -100,14 +100,14 @@ function BreakdownRow({
 export const HealthScoreCard = memo(function HealthScoreCard({ data, loading }: Props) {
   if (loading) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
-        <Skeleton className="h-4 w-36 mb-4 bg-surface-3" />
+      <div className="rounded-[20px] border border-white/10 bg-white/5 p-4 sm:p-5">
+        <Skeleton className="h-4 w-36 mb-4 bg-white/5" />
         <div className="flex items-center gap-6">
-          <Skeleton className="h-28 w-28 rounded-full bg-surface-3" />
+          <Skeleton className="h-28 w-28 rounded-full bg-white/5" />
           <div className="space-y-3 flex-1">
-            <Skeleton className="h-8 w-full bg-surface-3 rounded" />
-            <Skeleton className="h-8 w-full bg-surface-3 rounded" />
-            <Skeleton className="h-8 w-full bg-surface-3 rounded" />
+            <Skeleton className="h-8 w-full bg-white/5 rounded" />
+            <Skeleton className="h-8 w-full bg-white/5 rounded" />
+            <Skeleton className="h-8 w-full bg-white/5 rounded" />
           </div>
         </div>
       </div>
@@ -120,7 +120,7 @@ export const HealthScoreCard = memo(function HealthScoreCard({ data, loading }: 
   const b = data.breakdown;
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+    <div className="rounded-[20px] border border-white/10 bg-white/5 p-4 sm:p-5">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <div className="grid place-items-center h-6 w-6 rounded-md bg-accent/10 border border-accent/20">
@@ -166,7 +166,7 @@ export const HealthScoreCard = memo(function HealthScoreCard({ data, loading }: 
       </div>
 
       {/* Footer */}
-      <p className="text-[10px] text-fg-subtle mt-3 pt-3 border-t border-border">
+      <p className="text-[10px] text-fg-subtle mt-3 pt-3 border-t border-white/10">
         Based on {data.periodLabel}. Score updates every 10 minutes.
       </p>
     </div>

@@ -26,9 +26,9 @@ const accentMap = {
 function KpiSkeleton({ isLg }: { isLg?: boolean }) {
   return (
     <div className="animate-pulse space-y-3">
-      <div className="h-3 w-16 rounded-md bg-surface-3" />
-      <div className={cn("w-24 rounded-md bg-surface-3", isLg ? "h-9" : "h-7")} />
-      <div className="h-3 w-12 rounded-md bg-surface-3" />
+      <div className="h-3 w-16 rounded-md bg-white/5" />
+      <div className={cn("w-24 rounded-md bg-white/5", isLg ? "h-9" : "h-7")} />
+      <div className="h-3 w-12 rounded-md bg-white/5" />
     </div>
   );
 }
@@ -45,12 +45,12 @@ export const KpiCard = memo(function KpiCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-xl border border-border bg-surface",
+        "group relative overflow-hidden rounded-[20px] border border-white/10 bg-white/5",
         // lg: accent top border for hero treatment
         isLg && "border-t-2 border-t-accent/40",
         isLg ? "p-6" : "p-4",
         "transition-all duration-200",
-        "hover:border-border-strong",
+        "hover:border-white/10",
         // Subtle inner top highlight for gloss effect
         "shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
         // Accent glow on hover (per-color)
@@ -64,7 +64,7 @@ export const KpiCard = memo(function KpiCard({
           "grid place-items-center rounded-lg border transition-colors",
           isLg ? "h-8 w-8" : "h-7 w-7",
           // lg cards keep their accent badge; secondary cards use neutral
-          isLg ? iconBg : "bg-surface-2 border-border"
+          isLg ? iconBg : "bg-white/5 border-white/10"
         )}>
           <Icon className={cn(isLg ? "h-4 w-4" : "h-3.5 w-3.5", text)} />
         </div>

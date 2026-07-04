@@ -466,7 +466,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
   return (
     <>
-      <header className="relative z-30 flex h-12 flex-shrink-0 items-center justify-between border-b border-border bg-bg/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-bg/60">
+      <header className="relative z-30 flex h-12 flex-shrink-0 items-center justify-between px-4 bg-transparent border-b border-white/5 backdrop-blur-sm">
         <div className="flex items-center gap-2 flex-1">
           <button
             onClick={onMenuClick}

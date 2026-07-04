@@ -19,7 +19,7 @@ function formatHour(h: number) {
 function CustomTooltip({ active, payload, label }: any) {
     if (!active || !payload?.length) return null;
     return (
-        <div className="rounded-lg border border-border bg-surface-2 px-3 py-2 shadow-elevated">
+        <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 shadow-elevated">
             <p className="text-[10px] uppercase tracking-wider font-semibold text-fg-subtle mb-1">{label}</p>
             <p className="text-sm font-semibold text-fg num">{payload[0].value} orders</p>
         </div>

@@ -26,9 +26,9 @@ export const PeakHourIntelligence = memo(function PeakHourIntelligence({ data, l
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
-        <Skeleton className="h-4 w-36 mb-4 bg-surface-3" />
-        <Skeleton className="h-36 w-full bg-surface-3 rounded-lg" />
+      <div className="rounded-[20px] border border-white/10 bg-white/5 p-4 sm:p-5">
+        <Skeleton className="h-4 w-36 mb-4 bg-white/5" />
+        <Skeleton className="h-36 w-full bg-white/5 rounded-lg" />
       </div>
     );
   }
@@ -36,7 +36,7 @@ export const PeakHourIntelligence = memo(function PeakHourIntelligence({ data, l
   if (!data) return null;
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+    <div className="rounded-[20px] border border-white/10 bg-white/5 p-4 sm:p-5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <div className="flex items-center gap-2">
@@ -66,7 +66,7 @@ export const PeakHourIntelligence = memo(function PeakHourIntelligence({ data, l
               <div key={h.hour} className="flex flex-col items-center gap-1 flex-1 group relative">
                 {/* Tooltip on hover */}
                 <div className="absolute bottom-full mb-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                  <div className="rounded-md border border-border bg-surface-2 px-2 py-1.5 shadow-elevated text-center whitespace-nowrap">
+                  <div className="rounded-md border border-white/10 bg-white/5 px-2 py-1.5 shadow-elevated text-center whitespace-nowrap">
                     <p className="text-[10px] font-semibold text-fg-muted">{formatHour(h.hour)}</p>
                     <p className="text-[12px] font-semibold text-fg num">{h.orders} orders</p>
                     <p className="text-[10px] text-fg-subtle num">{formatCurrency(h.revenue)}</p>
@@ -83,7 +83,7 @@ export const PeakHourIntelligence = memo(function PeakHourIntelligence({ data, l
                         ? "bg-warning/30"
                         : h.orders > 0
                           ? "bg-accent/40"
-                          : "bg-surface-3"
+                          : "bg-white/5"
                   )}
                   style={{ height: `${Math.max(pct, h.orders > 0 ? 8 : 3)}%` }}
                 />
@@ -99,7 +99,7 @@ export const PeakHourIntelligence = memo(function PeakHourIntelligence({ data, l
       </div>
 
       {/* Legend + insights */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 pt-3 border-t border-border">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 pt-3 border-t border-white/10">
         <div className="flex items-center gap-1.5 text-[10px] text-fg-subtle">
           <div className="h-2 w-2 rounded-full bg-accent" /> Peak hour
         </div>

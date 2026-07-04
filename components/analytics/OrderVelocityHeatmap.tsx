@@ -24,11 +24,11 @@ export function OrderVelocityHeatmap({ totalOrders, loading }: OrderVelocityProp
 
   const getBlockColor = (intensity: number) => {
     switch (intensity) {
-      case 0: return "bg-surface-3";
+      case 0: return "bg-white/5";
       case 1: return "bg-info/30";
       case 2: return "bg-info/60";
       case 3: return "bg-info";
-      default: return "bg-surface-3";
+      default: return "bg-white/5";
     }
   };
 

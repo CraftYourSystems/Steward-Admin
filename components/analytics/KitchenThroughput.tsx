@@ -64,7 +64,7 @@ export function KitchenThroughput({ avgPrepTimeMins, loading }: KitchenThroughpu
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   return (
-                    <div className="bg-surface border border-border shadow-elevated rounded-lg px-3 py-2 text-[12px]">
+                    <div className="bg-white/5 border border-white/10 shadow-elevated rounded-lg px-3 py-2 text-[12px]">
                       <span className="text-fg-subtle">{payload[0].payload.time}: </span>
                       <span className="text-fg font-bold">{payload[0].value} mins</span>
                     </div>

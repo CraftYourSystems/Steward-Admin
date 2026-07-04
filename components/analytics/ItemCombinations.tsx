@@ -22,10 +22,10 @@ const BAR_COLORS = [
 export const ItemCombinations = memo(function ItemCombinations({ data, loading }: Props) {
   if (loading) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
-        <Skeleton className="h-4 w-40 mb-4 bg-surface-3" />
+      <div className="rounded-[20px] border border-white/10 bg-white/5 p-4 sm:p-5">
+        <Skeleton className="h-4 w-40 mb-4 bg-white/5" />
         {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full mb-2 bg-surface-3 rounded" />
+          <Skeleton key={i} className="h-12 w-full mb-2 bg-white/5 rounded" />
         ))}
       </div>
     );
@@ -33,7 +33,7 @@ export const ItemCombinations = memo(function ItemCombinations({ data, loading }
 
   if (!data || data.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+      <div className="rounded-[20px] border border-white/10 bg-white/5 p-4 sm:p-5">
         <div className="flex items-center gap-2 mb-4">
           <div className="grid place-items-center h-6 w-6 rounded-md bg-accent/10 border border-accent/20">
             <Link2 className="h-3 w-3 text-accent" />
@@ -53,7 +53,7 @@ export const ItemCombinations = memo(function ItemCombinations({ data, loading }
   const maxFreq = Math.max(...data.map((d) => d.frequency), 1);
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+    <div className="rounded-[20px] border border-white/10 bg-white/5 p-4 sm:p-5">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <div className="grid place-items-center h-6 w-6 rounded-md bg-accent/10 border border-accent/20">
@@ -70,7 +70,7 @@ export const ItemCombinations = memo(function ItemCombinations({ data, loading }
           return (
             <div
               key={`${combo.itemA.id}-${combo.itemB.id}`}
-              className="relative rounded-lg border border-border bg-surface/50 px-3 py-2.5 overflow-hidden"
+              className="relative rounded-lg border border-white/10 bg-white/5/50 px-3 py-2.5 overflow-hidden"
             >
               {/* Background bar */}
               <div
@@ -104,7 +104,7 @@ export const ItemCombinations = memo(function ItemCombinations({ data, loading }
       </div>
 
       {/* Footer tip */}
-      <p className="text-[10px] text-fg-subtle mt-3 pt-3 border-t border-border">
+      <p className="text-[10px] text-fg-subtle mt-3 pt-3 border-t border-white/10">
         💡 Use these insights to create combo deals or position items near each other on the menu.
       </p>
     </div>

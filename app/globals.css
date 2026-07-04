@@ -5,25 +5,25 @@
 @layer base {
   :root {
     /* Surfaces */
-    --bg: 240 6% 5%;            /* #0B0B0F */
-    --surface: 240 6% 7%;       /* #111114 */
-    --surface-2: 240 7% 10%;    /* #16161B */
-    --surface-3: 240 8% 13%;    /* #1A1A22 */
-    --border: 240 6% 16%;       /* #232328 */
-    --border-strong: 240 7% 20%;/* #2A2A35 */
+    --bg: 0 0% 0%;              /* #000000 - True Black */
+    --surface: 0 0% 11%;        /* #1C1C1E - iOS Elevated */
+    --surface-2: 0 0% 18%;      /* #2C2C2E */
+    --surface-3: 0 0% 23%;      /* #3A3A3C */
+    --border: 0 0% 23%;         /* #3A3A3C */
+    --border-strong: 0 0% 30%;  /* #48484A */
 
     /* Text */
-    --fg: 0 0% 98%;             /* #FAFAFA */
-    --fg-muted: 240 5% 65%;     /* #A1A1AA */
-    --fg-subtle: 240 4% 46%;    /* #71717A */
+    --fg: 0 0% 100%;            /* #FFFFFF */
+    --fg-muted: 0 0% 63%;       /* #A1A1A6 */
+    --fg-subtle: 0 0% 50%;      /* #808084 */
 
     /* Brand / semantic */
-    --accent: 262 83% 67%;      /* #8B5CF6 */
-    --accent-fg: 0 0% 100%;
-    --success: 142 71% 45%;     /* #22C55E */
-    --warning: 38 92% 50%;      /* #F59E0B */
-    --danger: 0 84% 60%;        /* #EF4444 */
-    --info: 217 91% 60%;        /* #3B82F6 */
+    --accent: 0 0% 100%;        /* #FFFFFF for minimalistic pop */
+    --accent-fg: 0 0% 0%;
+    --success: 130 52% 46%;     /* #34C759 - iOS Green */
+    --warning: 35 100% 55%;     /* #FF9F0A - iOS Orange */
+    --danger: 353 100% 58%;     /* #FF3B30 - iOS Red */
+    --info: 211 100% 50%;       /* #007AFF - iOS Blue */
 
     /* shadcn token aliases (so existing components keep working) */
     --background: var(--bg);
@@ -94,19 +94,22 @@
     -webkit-backdrop-filter: blur(8px);
   }
 
-  /* ─── Premium card with inner highlight ─────────────────────────────────── */
+  /* ─── Premium glass card ────────────────────────────────────────────────── */
   .card-premium {
-    background: hsl(var(--surface));
-    border: 1px solid hsl(var(--border));
-    border-radius: 16px;
-    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2), 0 1px 2px -1px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, background 0.3s ease;
   }
 
   .card-premium:hover {
-    border-color: hsl(var(--border-strong));
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 48px -4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
   /* ─── Gradient text ──────────────────────────────────────────────────────── */

@@ -18,12 +18,12 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   NEW:       { label: "New Order",  className: "bg-warning/10 text-warning border-warning/30" },
   PREPARING: { label: "Preparing",  className: "bg-info/10 text-info border-info/30" },
   READY:     { label: "Ready",      className: "bg-success/10 text-success border-success/30" },
-  COMPLETED: { label: "Completed",  className: "bg-surface-2 text-fg-subtle border-border" },
+  COMPLETED: { label: "Completed",  className: "bg-white/5 text-fg-subtle border-white/10" },
   CANCELLED: { label: "Cancelled",  className: "bg-danger/10 text-danger border-danger/30" },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const config = STATUS_CONFIG[status] ?? { label: status, className: "bg-surface-2 text-fg-subtle border-border" };
+  const config = STATUS_CONFIG[status] ?? { label: status, className: "bg-white/5 text-fg-subtle border-white/10" };
   return (
     <span className={cn(
       "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
@@ -38,7 +38,7 @@ function TableSkeleton() {
   return (
     <>
       {[1, 2, 3].map((i) => (
-        <tr key={i} className="border-b border-border last:border-0">
+        <tr key={i} className="border-b border-white/10 last:border-0">
           <td className="px-3 py-3"><Skeleton className="h-4 w-full" /></td>
           <td className="px-3 py-3"><Skeleton className="h-4 w-full" /></td>
           <td className="px-3 py-3"><Skeleton className="h-4 w-full" /></td>
@@ -71,16 +71,16 @@ export function RecentOrdersTable({ params, activeRange }: RecentOrdersTableProp
     <div className="card-premium overflow-hidden">
       {/* ── Block 1: Mobile card list (sm:hidden) ────────────────────────── */}
       <div className="sm:hidden">
-        <div className="px-5 py-4 border-b border-border/50">
+        <div className="px-5 py-4 border-b border-white/10/50">
           <span className="label-xs text-fg">Ledger</span>
         </div>
 
         {isLoading ? (
           <div className="space-y-3 p-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-lg bg-surface p-4 space-y-3">
-                <Skeleton className="h-3 w-24 bg-surface-2" />
-                <Skeleton className="h-2 w-full bg-surface-2" />
+              <div key={i} className="rounded-lg bg-white/5 p-4 space-y-3">
+                <Skeleton className="h-3 w-24 bg-white/5" />
+                <Skeleton className="h-2 w-full bg-white/5" />
               </div>
             ))}
           </div>
@@ -94,8 +94,8 @@ export function RecentOrdersTable({ params, activeRange }: RecentOrdersTableProp
               <Link
                 key={order.id}
                 href="/orders"
-                className="block rounded-xl border border-transparent bg-surface-2 p-4
-                           hover:border-border hover:bg-surface-3 transition-standard group relative overflow-hidden"
+                className="block rounded-[20px] border border-transparent bg-white/5 p-4
+                           hover:border-white/10 hover:bg-white/5 transition-standard group relative overflow-hidden"
               >
                 <div className="flex items-center justify-between mb-2 relative z-10">
                   <span className="font-mono text-[13px] font-semibold text-fg tracking-tight">
@@ -124,7 +124,7 @@ export function RecentOrdersTable({ params, activeRange }: RecentOrdersTableProp
 
       {/* ── Block 2: Desktop table (hidden sm:block) ──────────────────────── */}
       <div className="hidden sm:block">
-        <div className="px-6 py-5 border-b border-border/40 flex items-center justify-between">
+        <div className="px-6 py-5 border-b border-white/10/40 flex items-center justify-between">
           <span className="text-[12px] uppercase tracking-widest text-fg font-semibold">Ledger</span>
           <span className="text-[11px] text-fg-muted">Showing {orders.length} recent transactions</span>
         </div>
@@ -150,7 +150,7 @@ export function RecentOrdersTable({ params, activeRange }: RecentOrdersTableProp
                 </tr>
               ) : (
                 orders.map((order: Order) => (
-                  <tr key={order.id} className="group hover:bg-surface-2/50 transition-colors duration-200 cursor-pointer">
+                  <tr key={order.id} className="group hover:bg-white/5/50 transition-colors duration-200 cursor-pointer">
                     <td className="py-3 pl-6 pr-3">
                       <span className="font-mono text-[12px] font-medium text-fg">#{order.orderNumber}</span>
                     </td>
@@ -172,7 +172,7 @@ export function RecentOrdersTable({ params, activeRange }: RecentOrdersTableProp
                     </td>
                     <td className="py-3 pr-6 pl-3 text-right">
                       <Link href="/orders" onClick={(e) => e.stopPropagation()}>
-                        <button className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-surface-3 text-fg-muted hover:text-fg">
+                        <button className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-white/5 text-fg-muted hover:text-fg">
                           <MoreHorizontal className="h-4 w-4" />
                         </button>
                       </Link>

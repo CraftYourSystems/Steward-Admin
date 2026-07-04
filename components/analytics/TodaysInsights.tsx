@@ -27,14 +27,14 @@ interface InsightPill {
 export const TodaysInsights = memo(function TodaysInsights({ data, loading }: Props) {
   if (loading) {
     return (
-      <div className="rounded-xl border border-accent/20 bg-accent/[0.03] p-4 sm:p-5">
+      <div className="rounded-[20px] border border-accent/20 bg-accent/[0.03] p-4 sm:p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Skeleton className="h-4 w-4 rounded bg-surface-3" />
-          <Skeleton className="h-4 w-28 rounded bg-surface-3" />
+          <Skeleton className="h-4 w-4 rounded bg-white/5" />
+          <Skeleton className="h-4 w-28 rounded bg-white/5" />
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 rounded-lg bg-surface-3" />
+            <Skeleton key={i} className="h-16 rounded-lg bg-white/5" />
           ))}
         </div>
       </div>
@@ -72,7 +72,7 @@ export const TodaysInsights = memo(function TodaysInsights({ data, loading }: Pr
   ];
 
   return (
-    <div className="rounded-xl border border-accent/20 bg-gradient-to-r from-accent/[0.04] to-transparent p-4 sm:p-5">
+    <div className="rounded-[20px] border border-accent/20 bg-gradient-to-r from-accent/[0.04] to-transparent p-4 sm:p-5">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <div className="grid place-items-center h-6 w-6 rounded-md bg-accent/10 border border-accent/20">
@@ -90,7 +90,7 @@ export const TodaysInsights = memo(function TodaysInsights({ data, loading }: Pr
           return (
             <div
               key={pill.label}
-              className="rounded-lg border border-border bg-surface/70 px-3 py-2.5 flex flex-col gap-1.5"
+              className="rounded-lg border border-white/10 bg-white/5/70 px-3 py-2.5 flex flex-col gap-1.5"
             >
               <div className="flex items-center gap-1.5">
                 <Icon className="h-3 w-3 text-fg-subtle" />

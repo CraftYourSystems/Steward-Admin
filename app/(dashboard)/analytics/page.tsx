@@ -54,7 +54,7 @@ const QUICK_RANGES: { label: string; value: QuickRange }[] = [
   { label: "30D",       value: "30d" },
 ];
 
-const ChartSkeleton = () => <Skeleton className="h-48 sm:h-56 w-full rounded-xl bg-surface-2" />;
+const ChartSkeleton = () => <Skeleton className="h-48 sm:h-56 w-full rounded-[20px] bg-white/5" />;
 
 export default function AnalyticsPage() {
   const restaurant = useAuthStore((s) => s.restaurant);
@@ -100,7 +100,7 @@ export default function AnalyticsPage() {
 
   function RangeToggle() {
     return (
-      <div className="inline-flex items-center rounded-full border border-border bg-surface p-0.5">
+      <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 p-0.5">
         {QUICK_RANGES.map((r) => (
           <button
             key={r.value}
@@ -108,7 +108,7 @@ export default function AnalyticsPage() {
             className={cn(
               "h-7 px-3.5 rounded-full text-[11px] font-semibold uppercase tracking-wider transition-all duration-150",
               activeRange === r.value
-                ? "bg-surface-3 text-fg border border-border-strong shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                ? "bg-white/5 text-fg border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
                 : "text-fg-muted hover:text-fg"
             )}
           >
@@ -122,7 +122,7 @@ export default function AnalyticsPage() {
   return (
     <div className="px-3 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6 space-y-4 sm:space-y-5 max-w-[1400px] mx-auto">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-1 border-b border-border">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-1 border-b border-white/10">
         <div className="min-w-0">
           <div className="label-xs mb-1">{restaurant?.name ?? "Restaurant"}</div>
           <h2 className="text-xl font-semibold tracking-tight text-fg">Analytics</h2>
@@ -136,7 +136,7 @@ export default function AnalyticsPage() {
             onClick={handleManualRefresh}
             disabled={isRefreshing || isFetching}
             title="Refresh analytics"
-            className="hidden sm:flex items-center justify-center h-8 w-8 rounded-full border border-border bg-surface text-fg-muted hover:text-fg hover:border-border-strong transition-colors disabled:opacity-40"
+            className="hidden sm:flex items-center justify-center h-8 w-8 rounded-full border border-white/10 bg-white/5 text-fg-muted hover:text-fg hover:border-white/10 transition-colors disabled:opacity-40"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", (isRefreshing || isFetching) && "animate-spin")} />
           </button>

@@ -41,10 +41,10 @@ export const BestWorstSellers = memo(function BestWorstSellers({ data, loading }
     return (
       <div className="grid gap-3 sm:grid-cols-2">
         {[0, 1].map((i) => (
-          <div key={i} className="rounded-xl border border-border bg-surface p-4">
-            <Skeleton className="h-4 w-24 mb-4 bg-surface-3" />
+          <div key={i} className="rounded-[20px] border border-white/10 bg-white/5 p-4">
+            <Skeleton className="h-4 w-24 mb-4 bg-white/5" />
             {Array.from({ length: 3 }).map((_, j) => (
-              <Skeleton key={j} className="h-10 w-full mb-2 bg-surface-3 rounded" />
+              <Skeleton key={j} className="h-10 w-full mb-2 bg-white/5 rounded" />
             ))}
           </div>
         ))}
@@ -76,7 +76,7 @@ export const BestWorstSellers = memo(function BestWorstSellers({ data, loading }
       {sections.map((sec) => (
         <div
           key={sec.title}
-          className="rounded-xl border border-border bg-surface p-4"
+          className="rounded-[20px] border border-white/10 bg-white/5 p-4"
         >
           <div className="flex items-center gap-2 mb-3">
             <div

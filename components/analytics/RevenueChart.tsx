@@ -32,7 +32,7 @@ interface CustomTooltipProps {
 const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-border bg-surface-2 px-3 py-2 shadow-elevated">
+    <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 shadow-elevated">
       <p className="mb-1 text-[10px] uppercase tracking-wider font-semibold text-fg-subtle">{label}</p>
       <p className="text-sm font-semibold text-fg num">₹{payload[0].value?.toLocaleString("en-IN")}</p>
     </div>
@@ -54,7 +54,7 @@ export const RevenueChart = memo(function RevenueChart({ data, loading }: Revenu
   );
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
+    <div className="rounded-[20px] border border-white/10 bg-white/5 p-4">
       {/* Header */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
@@ -75,7 +75,7 @@ export const RevenueChart = memo(function RevenueChart({ data, loading }: Revenu
           {/* Ghost dashed grid lines */}
           <div className="absolute inset-0 flex flex-col justify-between py-2 pointer-events-none">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="w-full border-t border-dashed border-border/60" />
+              <div key={i} className="w-full border-t border-dashed border-white/10/60" />
             ))}
           </div>
           {/* Ghost flat baseline */}

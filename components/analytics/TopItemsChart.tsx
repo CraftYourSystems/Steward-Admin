@@ -25,7 +25,7 @@ interface CustomTooltipProps {
 const CustomTooltip = memo(function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-border bg-surface-2 px-3 py-2 shadow-elevated">
+    <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 shadow-elevated">
       <p className="text-[10px] uppercase tracking-wider font-semibold text-fg-subtle mb-1">{payload[0]?.payload?.name}</p>
       <p className="text-sm font-semibold text-fg num">{payload[0].value} sold</p>
     </div>
@@ -45,7 +45,7 @@ export const TopItemsChart = memo(function TopItemsChart({ data, loading }: TopI
   );
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
+    <div className="rounded-[20px] border border-white/10 bg-white/5 p-4">
       <div className="mb-4">
         <div className="label-xs mb-1">Top Items</div>
         <p className="text-[11px] text-fg-subtle">Most ordered in period</p>
@@ -59,7 +59,7 @@ export const TopItemsChart = memo(function TopItemsChart({ data, loading }: TopI
           {/* Ghost vertical grid lines */}
           <div className="absolute inset-0 flex justify-between px-2 pointer-events-none">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-full border-l border-dashed border-border/60" />
+              <div key={i} className="h-full border-l border-dashed border-white/10/60" />
             ))}
           </div>
           {/* Ghost bar stubs */}

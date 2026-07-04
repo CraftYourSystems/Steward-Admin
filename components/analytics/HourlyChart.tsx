@@ -14,7 +14,7 @@ interface HourlyChartProps { data?: HourlyDataPoint[]; loading?: boolean; }
 
 export const HourlyChart = memo(function HourlyChart({ data, loading }: HourlyChartProps) {
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
+    <div className="rounded-[20px] border border-white/10 bg-white/5 p-4">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <div className="label-xs mb-1">Busiest Hours</div>
