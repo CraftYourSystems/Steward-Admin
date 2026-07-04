@@ -7,6 +7,7 @@ import {
   Circle,
 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { useAuthStore } from "@/stores/auth.store";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -384,6 +385,24 @@ function UserMenu({ initials, onClose }: { initials: string; onClose: () => void
         >
           <LogOut className="h-3.5 w-3.5" />
           Sign out
+        </button>
+        <button
+          onClick={() => {
+            if (window.confirm("Are you sure you want to delete your account? This action is permanent and cannot be undone.")) {
+              api
+                .delete("/auth/me")
+                .then(() => {
+                  toast.success("Account deleted successfully");
+                  useAuthStore.getState().clearAuth();
+                  window.location.href = "/login";
+                })
+                .catch((err) => toast.error(err?.response?.data?.message ?? "Failed to delete account"));
+            }
+          }}
+          className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-[12px] text-danger hover:bg-danger/10 transition-colors mt-0.5"
+        >
+          <X className="h-3.5 w-3.5" />
+          Delete account
         </button>
       </div>
     </div>
