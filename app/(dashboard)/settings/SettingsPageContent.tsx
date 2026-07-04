@@ -135,43 +135,14 @@ export default function SettingsPageContent() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-48px)]">
-      {/* ── Left Sidebar (Master) ── */}
-      <div className="w-[260px] flex-shrink-0 border-r border-white/5 bg-transparent overflow-y-auto scrollbar-thin">
-        <div className="p-5">
-          <div className="label-xs mb-1">Configuration</div>
-          <h2 className="text-lg font-semibold tracking-tight text-fg mb-4">Settings</h2>
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="w-full">
-            <TabsList className="flex flex-col h-auto bg-transparent border-0 p-0 items-stretch gap-1">
-              {tabs.map((tab) => (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  className={cn(
-                    "justify-start px-3 py-2 text-[13px] font-medium rounded-lg transition-colors border border-transparent shadow-none data-[state=active]:shadow-none",
-                    activeTab === tab.value 
-                      ? "bg-white/10 text-fg border-white/10" 
-                      : "text-fg-muted hover:bg-white/5 hover:text-fg"
-                  )}
-                >
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
-      </div>
-
-      {/* ── Right Content (Detail) ── */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin bg-transparent relative">
-        {/* Sticky Header with Actions */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-5 border-b border-white/5 bg-bg/80 backdrop-blur-md">
+    <div className="flex h-[calc(100vh-48px)] flex-col bg-transparent">
+      {/* ── Sticky Header with Actions & Tabs ── */}
+      <div className="sticky top-0 z-10 w-full border-b border-white/5 bg-bg/80 backdrop-blur-md">
+        <div className="px-5 py-4 lg:px-8 lg:py-5 max-w-[1400px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-fg">
-              {tabs.find(t => t.value === activeTab)?.label}
-            </h3>
-            <p className="text-[12px] text-fg-subtle">
+            <div className="label-xs mb-1">Configuration</div>
+            <h2 className="text-xl font-semibold tracking-tight text-fg">Settings</h2>
+            <p className="text-[12px] text-fg-subtle mt-1">
               Manage your {tabs.find(t => t.value === activeTab)?.label.toLowerCase()} settings.
             </p>
           </div>
@@ -205,7 +176,32 @@ export default function SettingsPageContent() {
           </div>
         </div>
 
-        <div className="px-8 py-6 max-w-[800px]">
+        {/* ── Horizontal Tabs (Glassmorphic) ── */}
+        <div className="px-5 lg:px-8 max-w-[1400px] mx-auto pb-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="flex flex-wrap h-auto gap-1 bg-white/5 p-1 rounded-xl border border-white/5 justify-start">
+              {tabs.map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className={cn(
+                    "text-[12px] font-medium rounded-lg px-4 py-1.5 transition-colors shadow-none data-[state=active]:shadow-none",
+                    activeTab === tab.value 
+                      ? "bg-white/10 text-fg" 
+                      : "text-fg-muted hover:bg-white/5 hover:text-fg"
+                  )}
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+      </div>
+
+      {/* ── Right Content (Detail) ── */}
+      <div className="flex-1 overflow-y-auto scrollbar-thin relative p-5 lg:p-8 max-w-[1400px] mx-auto w-full">
+        <div className="max-w-[800px]">
           {isDirty && (
             <div className="mb-6 flex items-center gap-3 rounded-xl border border-warning/20 bg-warning/5 px-4 py-3">
               <span className="h-2 w-2 rounded-full bg-warning shrink-0" />
