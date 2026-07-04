@@ -140,7 +140,7 @@ function MenuItemsTab({ categories }: { categories: Category[] }) {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      <div className="card-premium overflow-hidden">
         {isLoading ? (
           <div className="space-y-1.5 p-3">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -353,7 +353,7 @@ function CategoriesTab() {
         </Button>
       </div>
 
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      <div className="card-premium overflow-hidden">
         {isLoading ? (
           <div className="space-y-1.5 p-3">
             {Array.from({ length: 4 }).map((_, i) => (

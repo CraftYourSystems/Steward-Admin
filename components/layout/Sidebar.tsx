@@ -85,23 +85,23 @@ function NavLink({
         href={href}
         onClick={onClose}
         className={cn(
-          "group relative flex items-center gap-2.5 h-9 px-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 active:scale-[0.97] active:duration-75",
+          "group relative flex items-center gap-3 h-9 px-3 rounded-lg text-[13px] font-medium transition-all duration-300 ease-out active:scale-[0.98]",
           active
-            ? "bg-surface-3 text-fg border border-border-strong shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
-            : "text-fg-muted hover:bg-surface-2 hover:text-fg border border-transparent"
+            ? "bg-surface-2 text-fg shadow-sm"
+            : "text-fg-muted hover:bg-surface-2/50 hover:text-fg"
         )}
       >
         {active && (
           <span
-            className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[3px] rounded-r-full opacity-80"
-            style={{ backgroundColor: accentColor ?? "hsl(var(--accent))" }}
+            className="absolute left-0 top-1/2 -translate-y-1/2 h-3.5 w-1 rounded-r-full shadow-[0_0_8px_currentColor]"
+            style={{ backgroundColor: accentColor ?? "hsl(var(--accent))", color: accentColor ?? "hsl(var(--accent))" }}
           />
         )}
         <Icon
-          className={cn("h-4 w-4 shrink-0 transition-colors", active ? "" : "text-fg-subtle group-hover:text-fg-muted")}
+          className={cn("h-4 w-4 shrink-0 transition-all duration-300", active ? "scale-110" : "text-fg-subtle group-hover:text-fg-muted")}
           style={active ? { color: accentColor ?? "hsl(var(--accent))" } : undefined}
         />
-        <span>{label}</span>
+        <span className={cn("transition-transform duration-300", active && "translate-x-0.5")}>{label}</span>
       </Link>
     </li>
   );

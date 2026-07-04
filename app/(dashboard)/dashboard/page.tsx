@@ -221,7 +221,7 @@ export default function DashboardPage() {
            Renders only when there are active orders in the kitchen.
       ──────────────────────────────────────────────────────────────────────── */}
       {liveActiveCount > 0 && (
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-[12px] text-fg-muted">
+        <div className="flex items-center gap-2 card-premium px-4 py-2.5 text-[12px] text-fg-muted">
           <span className="relative flex h-2 w-2 shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />

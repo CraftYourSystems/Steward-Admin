@@ -195,12 +195,12 @@ export default function OrdersPage() {
       </div>
 
       {/* Filters */}
-      <div className="rounded-xl border border-border bg-surface p-3">
+      <div className="card-premium p-3">
         <OrderFilters filters={filters} onChange={setFilters} />
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      <div className="card-premium overflow-hidden">
         {isLoading ? (
           <div className="space-y-1.5 p-3">
             {Array.from({ length: 10 }).map((_, i) => (

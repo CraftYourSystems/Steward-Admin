@@ -472,7 +472,7 @@ export default function AuditPageContent() {
 
       {/* ── Filters panel ──────────────────────────────────────────────── */}
       {showFilters && (
-        <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+        <div className="card-premium p-4 space-y-3">
           {/* Quick date presets */}
           <div>
             <label className="label-xs mb-2 block">Quick range</label>
@@ -575,7 +575,7 @@ export default function AuditPageContent() {
       )}
 
       {/* ── Log table ──────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      <div className="card-premium overflow-hidden">
         {/* Column headers */}
         <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-2 bg-surface-2 border-b border-border">
           <div className="w-7" />

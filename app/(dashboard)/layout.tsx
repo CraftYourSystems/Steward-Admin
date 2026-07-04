@@ -18,6 +18,8 @@ const ALLOWED_ROLES = ["ADMIN", "SUPER_ADMIN", "KITCHEN_STAFF", "WAITER"];
 // All paths where the kitchen socket should be active
 const KITCHEN_PATHS = ["/kitchen", "/kds", "/live-counter"];
 
+import { AnimatePresence, motion } from "framer-motion";
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router   = useRouter();
   const pathname = usePathname();
@@ -118,12 +120,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex h-screen overflow-hidden bg-bg text-fg">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0 bg-bg">
         <Header onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto scrollbar-thin">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin relative">
           <ErrorBoundary>
             <OnboardingWizard />
-            {children}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={pathname}
+                initial={{ opacity: 0, y: 8, filter: "blur(2px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -8, filter: "blur(2px)" }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                className="h-full w-full"
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
           </ErrorBoundary>
         </main>
       </div>

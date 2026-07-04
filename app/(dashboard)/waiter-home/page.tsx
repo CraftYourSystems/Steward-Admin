@@ -140,7 +140,7 @@ function QuickAction({ href, label, icon: Icon, accent }: {
     <Link
       href={href}
       className={cn(
-        "group flex items-center gap-2.5 rounded-xl border border-border bg-surface px-4 py-3",
+        "group flex items-center gap-2.5 card-premium px-4 py-3",
         "hover:border-border-strong hover:bg-surface-2 transition-all duration-200 active:scale-[0.98]",
       )}
     >
@@ -337,7 +337,7 @@ export default function WaiterHomePage() {
           { label: "Pending Payment", value: pendingPayment.length, color: "text-accent", bg: "bg-accent/10 border-accent/20 text-accent" },
           { label: "Completed Today", value: completedToday, color: "text-fg-muted", bg: "bg-surface-3 border-border text-fg-muted" },
         ].map((s) => (
-          <div key={s.label} className="rounded-xl border border-border bg-surface p-4">
+          <div key={s.label} className="card-premium p-4">
             <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-fg-subtle mb-2">{s.label}</div>
             <div className={cn("text-2xl font-black tabular-nums", s.color)}>{s.value}</div>
           </div>
@@ -348,7 +348,7 @@ export default function WaiterHomePage() {
       <div className="grid lg:grid-cols-[1fr_280px] gap-5">
 
         {/* Table Grid */}
-        <div className="rounded-xl border border-border bg-surface overflow-hidden">
+        <div className="card-premium overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-surface-2/50">
             <Table2 className="h-4 w-4 text-info" />
             <span className="text-[13px] font-semibold text-fg">Table Overview</span>
@@ -401,7 +401,7 @@ export default function WaiterHomePage() {
 
         {/* Quick Actions */}
         <div className="space-y-3">
-          <div className="rounded-xl border border-border bg-surface overflow-hidden">
+          <div className="card-premium overflow-hidden">
             <div className="px-4 py-3 border-b border-border bg-surface-2/50">
               <span className="text-[13px] font-semibold text-fg">Quick Actions</span>
             </div>

@@ -97,7 +97,7 @@ function QuickAction({
     <Link
       href={href}
       className={cn(
-        "group flex flex-col gap-2 rounded-xl border border-border bg-surface p-4",
+        "group flex flex-col gap-2 card-premium p-4",
         "hover:border-border-strong hover:bg-surface-2 transition-all duration-200",
         "active:scale-[0.98]",
       )}
@@ -368,7 +368,7 @@ export default function KitchenHomePage() {
       <div className="grid lg:grid-cols-[1fr_300px] gap-5">
 
         {/* Active Orders Feed */}
-        <div className="rounded-xl border border-border bg-surface overflow-hidden">
+        <div className="card-premium overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface-2/50">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-accent" />
@@ -413,7 +413,7 @@ export default function KitchenHomePage() {
 
         {/* Quick Actions */}
         <div className="space-y-3">
-          <div className="rounded-xl border border-border bg-surface overflow-hidden">
+          <div className="card-premium overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-surface-2/50">
               <span className="text-[13px] font-semibold text-fg">Quick Actions</span>
             </div>
@@ -450,7 +450,7 @@ export default function KitchenHomePage() {
           </div>
 
           {/* Lane summary */}
-          <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+          <div className="card-premium p-4 space-y-3">
             <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-fg-subtle">Lane Summary</span>
             {[
               { label: "New", count: newOrders.length, color: "bg-warning", textColor: "text-warning" },

@@ -83,7 +83,7 @@ function OrderCard({
   });
 
   return (
-    <div className="rounded-xl border border-border bg-surface flex flex-col overflow-hidden">
+    <div className="card-premium flex flex-col overflow-hidden">
       {/* Card header */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border bg-surface-2">
         <div className="flex items-center gap-2 min-w-0">
@@ -171,7 +171,7 @@ function OrderCard({
 
 function CardSkeleton() {
   return (
-    <div className="rounded-xl border border-border bg-surface overflow-hidden">
+    <div className="card-premium overflow-hidden">
       <div className="px-4 py-3 border-b border-border bg-surface-2 flex justify-between">
         <Skeleton className="h-4 w-28" />
         <Skeleton className="h-4 w-16" />
@@ -298,11 +298,11 @@ export default function PayAtCounterPage() {
           {[1, 2, 3].map((i) => <CardSkeleton key={i} />)}
         </div>
       ) : isError ? (
-        <div className="rounded-xl border border-border bg-surface px-6 py-12 text-center">
+        <div className="card-premium px-6 py-12 text-center">
           <p className="text-[13px] text-danger">Failed to load orders. Please refresh.</p>
         </div>
       ) : orders.length === 0 ? (
-        <div className="rounded-xl border border-border bg-surface flex flex-col items-center justify-center py-20 text-center">
+        <div className="card-premium flex flex-col items-center justify-center py-20 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/10 border border-success/20 mb-3">
             <CheckCircle2 className="h-6 w-6 text-success" />
           </div>
