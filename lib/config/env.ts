@@ -18,15 +18,11 @@ function validate(name: string, value: string | undefined, fallback: string): st
 
   const isLocalhost = val.includes("localhost") || val.includes("127.0.0.1");
   if (isProd && isLocalhost) {
-    // Allow local production-style builds to fall back to the shipped production defaults
-    // when the local .env file points to localhost, while still protecting real deployments.
+    // Production builds must use the backend they were built for. Silently
+    // replacing localhost with the hosted fallback makes OAuth redirects point
+    // at the wrong server and breaks Google sign-in in local production checks.
     const isServerBuild = typeof window === "undefined";
     const isHostedBuild = Boolean(process.env.CF_PAGES || process.env.GITHUB_ACTIONS || process.env.VERCEL_ENV);
-
-    if (isServerBuild && !isHostedBuild && fallback && !fallback.includes("localhost") && !fallback.includes("127.0.0.1")) {
-      console.warn(`[Steward] WARNING: ${name} points to localhost in a local production build; using fallback ${fallback}`);
-      return fallback;
-    }
 
     if (isServerBuild && !isHostedBuild) {
       throw new Error(`[Steward] CRITICAL: Environment variable ${name} points to localhost in a production build.`);

@@ -29,15 +29,17 @@ interface OAuthButtonsProps {
   apiUrl?: string;
 }
 
+function getOAuthBaseUrl(apiUrl?: string): string {
+  const configuredUrl = apiUrl || API_URL || "http://localhost:4000/v1";
+  return configuredUrl.replace(/\/v\d+\/?$/, "").replace(/\/$/, "");
+}
+
 export function OAuthButtons({ apiUrl }: OAuthButtonsProps) {
   const [loading, setLoading] = useState(false);
   const [base, setBase] = useState("");
 
   useEffect(() => {
-    const resolvedBase = apiUrl
-      ?? API_URL.replace(/\/v\d+\/?$/, "")
-      ?? "http://localhost:4000";
-    setBase(resolvedBase);
+    setBase(getOAuthBaseUrl(apiUrl));
   }, [apiUrl]);
 
   const handleGoogleSignIn = () => {
@@ -51,6 +53,7 @@ export function OAuthButtons({ apiUrl }: OAuthButtonsProps) {
   return (
     <div className="w-full space-y-2">
       <button
+        type="button"
         onClick={handleGoogleSignIn}
         disabled={loading || !base}
         className="w-full flex items-center justify-center gap-3 rounded-xl border border-border bg-surface px-4 py-2.5 text-[13px] font-medium text-fg hover:bg-surface-2 hover:border-border-strong transition-colors disabled:opacity-60 disabled:cursor-not-allowed"

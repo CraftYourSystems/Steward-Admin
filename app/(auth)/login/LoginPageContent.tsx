@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Clock, IndianRupee, ShoppingBag, Store, TrendingUp } from 'lucide-react';
@@ -144,6 +144,7 @@ export default function LoginPageContent() {
   const [resendEmail, setResendEmail] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSent, setResendSent] = useState(false);
+  const exchangedOAuthCodeRef = useRef<string | null>(null);
 
   const handleResendVerification = async () => {
     if (!resendEmail || resendLoading) return;
@@ -179,6 +180,8 @@ export default function LoginPageContent() {
 
     const code = searchParams.get('code');
     if (!code) return;
+    if (exchangedOAuthCodeRef.current === code) return;
+    exchangedOAuthCodeRef.current = code;
 
     const handleExchange = async () => {
       try {
