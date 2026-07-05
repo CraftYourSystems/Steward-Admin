@@ -1,20 +1,15 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Activity } from "lucide-react";
+import type { HeatmapEntry } from "@/types";
 
 interface OrderVelocityProps {
   totalOrders: number;
   loading: boolean;
+  heatmap?: HeatmapEntry[];
 }
 
-// Generate dummy heatmap blocks for visual effect
-const blocks = Array.from({ length: 48 }).map((_, i) => {
-  // Random intensity between 0 and 3
-  const intensity = Math.floor(Math.random() * 4);
-  return { id: i, intensity };
-});
-
-export function OrderVelocityHeatmap({ totalOrders, loading }: OrderVelocityProps) {
+export function OrderVelocityHeatmap({ totalOrders, loading, heatmap }: OrderVelocityProps) {
   if (loading) {
     return (
       <div className="card-premium p-6 flex flex-col justify-between animate-shimmer min-h-[160px]">
@@ -31,6 +26,23 @@ export function OrderVelocityHeatmap({ totalOrders, loading }: OrderVelocityProp
       default: return "bg-white/5";
     }
   };
+
+  // If we don't have heatmap data yet (e.g. backend still returning old shape), render dummy for now
+  const dummyBlocks = Array.from({ length: 48 }).map((_, i) => ({ id: `dummy-${i}`, intensity: Math.floor(Math.random() * 4) }));
+  
+  // Flatten a 7x24 to just render the most recent 48 hours for visual fit, 
+  // or just render the first 48 blocks from the heatmap array if we want a full grid.
+  // The UI is currently a simple flex wrap. Let's render the last 48 hours if possible.
+  let blocksToRender = dummyBlocks;
+  if (heatmap && heatmap.length > 0) {
+    // Sort by day and hour
+    const sorted = [...heatmap].sort((a, b) => {
+      if (a.dayOfWeek === b.dayOfWeek) return a.hour - b.hour;
+      return a.dayOfWeek - b.dayOfWeek;
+    });
+    // Take the last 48 entries (e.g., last 2 days)
+    blocksToRender = sorted.slice(-48).map(h => ({ id: `real-${h.dayOfWeek}-${h.hour}`, intensity: h.intensity }));
+  }
 
   return (
     <motion.div
@@ -56,7 +68,7 @@ export function OrderVelocityHeatmap({ totalOrders, loading }: OrderVelocityProp
 
       <div className="mt-auto">
         <div className="flex flex-wrap gap-1">
-          {blocks.map((block, i) => (
+          {blocksToRender.map((block, i) => (
             <motion.div
               key={block.id}
               initial={{ opacity: 0, scale: 0 }}
@@ -67,7 +79,7 @@ export function OrderVelocityHeatmap({ totalOrders, loading }: OrderVelocityProp
           ))}
         </div>
         <div className="flex justify-between items-center mt-3 text-[10px] text-fg-muted uppercase tracking-widest font-semibold">
-          <span>8 AM</span>
+          <span>48h Ago</span>
           <span>Now</span>
         </div>
       </div>

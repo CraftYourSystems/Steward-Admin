@@ -24,8 +24,22 @@ function ItemRow({ item, index, type }: { item: ItemPerformanceItem; index: numb
       </span>
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-medium text-fg truncate">{item.name}</p>
-        <p className="text-[11px] text-fg-subtle num">
-          {formatCurrency(item.totalRevenue)} · {item.percentage}% of sales
+        <p className="text-[11px] text-fg-subtle num flex items-center gap-1.5">
+          <span>{formatCurrency(item.totalRevenue)}</span>
+          <span className="text-white/20">•</span>
+          <span>{item.percentage}% of sales</span>
+          {item.marginPercentage !== undefined && (
+            <>
+              <span className="text-white/20">•</span>
+              <span className={cn(
+                "font-medium",
+                item.marginPercentage >= 60 ? "text-success" : 
+                item.marginPercentage < 30 ? "text-danger" : "text-info"
+              )}>
+                {item.marginPercentage}% margin
+              </span>
+            </>
+          )}
         </p>
       </div>
       <div className="text-right shrink-0">

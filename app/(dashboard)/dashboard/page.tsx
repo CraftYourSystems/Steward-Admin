@@ -17,6 +17,7 @@ import { RecentOrdersTable } from "@/components/analytics/RecentOrdersTable";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useAnalyticsSummary,
+  usePeakHour,
 } from "@/hooks/useAnalytics";
 import { useAuthStore } from "@/stores/auth.store";
 import { useSettingsStore } from "@/stores/settings.store";
@@ -96,6 +97,7 @@ export default function DashboardPage() {
 
   // Pass activeRange to hooks so they can use a shorter staleTime + auto-poll.
   const summary  = useAnalyticsSummary(params, activeRange);
+  const peakHourQuery = usePeakHour(params, activeRange);
 
   // ── Menu items (for onboarding check) ─────────────────────────────────────
   const menuQuery = useQuery({
@@ -323,7 +325,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-6">
         <RevenueRing current={d?.totalRevenue || 0} target={50000} loading={loading} />
         <KitchenThroughput avgPrepTimeMins={d?.avgPrepTimeMins || 0} loading={loading} />
-        <OrderVelocityHeatmap totalOrders={d?.totalOrders || 0} loading={loading} />
+        <OrderVelocityHeatmap totalOrders={d?.totalOrders || 0} loading={loading} heatmap={peakHourQuery.data?.heatmap} />
       </div>
 
       {/* ── Section label ─────────────────────────────────────────────────── */}

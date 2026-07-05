@@ -4,10 +4,21 @@ import { useKanbanColumns } from "@/hooks/useKitchenOrders";
 import { KanbanColumn } from "@/components/kitchen/orders/KanbanColumn";
 import { ConnectionStatus } from "@/components/kitchen/layout/ConnectionStatus";
 import { Flame, ChefHat, CheckCircle2 } from "lucide-react";
+import { QueueHealthGauge } from "@/components/kitchen/intelligence/QueueHealthGauge";
+import { PrepTimeMetrics } from "@/components/kitchen/intelligence/PrepTimeMetrics";
+import { DelayedCausesChart } from "@/components/kitchen/intelligence/DelayedCausesChart";
+import { TicketAgingList } from "@/components/kitchen/intelligence/TicketAgingList";
+import { useQueueHealth, usePrepTimeByStation, useDelayMetrics, useDelayedOrderCauses, useTicketAging } from "@/hooks/useKitchenIntelligence";
 
 export default function KitchenBoardPage() {
-  const { newOrders, preparingOrders, readyOrders, isLoading } =
-    useKanbanColumns();
+  const { newOrders, preparingOrders, readyOrders, isLoading } = useKanbanColumns();
+  
+  // Intelligence Hooks
+  const queueHealth = useQueueHealth();
+  const prepTime = usePrepTimeByStation();
+  const delayMetrics = useDelayMetrics();
+  const delayCauses = useDelayedOrderCauses();
+  const ticketAging = useTicketAging();
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[#0F0F0F]">
@@ -17,6 +28,14 @@ export default function KitchenBoardPage() {
           Kitchen Board
         </h1>
         <ConnectionStatus />
+      </div>
+
+      {/* Intelligence Dashboard MVP */}
+      <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 border-b border-white/[0.06] bg-black/20">
+        <QueueHealthGauge data={queueHealth.data} loading={queueHealth.isLoading} />
+        <PrepTimeMetrics prepData={prepTime.data} delayData={delayMetrics.data} loading={delayMetrics.isLoading} />
+        <DelayedCausesChart data={delayCauses.data} loading={delayCauses.isLoading} />
+        <TicketAgingList data={ticketAging.data} loading={ticketAging.isLoading} />
       </div>
 
       {/* Kanban grid */}

@@ -1,31 +1,20 @@
 "use client";
 
-import { useState, useMemo, useCallback, Suspense, lazy } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { subDays, startOfDay, endOfDay } from "date-fns";
 import { RefreshCw } from "lucide-react";
-import { KpiCard } from "@/components/analytics/KpiCard";
-import { TodaysInsights } from "@/components/analytics/TodaysInsights";
-import { BestWorstSellers } from "@/components/analytics/BestWorstSellers";
-import { PeakHourIntelligence } from "@/components/analytics/PeakHourIntelligence";
-import { HealthScoreCard } from "@/components/analytics/HealthScoreCard";
-import { ItemCombinations } from "@/components/analytics/ItemCombinations";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  useRevenueData, useTopItems, useTodaysInsights,
-  useItemPerformance, usePeakHour, useHealthScore,
-  useItemCombinations,
-} from "@/hooks/useAnalytics";
 import { useAuthStore } from "@/stores/auth.store";
 import { cn } from "@/lib/utils";
 
-// Lazy-load charts
-const RevenueChart = lazy(() =>
-  import("@/components/analytics/RevenueChart").then((m) => ({ default: m.RevenueChart }))
-);
-const TopItemsChart = lazy(() =>
-  import("@/components/analytics/TopItemsChart").then((m) => ({ default: m.TopItemsChart }))
-);
+import { OverviewTab } from "./OverviewTab";
+import { AdvancedTab } from "./AdvancedTab";
+
+import {
+  useRevenueData, useTopItems, useTodaysInsights,
+  useItemPerformance, usePeakHour, useHealthScore,
+  useItemCombinations, useAnalyticsSummary, useOrderAccuracy
+} from "@/hooks/useAnalytics";
 
 type QuickRange = "today" | "yesterday" | "7d" | "30d";
 const ISO = (d: Date) => d.toISOString();
@@ -54,17 +43,15 @@ const QUICK_RANGES: { label: string; value: QuickRange }[] = [
   { label: "30D",       value: "30d" },
 ];
 
-const ChartSkeleton = () => <Skeleton className="h-48 sm:h-56 w-full rounded-[20px] bg-white/5" />;
-
 export default function AnalyticsPage() {
   const restaurant = useAuthStore((s) => s.restaurant);
   const queryClient = useQueryClient();
 
-  // ── Date range ─────────────────────────────────────────────────────────────
   const [activeRange, setActiveRange] = useState<QuickRange>("today");
+  const [activeTab, setActiveTab] = useState<"overview" | "advanced">("overview");
   const params = useMemo(() => getRange(activeRange), [activeRange]);
 
-  // Hook subscriptions
+  // Hook subscriptions (for Overview)
   const revenue = useRevenueData(params, activeRange);
   const topItems = useTopItems(params, activeRange);
   const insights = useTodaysInsights();
@@ -72,8 +59,9 @@ export default function AnalyticsPage() {
   const peakHour = usePeakHour(params, activeRange);
   const healthScore = useHealthScore();
   const combinations = useItemCombinations(params, activeRange);
+  const summary = useAnalyticsSummary(params, activeRange);
+  const accuracy = useOrderAccuracy(params, activeRange);
 
-  // ── Refresh handler ────────────────────────────────────────────────────────
   const [isRefreshing, setIsRefreshing] = useState(false);
   const handleManualRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -85,6 +73,11 @@ export default function AnalyticsPage() {
       queryClient.invalidateQueries({ queryKey: ["analytics-peak-hour"] }),
       queryClient.invalidateQueries({ queryKey: ["analytics-health-score"] }),
       queryClient.invalidateQueries({ queryKey: ["analytics-combinations"] }),
+      queryClient.invalidateQueries({ queryKey: ["analytics-summary"] }),
+      queryClient.invalidateQueries({ queryKey: ["analytics-accuracy"] }),
+      queryClient.invalidateQueries({ queryKey: ["v2-menu-conversion"] }),
+      queryClient.invalidateQueries({ queryKey: ["v2-order-metrics"] }),
+      queryClient.invalidateQueries({ queryKey: ["v2-repeat-items"] }),
     ]);
     setIsRefreshing(false);
   }, [queryClient]);
@@ -96,7 +89,9 @@ export default function AnalyticsPage() {
     itemPerformance.isFetching ||
     peakHour.isFetching ||
     healthScore.isFetching ||
-    combinations.isFetching;
+    combinations.isFetching ||
+    summary.isFetching ||
+    accuracy.isFetching;
 
   function RangeToggle() {
     return (
@@ -131,7 +126,6 @@ export default function AnalyticsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Manual refresh button */}
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing || isFetching}
@@ -144,45 +138,46 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* ── Today's Insights Banner ─────────────────────────────────────────── */}
-      <TodaysInsights data={insights.data} loading={insights.isLoading} />
-
-      {/* ── Section label ─────────────────────────────────────────────────── */}
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
-        Trends
-      </p>
-
-      {/* ── Charts ─────────────────────────────────────────────────────────── */}
-      <div className="grid gap-3 lg:grid-cols-2">
-        <Suspense fallback={<ChartSkeleton />}>
-          <RevenueChart data={revenue.data} loading={revenue.isLoading} />
-        </Suspense>
-        <Suspense fallback={<ChartSkeleton />}>
-          <TopItemsChart data={topItems.data} loading={topItems.isLoading} />
-        </Suspense>
+      {/* ── Tabs ─────────────────────────────────────────────────────────── */}
+      <div className="flex space-x-1 border-b border-white/10 pb-2">
+        <button
+          onClick={() => setActiveTab("overview")}
+          className={cn(
+            "px-4 py-2 text-sm font-medium rounded-t-lg transition-colors",
+            activeTab === "overview" ? "bg-white/10 text-fg border-b-2 border-primary" : "text-fg-muted hover:text-fg"
+          )}
+        >
+          Overview
+        </button>
+        <button
+          onClick={() => setActiveTab("advanced")}
+          className={cn(
+            "px-4 py-2 text-sm font-medium rounded-t-lg transition-colors",
+            activeTab === "advanced" ? "bg-white/10 text-fg border-b-2 border-primary" : "text-fg-muted hover:text-fg"
+          )}
+        >
+          Advanced Metrics (V2)
+        </button>
       </div>
 
-      {/* ── Section label ─────────────────────────────────────────────────── */}
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
-        Menu Performance
-      </p>
+      {/* ── Tab Content ──────────────────────────────────────────────────── */}
+      {activeTab === "overview" && (
+        <OverviewTab
+          insights={insights}
+          summary={summary}
+          accuracy={accuracy}
+          revenue={revenue}
+          topItems={topItems}
+          itemPerformance={itemPerformance}
+          healthScore={healthScore}
+          combinations={combinations}
+          peakHour={peakHour}
+        />
+      )}
 
-      {/* ── Best / Worst Sellers ────────────────────────────────────────────── */}
-      <BestWorstSellers data={itemPerformance.data} loading={itemPerformance.isLoading} />
-
-      {/* ── Health Score & Combinations (side by side on lg) ────────────────── */}
-      <div className="grid gap-3 lg:grid-cols-2">
-        <HealthScoreCard data={healthScore.data} loading={healthScore.isLoading} />
-        <ItemCombinations data={combinations.data} loading={combinations.isLoading} />
-      </div>
-
-      {/* ── Section label ─────────────────────────────────────────────────── */}
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
-        Peak Hours
-      </p>
-
-      {/* ── Peak Hour Intelligence ──────────────────────────────────────────── */}
-      <PeakHourIntelligence data={peakHour.data} loading={peakHour.isLoading} />
+      {activeTab === "advanced" && (
+        <AdvancedTab />
+      )}
     </div>
   );
 }

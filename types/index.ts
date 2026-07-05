@@ -185,6 +185,8 @@ export interface AnalyticsSummary {
   completedOrders: number;
   cancellationRate: number;
   avgPrepTimeMins: number;
+  avgKitchenDelayMins?: number;
+  revenuePerCustomer?: number;
 }
 
 export interface RevenueDataPoint {
@@ -217,6 +219,7 @@ export interface ItemPerformanceItem {
   totalQuantity: number;
   totalRevenue: number;
   percentage: number;
+  marginPercentage?: number;
 }
 
 export interface ItemPerformanceData {
@@ -253,8 +256,16 @@ export interface PeakHourEntry {
   isQuiet: boolean;
 }
 
+export interface HeatmapEntry {
+  dayOfWeek: number;
+  hour: number;
+  orders: number;
+  intensity: number;
+}
+
 export interface PeakHourData {
   distribution: PeakHourEntry[];
+  heatmap?: HeatmapEntry[];
   peakHour: number | null;
   peakOrders: number;
   peakRevenue: number;

@@ -15,15 +15,26 @@ function validate(name: string, value: string | undefined, fallback: string): st
   if (!val) {
     throw new Error(`[Steward] CRITICAL: Environment variable ${name} is required but missing.`);
   }
-  if (isProd && (val.includes("localhost") || val.includes("127.0.0.1"))) {
-    // Only throw during the local build/prerender phase to prevent deploying a bad build.
-    // Never crash the runtime in the cloud (where process.env.CF_PAGES is active), in the browser, or in GitHub Actions.
-    if (typeof window === "undefined" && !process.env.CF_PAGES && !process.env.GITHUB_ACTIONS) {
-      throw new Error(`[Steward] CRITICAL: Environment variable ${name} points to localhost in a production build.`);
-    } else {
-      console.warn(`[Steward] WARNING: Environment variable ${name} points to localhost in production: ${val}`);
+
+  const isLocalhost = val.includes("localhost") || val.includes("127.0.0.1");
+  if (isProd && isLocalhost) {
+    // Allow local production-style builds to fall back to the shipped production defaults
+    // when the local .env file points to localhost, while still protecting real deployments.
+    const isServerBuild = typeof window === "undefined";
+    const isHostedBuild = Boolean(process.env.CF_PAGES || process.env.GITHUB_ACTIONS || process.env.VERCEL_ENV);
+
+    if (isServerBuild && !isHostedBuild && fallback && !fallback.includes("localhost") && !fallback.includes("127.0.0.1")) {
+      console.warn(`[Steward] WARNING: ${name} points to localhost in a local production build; using fallback ${fallback}`);
+      return fallback;
     }
+
+    if (isServerBuild && !isHostedBuild) {
+      throw new Error(`[Steward] CRITICAL: Environment variable ${name} points to localhost in a production build.`);
+    }
+
+    console.warn(`[Steward] WARNING: Environment variable ${name} points to localhost in production: ${val}`);
   }
+
   return val;
 }
 

@@ -174,3 +174,54 @@ export function useItemCombinations(params: DateParams, activeRange?: string) {
     refetchInterval: isToday ? TODAY_REFETCH_MS : false,
   });
 }
+
+export function useChannelSplit(params: DateParams, activeRange?: string) {
+  const isToday = activeRange === "today";
+  return useQuery({
+    queryKey: ["analytics-channel-split", params],
+    queryFn: async () => {
+      const { data } = await api.get<ApiSuccess<{ channel: string; orders: number }[]>>(
+        "/admin/analytics/channel-split",
+        { params }
+      );
+      return data.data;
+    },
+    staleTime:       isToday ? TODAY_STALE_TIME : ANALYTICS_STALE_TIME,
+    gcTime:          ANALYTICS_GC_TIME,
+    refetchInterval: isToday ? TODAY_REFETCH_MS : false,
+  });
+}
+
+export function useRefundReasons(params: DateParams, activeRange?: string) {
+  const isToday = activeRange === "today";
+  return useQuery({
+    queryKey: ["analytics-refund-reasons", params],
+    queryFn: async () => {
+      const { data } = await api.get<ApiSuccess<{ reason: string | null; count: number }[]>>(
+        "/admin/analytics/refund-reasons",
+        { params }
+      );
+      return data.data;
+    },
+    staleTime:       isToday ? TODAY_STALE_TIME : ANALYTICS_STALE_TIME,
+    gcTime:          ANALYTICS_GC_TIME,
+    refetchInterval: isToday ? TODAY_REFETCH_MS : false,
+  });
+}
+
+export function useOrderAccuracy(params: DateParams, activeRange?: string) {
+  const isToday = activeRange === "today";
+  return useQuery({
+    queryKey: ["analytics-accuracy", params],
+    queryFn: async () => {
+      const { data } = await api.get<ApiSuccess<{ totalCompleted: number; correctedOrders: number; accuracyPercentage: number }>>(
+        "/admin/analytics/accuracy",
+        { params }
+      );
+      return data.data;
+    },
+    staleTime:       isToday ? TODAY_STALE_TIME : ANALYTICS_STALE_TIME,
+    gcTime:          ANALYTICS_GC_TIME,
+    refetchInterval: isToday ? TODAY_REFETCH_MS : false,
+  });
+}

@@ -6,6 +6,7 @@ import {
   LayoutDashboard, ShoppingCart, UtensilsCrossed, Users,
   LogOut, X, Settings, ToggleLeft, WifiOff, Kanban,
   Soup, ClipboardList, BanknoteIcon, Home, BarChart3, ArrowLeft,
+  Megaphone, PackageOpen, Activity, Sparkles, BrainCircuit
 } from "lucide-react";
 import { usePlatformStore } from "@/stores/platform.store";
 import { cn } from "@/lib/utils";
@@ -17,11 +18,20 @@ import { hasPermission, Permissions } from "@/lib/permissions/permissions";
 
 const navAdmin = [
   { href: "/dashboard",      label: "Overview",        icon: LayoutDashboard },
+  { href: "/live-ops",       label: "Live Ops",        icon: Activity },
+  { href: "/insights",       label: "AI Insights",     icon: Sparkles },
+  { href: "/ai",             label: "Predictive AI",   icon: BrainCircuit },
   { href: "/analytics",      label: "Analytics",       icon: BarChart3 },
+  { href: "/finance",        label: "Finance",         icon: BanknoteIcon },
+  { href: "/marketing",      label: "Marketing",       icon: Megaphone },
+  { href: "/behavior",       label: "Behavior",        icon: BarChart3 },
+  { href: "/customers",      label: "Customers",       icon: Users },
+  { href: "/reports",        label: "Reports",         icon: ClipboardList },
   { href: "/orders",         label: "Orders",          icon: ShoppingCart },
   { href: "/pay-at-counter", label: "Pay at Counter",  icon: BanknoteIcon },
   { href: "/menu",           label: "Menu",            icon: UtensilsCrossed },
   { href: "/staff",          label: "Staff",           icon: Users },
+  { href: "/inventory",      label: "Inventory",       icon: PackageOpen },
   { href: "/audit",          label: "Staff Logs",      icon: ClipboardList },
 ];
 

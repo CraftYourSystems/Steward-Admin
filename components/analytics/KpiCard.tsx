@@ -45,7 +45,7 @@ export const KpiCard = memo(function KpiCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-[20px] border border-white/10 bg-white/5",
+        "group relative overflow-hidden glass-card",
         // lg: accent top border for hero treatment
         isLg && "border-t-2 border-t-accent/40",
         isLg ? "p-6" : "p-4",
