@@ -54,37 +54,7 @@ export default function MarketingPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
-        <div className="relative overflow-hidden rounded-[20px] border border-white/10 bg-white/5 p-5 opacity-50">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-fg flex items-center gap-2">
-              <Ticket className="w-4 h-4 text-warning" />
-              Promo / Voucher Redemption
-            </h3>
-          </div>
-          <p className="text-3xl font-bold text-fg my-2">-- %</p>
-          <div className="absolute inset-0 bg-background/50 flex items-center justify-center backdrop-blur-[2px]">
-            <span className="text-xs font-semibold px-3 py-1 bg-surface-2 rounded-full border border-white/10">
-              No campaign system yet (Requires V3)
-            </span>
-          </div>
-        </div>
-        
-        <div className="relative overflow-hidden rounded-[20px] border border-white/10 bg-white/5 p-5 opacity-50">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-fg flex items-center gap-2">
-              <Megaphone className="w-4 h-4 text-primary" />
-              Campaign ROI
-            </h3>
-          </div>
-          <p className="text-3xl font-bold text-fg my-2">-- x</p>
-          <div className="absolute inset-0 bg-background/50 flex items-center justify-center backdrop-blur-[2px]">
-            <span className="text-xs font-semibold px-3 py-1 bg-surface-2 rounded-full border border-white/10">
-              No campaign system yet (Requires V3)
-            </span>
-          </div>
-        </div>
-      </div>
+
 
       <div className="rounded-[20px] border border-white/10 bg-white/5 p-4 sm:p-5 flex flex-col md:flex-row gap-6">
         <div className="flex-1">

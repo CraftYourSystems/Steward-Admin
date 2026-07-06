@@ -185,9 +185,13 @@ export default function ReportsPage() {
                 </div>
                 <div className="flex-1 bg-black/5 p-4 rounded-lg flex justify-between items-center">
                   <div className="text-sm font-bold">Labor Cost %</div>
-                  <div className="text-xs font-semibold px-2 py-1 bg-warning/20 text-warning-800 rounded">
-                    Requires V3 Config
-                  </div>
+                  {report.data.finance.laborCostPct !== null && report.data.finance.laborCostPct !== undefined ? (
+                    <div className="text-2xl font-black">{report.data.finance.laborCostPct.toFixed(1)}%</div>
+                  ) : (
+                    <div className="text-xs font-semibold px-2 py-1 bg-warning/20 text-warning-800 rounded">
+                      Requires V3 Config
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
