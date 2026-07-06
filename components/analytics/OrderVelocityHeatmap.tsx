@@ -105,8 +105,27 @@ export function OrderVelocityHeatmap({ totalOrders, loading, heatmap, activeRang
           style={{ gridTemplateColumns: "repeat(24, minmax(0, 1fr))" }}
         >
           {blocksToRender.map((block, i) => {
-            const hoursAgo = 47 - i;
-            const timeLabel = hoursAgo === 0 ? "Now" : `${hoursAgo}h ago`;
+            let timeLabel = "";
+            if (activeRange === "30d") {
+              const hoursAgo = Math.round(((47 - i) * 30 * 24) / 47);
+              if (hoursAgo >= 24) {
+                const daysAgo = Math.round(hoursAgo / 24);
+                timeLabel = daysAgo === 1 ? "1 day ago" : `${daysAgo} days ago`;
+              } else {
+                timeLabel = hoursAgo === 0 ? "Now" : `${hoursAgo}h ago`;
+              }
+            } else if (activeRange === "7d") {
+              const hoursAgo = Math.round(((47 - i) * 7 * 24) / 47);
+              if (hoursAgo >= 24) {
+                const daysAgo = Math.round(hoursAgo / 24);
+                timeLabel = daysAgo === 1 ? "1 day ago" : `${daysAgo} days ago`;
+              } else {
+                timeLabel = hoursAgo === 0 ? "Now" : `${hoursAgo}h ago`;
+              }
+            } else {
+              const hoursAgo = 47 - i;
+              timeLabel = hoursAgo === 0 ? "Now" : `${hoursAgo}h ago`;
+            }
             const tooltipText = `${timeLabel} (${getIntensityLabel(block.intensity)})`;
 
             return (
