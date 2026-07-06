@@ -138,7 +138,6 @@ export default function LoginPageContent() {
   const searchParams = useSearchParams();
   const { accessToken, user, setAuth } = useAuthStore();
 
-  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<AuthTab>(AUTH_TABS.ADMIN);
   const [adminError, setAdminError] = useState<string | null>(null);
   const [staffError, setStaffError] = useState<string | null>(null);
@@ -146,21 +145,6 @@ export default function LoginPageContent() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSent, setResendSent] = useState(false);
   const exchangedOAuthCodeRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-bg text-fg">
-        <div className="flex flex-col items-center gap-2.5">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-fg-subtle border-t-fg" />
-          <p className="text-[11px] font-medium text-fg-subtle tracking-wide uppercase">Loading</p>
-        </div>
-      </div>
-    );
-  }
 
   const handleResendVerification = async () => {
     if (!resendEmail || resendLoading) return;

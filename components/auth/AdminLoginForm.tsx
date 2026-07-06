@@ -53,6 +53,7 @@ export function AdminLoginForm({ onSubmit, serverError }: AdminLoginFormProps) {
           type="email"
           placeholder="you@restaurant.com"
           autoComplete="email"
+          suppressHydrationWarning={true}
           {...register('email')}
         />
         {errors.email && (
@@ -81,6 +82,7 @@ export function AdminLoginForm({ onSubmit, serverError }: AdminLoginFormProps) {
             placeholder="••••••••"
             autoComplete="current-password"
             className="pr-10"
+            suppressHydrationWarning={true}
             {...register('password')}
           />
           <button

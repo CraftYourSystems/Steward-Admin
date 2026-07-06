@@ -256,6 +256,7 @@ export function StaffLoginForm({ onSubmit, serverError }: StaffLoginFormProps) {
             maxLength={20}
             autoFocus={showCodeInput}
             className="uppercase tracking-widest font-mono text-center text-[15px]"
+            suppressHydrationWarning={true}
             {...register('restaurantCode')}
           />
           {errors.restaurantCode && (
