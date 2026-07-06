@@ -30,9 +30,6 @@ export function OrderVelocityHeatmap({ totalOrders, loading, heatmap }: OrderVel
   // If we don't have heatmap data yet (e.g. backend still returning old shape), render dummy for now
   const dummyBlocks = Array.from({ length: 48 }).map((_, i) => ({ id: `dummy-${i}`, intensity: Math.floor(Math.random() * 4) }));
   
-  // Flatten a 7x24 to just render the most recent 48 hours for visual fit, 
-  // or just render the first 48 blocks from the heatmap array if we want a full grid.
-  // The UI is currently a simple flex wrap. Let's render the last 48 hours if possible.
   let blocksToRender = dummyBlocks;
   if (heatmap && heatmap.length > 0) {
     // Sort by day and hour
@@ -41,8 +38,25 @@ export function OrderVelocityHeatmap({ totalOrders, loading, heatmap }: OrderVel
       return a.dayOfWeek - b.dayOfWeek;
     });
     // Take the last 48 entries (e.g., last 2 days)
-    blocksToRender = sorted.slice(-48).map(h => ({ id: `real-${h.dayOfWeek}-${h.hour}`, intensity: h.intensity }));
+    const sliced = sorted.slice(-48);
+    // Pad with empty blocks if we have less than 48 hours of data
+    if (sliced.length < 48) {
+      const padding = Array.from({ length: 48 - sliced.length }).map((_, i) => ({ id: `pad-${i}`, intensity: 0 }));
+      blocksToRender = [...padding, ...sliced.map(h => ({ id: `real-${h.dayOfWeek}-${h.hour}`, intensity: h.intensity }))];
+    } else {
+      blocksToRender = sliced.map(h => ({ id: `real-${h.dayOfWeek}-${h.hour}`, intensity: h.intensity }));
+    }
   }
+
+  const getIntensityLabel = (intensity: number) => {
+    switch (intensity) {
+      case 0: return "No orders";
+      case 1: return "Low activity";
+      case 2: return "Medium activity";
+      case 3: return "Peak velocity";
+      default: return "";
+    }
+  };
 
   return (
     <motion.div
@@ -67,19 +81,40 @@ export function OrderVelocityHeatmap({ totalOrders, loading, heatmap }: OrderVel
       </div>
 
       <div className="mt-auto">
-        <div className="flex flex-wrap gap-1">
-          {blocksToRender.map((block, i) => (
-            <motion.div
-              key={block.id}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 + i * 0.01, duration: 0.3 }}
-              className={`h-[14px] w-[14px] rounded-sm ${getBlockColor(block.intensity)} border border-white/5`}
-            />
-          ))}
+        {/* Render a clean 2x24 grid (Day 1 and Day 2) */}
+        <div 
+          className="grid gap-1 select-none"
+          style={{ gridTemplateColumns: "repeat(24, minmax(0, 1fr))" }}
+        >
+          {blocksToRender.map((block, i) => {
+            const hoursAgo = 47 - i;
+            const timeLabel = hoursAgo === 0 ? "Now" : `${hoursAgo}h ago`;
+            const tooltipText = `${timeLabel} (${getIntensityLabel(block.intensity)})`;
+
+            return (
+              <motion.div
+                key={block.id}
+                title={tooltipText}
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 + i * 0.005, duration: 0.2 }}
+                className={`aspect-square w-full rounded-[2px] ${getBlockColor(block.intensity)} border border-white/5 cursor-pointer hover:border-accent hover:scale-110 transition-all`}
+              />
+            );
+          })}
         </div>
         <div className="flex justify-between items-center mt-3 text-[10px] text-fg-muted uppercase tracking-widest font-semibold">
           <span>48h Ago</span>
+          
+          <div className="flex items-center gap-1 normal-case tracking-normal text-[9px] font-medium text-fg-subtle">
+            <span className="text-fg-muted">0</span>
+            <div className="h-2 w-2 rounded-sm bg-white/5 border border-white/5" />
+            <div className="h-2 w-2 rounded-sm bg-info/30" />
+            <div className="h-2 w-2 rounded-sm bg-info/60" />
+            <div className="h-2 w-2 rounded-sm bg-info" />
+            <span className="text-fg-muted mr-1">Peak</span>
+          </div>
+
           <span>Now</span>
         </div>
       </div>
