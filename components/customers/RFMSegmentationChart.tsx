@@ -26,10 +26,10 @@ export function RFMSegmentationChart({ data, loading }: Props) {
   const total = segments.champions + segments.atRisk + segments.new + segments.lost;
 
   const boxes = [
-    { label: "Champions", desc: "Frequent, recent, high spend", count: segments.champions, color: "bg-success text-success-fg", border: "border-success/20" },
-    { label: "New", desc: "1 order, recent", count: segments.new, color: "bg-primary text-primary-fg", border: "border-primary/20" },
-    { label: "At-Risk", desc: "Multiple orders, >30d inactive", count: segments.atRisk, color: "bg-warning text-warning-fg", border: "border-warning/20" },
-    { label: "Lost", desc: ">90d inactive", count: segments.lost, color: "bg-danger text-danger-fg", border: "border-danger/20" },
+    { label: "Champions", desc: "Frequent, recent, high spend", count: segments.champions, color: "bg-success text-white", border: "border-success/20" },
+    { label: "New", desc: "1 order, recent", count: segments.new, color: "bg-primary text-primary-foreground", border: "border-primary/20" },
+    { label: "At-Risk", desc: "Multiple orders, >30d inactive", count: segments.atRisk, color: "bg-warning text-black", border: "border-warning/20" },
+    { label: "Lost", desc: ">90d inactive", count: segments.lost, color: "bg-danger text-white", border: "border-danger/20" },
   ];
 
   return (

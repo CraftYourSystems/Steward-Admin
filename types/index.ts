@@ -322,6 +322,7 @@ export interface KitchenOrder {
   items: KitchenOrderItem[];
   paymentMethod?: string;
   paymentStatus?: string;
+  delayReason?: string | null;
 }
 
 // Active states shown on the kanban board

@@ -73,19 +73,21 @@ export function useKitchenStatusMutation() {
     mutationFn: async ({
       orderId,
       status,
+      delayReason,
     }: {
       orderId: string;
       status: OrderStatus;
+      delayReason?: string | null;
     }) => {
       const { data } = await api.patch<ApiSuccess<KitchenOrder>>(
         `/orders/kitchen/${orderId}/status`,
-        { status }
+        { status, delayReason }
       );
       return data.data;
     },
 
     // ── Optimistic update: move card instantly ────────────────────────────
-    async onMutate({ orderId, status }) {
+    async onMutate({ orderId, status, delayReason }) {
       await queryClient.cancelQueries({ queryKey: KITCHEN_ORDERS_QUERY_KEY });
       const previousOrders = queryClient.getQueryData<KitchenOrder[]>(
         KITCHEN_ORDERS_QUERY_KEY
@@ -104,6 +106,7 @@ export function useKitchenStatusMutation() {
               ? {
                   ...order,
                   status,
+                  ...(delayReason !== undefined ? { delayReason } : {}),
                   // Stamp startedPreparingAt locally so the timer starts immediately
                   ...(status === "PREPARING" && !order.startedPreparingAt
                     ? { startedPreparingAt: new Date().toISOString() }

@@ -129,6 +129,33 @@ export const StatusActions = memo(function StatusActions({ order }: StatusAction
           </button>
         )}
       </div>
+
+      {(order.status === "NEW" || order.status === "PREPARING") && (
+        <div className="mt-2 pt-2 border-t border-white/[0.04]">
+          <select
+            value={order.delayReason || ""}
+            disabled={isPending}
+            onChange={(e) => {
+              mutate({
+                orderId: order.id,
+                status: order.status,
+                delayReason: e.target.value || null,
+              });
+            }}
+            className={cn(
+              "w-full h-8 px-2 rounded-lg text-[11px] font-semibold bg-white/5 border border-white/10 text-fg-subtle cursor-pointer transition-colors focus:outline-none focus:border-warning/35",
+              order.delayReason && "text-warning border-warning/20 bg-warning/5"
+            )}
+          >
+            <option value="" className="bg-[#0F0F0F] text-fg-muted">No Delay / Clear</option>
+            <option value="Kitchen Understaffed" className="bg-[#0F0F0F] text-fg">Kitchen Understaffed</option>
+            <option value="Ingredient Shortage" className="bg-[#0F0F0F] text-fg">Ingredient Shortage</option>
+            <option value="Equipment Issue" className="bg-[#0F0F0F] text-fg">Equipment Issue</option>
+            <option value="High Order Surge" className="bg-[#0F0F0F] text-fg">High Order Surge</option>
+            <option value="Other Kitchen Delay" className="bg-[#0F0F0F] text-fg">Other Kitchen Delay</option>
+          </select>
+        </div>
+      )}
     </div>
   );
 });

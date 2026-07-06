@@ -22,20 +22,17 @@ function getRange(range: QuickRange) {
 export default function ReportsPage() {
   const [activeRange, setActiveRange] = useState<QuickRange>("7d");
   const [email, setEmail] = useState("");
-  const [generateReady, setGenerateReady] = useState(false);
+  const [queryRange, setQueryRange] = useState<{ from: string; to: string } | null>(null);
   
-  const params = useMemo(() => getRange(activeRange), [activeRange]);
-  
-  // Only fetch when generate ready
-  const report = useGeneratedReport(params, generateReady);
+  // Only fetch when queryRange is set
+  const report = useGeneratedReport(queryRange || { from: "", to: "" }, !!queryRange);
 
   const handlePrint = () => {
     window.print();
   };
 
   const handleGenerate = () => {
-    setGenerateReady(true);
-    report.refetch();
+    setQueryRange(getRange(activeRange));
   };
 
   return (
@@ -52,10 +49,10 @@ export default function ReportsPage() {
             {["7d", "30d", "90d"].map(r => (
               <button
                 key={r}
-                onClick={() => { setActiveRange(r as QuickRange); setGenerateReady(false); }}
+                onClick={() => { setActiveRange(r as QuickRange); setQueryRange(null); }}
                 className={cn(
                   "px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wider transition-colors",
-                  activeRange === r ? "bg-primary text-primary-fg" : "text-fg-muted hover:text-fg"
+                  activeRange === r ? "bg-primary text-primary-foreground" : "text-fg-muted hover:text-fg"
                 )}
               >
                 {r === "7d" ? "Weekly" : r === "30d" ? "Monthly" : "Quarterly"}
@@ -87,27 +84,27 @@ export default function ReportsPage() {
       </div>
 
       {/* ── Report Preview Area ──────────────────────────────────────────────── */}
-      {!generateReady && (
+      {!queryRange && (
         <div className="h-[400px] rounded-xl border border-dashed border-white/20 flex flex-col items-center justify-center text-fg-muted print:hidden">
           <FileText className="w-12 h-12 mb-4 opacity-50" />
           <p>Select a period and click Generate to view the report.</p>
         </div>
       )}
 
-      {generateReady && report.isLoading && (
+      {queryRange && report.isLoading && (
         <div className="h-[400px] rounded-xl border border-white/10 bg-white/5 flex flex-col items-center justify-center print:hidden">
           <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin mb-4" />
           <p className="text-fg-subtle">Compiling report data...</p>
         </div>
       )}
 
-      {generateReady && report.data && (
+      {queryRange && report.data && (
         <div className="relative">
           {/* Print controls overlay */}
           <div className="absolute top-4 right-4 flex gap-2 print:hidden z-10">
             <button 
               onClick={handlePrint}
-              className="h-8 px-3 flex items-center gap-2 bg-primary text-primary-fg font-semibold rounded-md text-xs hover:brightness-110 shadow-lg"
+              className="h-8 px-3 flex items-center gap-2 bg-primary text-primary-foreground font-semibold rounded-md text-xs hover:brightness-110 shadow-lg"
             >
               <Printer className="w-3.5 h-3.5" />
               Print to PDF
