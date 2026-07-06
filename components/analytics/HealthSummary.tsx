@@ -7,9 +7,10 @@ import { ArrowRight, Sparkles, AlertCircle, CheckCircle2 } from "lucide-react";
 interface HealthSummaryProps {
   data?: AnalyticsSummary;
   loading: boolean;
+  activeRange: string;
 }
 
-export function HealthSummary({ data, loading }: HealthSummaryProps) {
+export function HealthSummary({ data, loading, activeRange }: HealthSummaryProps) {
   if (loading) {
     return (
       <div className="flex flex-col space-y-4">
@@ -23,10 +24,16 @@ export function HealthSummary({ data, loading }: HealthSummaryProps) {
 
   const { totalRevenue, completedOrders, totalOrders, avgPrepTimeMins } = data;
 
+  // Determine range label
+  let rangeLabel = "today";
+  if (activeRange === "yesterday") rangeLabel = "yesterday";
+  else if (activeRange === "7d") rangeLabel = "in the last 7 days";
+  else if (activeRange === "30d") rangeLabel = "in the last 30 days";
+
   // Determine health state
   let state: "optimal" | "warning" | "critical" = "optimal";
   let title = "Operations are running smoothly.";
-  let description = `You have completed ${completedOrders} orders today, generating ${formatCurrency(totalRevenue)} in revenue. The kitchen is maintaining an average prep time of ${avgPrepTimeMins.toFixed(0)} minutes.`;
+  let description = `You have completed ${completedOrders} orders ${rangeLabel}, generating ${formatCurrency(totalRevenue)} in revenue. The kitchen is maintaining an average prep time of ${avgPrepTimeMins.toFixed(0)} minutes.`;
 
   if (avgPrepTimeMins > 25) {
     state = "warning";

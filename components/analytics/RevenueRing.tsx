@@ -5,11 +5,24 @@ import { IndianRupee, TrendingUp } from "lucide-react";
 
 interface RevenueRingProps {
   current: number;
-  target: number;
   loading: boolean;
+  activeRange: string;
 }
 
-export function RevenueRing({ current, target, loading }: RevenueRingProps) {
+export function RevenueRing({ current, loading, activeRange }: RevenueRingProps) {
+  let label = "Today's Revenue";
+  let target = 50000;
+  if (activeRange === "yesterday") {
+    label = "Yesterday's Revenue";
+    target = 50000;
+  } else if (activeRange === "7d") {
+    label = "7-Day Revenue";
+    target = 350000;
+  } else if (activeRange === "30d") {
+    label = "30-Day Revenue";
+    target = 1500000;
+  }
+
   const radius = 60;
   const circumference = 2 * Math.PI * radius;
   const percentage = target > 0 ? Math.min(current / target, 1) : 0;
@@ -61,7 +74,7 @@ export function RevenueRing({ current, target, loading }: RevenueRingProps) {
       </div>
 
       <div className="space-y-1">
-        <h3 className="label-xs text-fg-muted">Today's Revenue</h3>
+        <h3 className="label-xs text-fg-muted">{label}</h3>
         <div className="text-4xl font-bold tracking-tighter text-fg flex items-baseline gap-1">
           {formatCurrency(current).split(".")[0]}
           <span className="text-lg text-fg-subtle">

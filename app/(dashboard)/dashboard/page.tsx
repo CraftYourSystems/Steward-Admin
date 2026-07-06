@@ -319,13 +319,13 @@ export default function DashboardPage() {
       </motion.p>
 
       {/* ── Health Summary ─────────────────────────────────────────────────── */}
-      <HealthSummary data={summary.data} loading={loading} />
+      <HealthSummary data={summary.data} loading={loading} activeRange={activeRange} />
 
       {/* ── Bespoke Data Visualizations ────────────────────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-6">
-        <RevenueRing current={d?.totalRevenue || 0} target={50000} loading={loading} />
+        <RevenueRing current={Number(d?.totalRevenue || 0)} loading={loading} activeRange={activeRange} />
         <KitchenThroughput avgPrepTimeMins={d?.avgPrepTimeMins || 0} loading={loading} />
-        <OrderVelocityHeatmap totalOrders={d?.totalOrders || 0} loading={loading} heatmap={peakHourQuery.data?.heatmap} />
+        <OrderVelocityHeatmap totalOrders={d?.totalOrders || 0} loading={loading} heatmap={peakHourQuery.data?.heatmap} activeRange={activeRange} />
       </div>
 
       {/* ── Section label ─────────────────────────────────────────────────── */}

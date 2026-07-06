@@ -7,9 +7,27 @@ interface OrderVelocityProps {
   totalOrders: number;
   loading: boolean;
   heatmap?: HeatmapEntry[];
+  activeRange: string;
 }
 
-export function OrderVelocityHeatmap({ totalOrders, loading, heatmap }: OrderVelocityProps) {
+export function OrderVelocityHeatmap({ totalOrders, loading, heatmap, activeRange }: OrderVelocityProps) {
+  let startLabel = "48h Ago";
+  let endLabel = "Now";
+  let descriptionLabel = "Order Velocity";
+  if (activeRange === "yesterday") {
+    startLabel = "Yesterday";
+    endLabel = "End of Day";
+    descriptionLabel = "Yesterday's Velocity";
+  } else if (activeRange === "7d") {
+    startLabel = "7-Day Velocity"; // wait, description is better as "Order Velocity" or "7-Day Order Volume"
+    startLabel = "7 Days Ago";
+    endLabel = "Now";
+    descriptionLabel = "7-Day Velocity";
+  } else if (activeRange === "30d") {
+    startLabel = "30 Days Ago";
+    endLabel = "Now";
+    descriptionLabel = "30-Day Velocity";
+  }
   if (loading) {
     return (
       <div className="card-premium p-6 flex flex-col justify-between animate-shimmer min-h-[160px]">
@@ -69,7 +87,7 @@ export function OrderVelocityHeatmap({ totalOrders, loading, heatmap }: OrderVel
         <div className="space-y-1">
           <h3 className="label-xs text-fg-muted flex items-center gap-1.5">
             <Activity className="h-3.5 w-3.5" />
-            Order Velocity
+            {descriptionLabel}
           </h3>
           <div className="text-3xl font-bold tracking-tighter text-fg flex items-baseline gap-1">
             {totalOrders}
@@ -104,7 +122,7 @@ export function OrderVelocityHeatmap({ totalOrders, loading, heatmap }: OrderVel
           })}
         </div>
         <div className="flex justify-between items-center mt-3 text-[10px] text-fg-muted uppercase tracking-widest font-semibold">
-          <span>48h Ago</span>
+          <span>{startLabel}</span>
           
           <div className="flex items-center gap-1 normal-case tracking-normal text-[9px] font-medium text-fg-subtle">
             <span className="text-fg-muted">0</span>
@@ -115,7 +133,7 @@ export function OrderVelocityHeatmap({ totalOrders, loading, heatmap }: OrderVel
             <span className="text-fg-muted mr-1">Peak</span>
           </div>
 
-          <span>Now</span>
+          <span>{endLabel}</span>
         </div>
       </div>
     </motion.div>
