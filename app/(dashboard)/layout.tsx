@@ -32,6 +32,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { isReady, isAuthenticated, isSlowConnection, user } = useRequireAuth();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const isKitchenPath = KITCHEN_PATHS.some((p) => pathname.startsWith(p));
   const isAdmin       = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
@@ -39,6 +40,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useSocket({ enabled: isAdmin && isDashboard });
   useKitchenSocket({ enabled: isKitchenPath });
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem("steward:sidebar-collapsed");
+    if (stored) setSidebarCollapsed(stored === "true");
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("steward:sidebar-collapsed", String(sidebarCollapsed));
+  }, [sidebarCollapsed]);
 
   // ── Role + permission guard ───────────────────────────────────────────────
   // Only runs after the auth state has settled (isReady = true).
@@ -119,7 +129,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg text-fg">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
+      />
       <div className="flex flex-1 flex-col overflow-hidden min-w-0 bg-bg">
         <Header onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin relative">

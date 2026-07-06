@@ -6,7 +6,8 @@ import {
   LayoutDashboard, ShoppingCart, UtensilsCrossed, Users,
   LogOut, X, Settings, ToggleLeft, WifiOff, Kanban,
   Soup, ClipboardList, BanknoteIcon, Home, BarChart3, ArrowLeft,
-  Megaphone, PackageOpen, Activity, Sparkles, BrainCircuit
+  Megaphone, PackageOpen, Activity, Sparkles, BrainCircuit,
+  PanelLeftClose, PanelLeftOpen
 } from "lucide-react";
 import { usePlatformStore } from "@/stores/platform.store";
 import { cn } from "@/lib/utils";
@@ -72,12 +73,14 @@ function NavLink({
   icon: Icon,
   onClose,
   accentColor,
+  collapsed = false,
 }: {
   href: string;
   label: string;
   icon: React.ElementType;
   onClose: () => void;
   accentColor?: string;
+  collapsed?: boolean;
 }) {
   const pathname = usePathname();
   const active =
@@ -95,8 +98,10 @@ function NavLink({
       <Link
         href={href}
         onClick={onClose}
+        title={collapsed ? label : undefined}
         className={cn(
-          "group relative flex items-center gap-3 h-9 px-3 rounded-lg text-[13px] font-medium transition-all duration-300 ease-out active:scale-[0.98]",
+          "group relative flex items-center h-9 rounded-lg text-[13px] font-medium transition-all duration-300 ease-out active:scale-[0.98]",
+          collapsed ? "justify-center gap-0 px-0" : "gap-3 px-3",
           active
             ? "bg-surface-2 text-fg shadow-sm"
             : "text-fg-muted hover:bg-surface-2/50 hover:text-fg"
@@ -112,7 +117,15 @@ function NavLink({
           className={cn("h-4 w-4 shrink-0 transition-all duration-300", active ? "scale-110" : "text-fg-subtle group-hover:text-fg-muted")}
           style={active ? { color: accentColor ?? "hsl(var(--accent))" } : undefined}
         />
-        <span className={cn("transition-transform duration-300", active && "translate-x-0.5")}>{label}</span>
+        <span
+          className={cn(
+            "min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300",
+            collapsed ? "w-0 opacity-0" : "w-auto opacity-100",
+            active && !collapsed && "translate-x-0.5"
+          )}
+        >
+          {label}
+        </span>
       </Link>
     </li>
   );
@@ -120,9 +133,16 @@ function NavLink({
 
 // ─── Section label ────────────────────────────────────────────────────────────
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function SectionLabel({ children, collapsed = false }: { children: React.ReactNode; collapsed?: boolean }) {
   return (
-    <div className="label-xs px-2.5 mb-1.5 mt-0.5">{children}</div>
+    <div
+      className={cn(
+        "label-xs mb-1.5 mt-0.5 overflow-hidden whitespace-nowrap transition-all duration-300",
+        collapsed ? "h-px px-1 opacity-20" : "px-2.5 opacity-100"
+      )}
+    >
+      {collapsed ? <span className="block h-px bg-border" /> : children}
+    </div>
   );
 }
 
@@ -131,9 +151,11 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
-export function Sidebar({ open, onClose }: SidebarProps) {
+export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -178,13 +200,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         className={cn(
           "fixed left-0 top-0 z-50 flex h-full w-[240px] flex-col",
           "bg-transparent border-r border-white/5",
-          "transition-transform duration-200 lg:relative lg:translate-x-0",
+          "transition-[transform,width] duration-300 ease-out lg:relative lg:translate-x-0",
+          collapsed ? "lg:w-[72px]" : "lg:w-[240px]",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Brand */}
-        <div className="flex h-14 items-center justify-between border-b border-border px-4 shrink-0">
-          <div className="flex items-center gap-2.5">
+        <div className={cn("flex h-14 items-center justify-between border-b border-border shrink-0 transition-all duration-300", collapsed ? "px-3" : "px-4")}>
+          <div className={cn("flex min-w-0 items-center transition-all duration-300", collapsed ? "gap-0" : "gap-2.5")}>
             {/* Logo mark — role-tinted */}
             <div
               className={cn("flex h-7 w-7 items-center justify-center rounded-md", cfg.logoBg)}
@@ -192,7 +215,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             >
               <span className={cn("text-[11px] font-bold", cfg.logoText ?? "text-white")}>S</span>
             </div>
-            <div className="leading-none">
+            <div className={cn("min-w-0 overflow-hidden leading-none transition-all duration-300", collapsed ? "w-0 opacity-0" : "w-[140px] opacity-100")}>
               <div className="text-[13px] font-semibold text-fg">Steward</div>
               <div className="flex items-center gap-1 mt-0.5">
                 <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse shrink-0", cfg.statusDot)} />
