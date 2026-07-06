@@ -250,10 +250,10 @@ function AddConfigDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
 
   const isFormValid = () => {
     if (provider === "razorpay") {
-      return !!credentials.key_id && !!credentials.key_secret;
+      return !!credentials.keyId && !!credentials.keySecret;
     }
     if (provider === "phonepe") {
-      return !!credentials.merchant_id && !!credentials.salt_key && !!credentials.salt_index;
+      return !!credentials.merchantId && !!credentials.saltKey && !!credentials.saltIndex;
     }
     return false;
   };
@@ -305,8 +305,8 @@ function AddConfigDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
                   <label className="text-[11px] text-[rgba(var(--on-surface-rgb),0.6)]">Key ID</label>
                   <Input 
                     placeholder="rzp_test_..." 
-                    value={credentials.key_id || ""}
-                    onChange={(e) => setCredentials(prev => ({ ...prev, key_id: e.target.value }))}
+                    value={credentials.keyId || ""}
+                    onChange={(e) => setCredentials(prev => ({ ...prev, keyId: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-1">
@@ -314,8 +314,8 @@ function AddConfigDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
                   <Input 
                     type="password"
                     placeholder="••••••••••••" 
-                    value={credentials.key_secret || ""}
-                    onChange={(e) => setCredentials(prev => ({ ...prev, key_secret: e.target.value }))}
+                    value={credentials.keySecret || ""}
+                    onChange={(e) => setCredentials(prev => ({ ...prev, keySecret: e.target.value }))}
                   />
                 </div>
               </>
@@ -327,8 +327,8 @@ function AddConfigDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
                   <label className="text-[11px] text-[rgba(var(--on-surface-rgb),0.6)]">Merchant ID</label>
                   <Input 
                     placeholder="MERCHANTUAT" 
-                    value={credentials.merchant_id || ""}
-                    onChange={(e) => setCredentials(prev => ({ ...prev, merchant_id: e.target.value }))}
+                    value={credentials.merchantId || ""}
+                    onChange={(e) => setCredentials(prev => ({ ...prev, merchantId: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-1">
@@ -336,16 +336,16 @@ function AddConfigDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
                   <Input 
                     type="password"
                     placeholder="••••••••••••" 
-                    value={credentials.salt_key || ""}
-                    onChange={(e) => setCredentials(prev => ({ ...prev, salt_key: e.target.value }))}
+                    value={credentials.saltKey || ""}
+                    onChange={(e) => setCredentials(prev => ({ ...prev, saltKey: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[11px] text-[rgba(var(--on-surface-rgb),0.6)]">Salt Index</label>
                   <Input 
                     placeholder="1" 
-                    value={credentials.salt_index || ""}
-                    onChange={(e) => setCredentials(prev => ({ ...prev, salt_index: e.target.value }))}
+                    value={credentials.saltIndex || ""}
+                    onChange={(e) => setCredentials(prev => ({ ...prev, saltIndex: e.target.value }))}
                   />
                 </div>
               </>
