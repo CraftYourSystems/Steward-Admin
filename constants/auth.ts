@@ -16,13 +16,13 @@ export function getRedirectPath(role: UserRole | string): string {
     case 'SUPER_ADMIN':
       return '/platform';
     case 'ADMIN':
-      return '/dashboard';
+      return '/live-ops';
     case 'KITCHEN_STAFF':
       return '/kitchen-home';
     case 'WAITER':
       return '/waiter-home';
     default:
-      return '/dashboard';
+      return '/live-ops';
   }
 }
 

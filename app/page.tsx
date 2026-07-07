@@ -5,5 +5,5 @@ import { redirect } from "next/navigation";
  * The dashboard layout handles auth-gating and role routing.
  */
 export default function RootPage() {
-  redirect("/dashboard");
+  redirect("/live-ops");
 }

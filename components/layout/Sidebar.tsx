@@ -18,7 +18,6 @@ import { hasPermission, Permissions } from "@/lib/permissions/permissions";
 // ─── Nav definitions ──────────────────────────────────────────────────────────
 
 const navAdmin = [
-  { href: "/dashboard",      label: "Overview",        icon: LayoutDashboard },
   { href: "/live-ops",       label: "Live Ops",        icon: Activity },
   { href: "/insights",       label: "AI Insights",     icon: Sparkles },
   { href: "/ai",             label: "Predictive AI",   icon: BrainCircuit },
