@@ -46,7 +46,8 @@ export function OAuthButtons({ apiUrl }: OAuthButtonsProps) {
     if (!base) return;
     setLoading(true);
     // Redirect to backend OAuth initiation endpoint
-    const redirectUri = typeof window !== "undefined" ? window.location.origin : "";
+    // Ensure we redirect back to the /login page where the exchange logic lives
+    const redirectUri = typeof window !== "undefined" ? `${window.location.origin}/login` : "";
     window.location.href = `${base}/v1/auth/google?redirect_uri=${encodeURIComponent(redirectUri)}`;
   };
 
