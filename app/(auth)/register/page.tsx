@@ -113,6 +113,11 @@ export default function RegisterPage() {
         return;
       }
 
+      if (!data.data.accessToken || !data.data.user || !data.data.restaurant) {
+        setServerError('Registration succeeded, but sign-in is pending. Please verify your email and then sign in.');
+        return;
+      }
+
       if (data.data.csrfToken) {
         setCsrfToken(data.data.csrfToken);
       }
@@ -296,11 +301,11 @@ export default function RegisterPage() {
 
             <p className="mt-4 text-[11px] text-fg-subtle text-center">
               By registering you agree to our{' '}
-              <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="hover:text-fg-muted underline underline-offset-2">
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="hover:text-fg-muted underline underline-offset-2">
                 Terms of Service
               </a>{' '}
               and{' '}
-              <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-fg-muted underline underline-offset-2">
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-fg-muted underline underline-offset-2">
                 Privacy Policy
               </a>
               .
@@ -372,4 +377,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
