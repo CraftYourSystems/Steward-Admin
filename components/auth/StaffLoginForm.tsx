@@ -200,7 +200,7 @@ export function StaffLoginForm({ onSubmit, serverError }: StaffLoginFormProps) {
   const handleGoogleSignIn = () => {
     if (!googleBaseUrl) return;
     setGoogleLoading(true);
-    const redirectUri = typeof window !== 'undefined' ? `${window.location.origin}/login` : '';
+    const redirectUri = typeof window !== 'undefined' ? window.location.origin : '';
     window.location.href = `${googleBaseUrl}/v1/auth/google?role=staff&redirect_uri=${encodeURIComponent(redirectUri)}`;
   };
 
