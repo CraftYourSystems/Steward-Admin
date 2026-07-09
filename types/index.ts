@@ -23,6 +23,7 @@ export interface User {
   phone?: string | null;
   role: UserRole;
   restaurantId: string | null;
+  currentBranchId?: string | null;
   avatarUrl?: string | null;
   authProvider?: string;
   emailVerified?: boolean;

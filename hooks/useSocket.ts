@@ -64,6 +64,7 @@ export function useSocket({ enabled = true }: UseSocketOptions = {}) {
   }, [queryClient]);
 
   const restaurantId = user?.restaurantId;
+  const currentBranchId = user?.currentBranchId;
 
   const events = useMemo(() => ({
     "order:updated": handleOrderUpdated,
@@ -76,11 +77,15 @@ export function useSocket({ enabled = true }: UseSocketOptions = {}) {
   }), [handleOrderUpdated, handleOrderCreated, invalidateMenuItems]);
 
   const rooms = useMemo(
-    () =>
-      restaurantId
-        ? [`admin:${restaurantId}`, `restaurant:${restaurantId}`]
-        : [],
-    [restaurantId]
+    () => {
+      if (!restaurantId) return [];
+      const list = [`admin:${restaurantId}`, `restaurant:${restaurantId}`];
+      if (currentBranchId) {
+        list.push(`restaurant:${restaurantId}:branch:${currentBranchId}`);
+      }
+      return list;
+    },
+    [restaurantId, currentBranchId]
   );
 
   useBaseSocket({

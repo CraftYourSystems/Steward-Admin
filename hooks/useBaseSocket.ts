@@ -111,5 +111,5 @@ export function useBaseSocket({
       releaseSocket();
     };
      
-  }, [accessToken, user?.restaurantId, enabled]);
+  }, [accessToken, user?.restaurantId, user?.currentBranchId, enabled]);
 }

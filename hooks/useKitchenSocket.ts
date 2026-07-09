@@ -114,12 +114,21 @@ export function useKitchenSocket({ enabled = true }: UseKitchenSocketOptions = {
     "item:availability_changed": invalidateMenuItems,
   }), [handleNewOrder, handleOrderUpdated, invalidateMenuItems]);
 
+  const currentBranchId = user?.currentBranchId;
+
   // FIX: Memoize the rooms array so it has a stable reference across renders.
   // A new array literal on every render would not cause a reconnect (rooms is
   // excluded from deps in useBaseSocket), but it avoids unnecessary allocations.
   const rooms = useMemo(
-    () => (restaurantId ? [`kitchen:${restaurantId}`] : []),
-    [restaurantId]
+    () => {
+      if (!restaurantId) return [];
+      const list = [`restaurant:${restaurantId}`];
+      if (currentBranchId) {
+        list.push(`restaurant:${restaurantId}:branch:${currentBranchId}:kitchen`);
+      }
+      return list;
+    },
+    [restaurantId, currentBranchId]
   );
 
   useBaseSocket({
