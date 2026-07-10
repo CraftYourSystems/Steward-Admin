@@ -15,6 +15,25 @@ export type KitchenType = "MAIN" | "TIME_TAKING" | "READY_TO_SERVE";
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
+export interface BranchSummary {
+  id: string;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  isActive?: boolean;
+  createdAt?: string;
+}
+
+export interface QrCode {
+  id: string;
+  branchId: string;
+  code: string;
+  name: string | null;
+  tableNumber: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -24,6 +43,7 @@ export interface User {
   role: UserRole;
   restaurantId: string | null;
   currentBranchId?: string | null;
+  assignedBranchId?: string | null;
   avatarUrl?: string | null;
   authProvider?: string;
   emailVerified?: boolean;
@@ -40,6 +60,12 @@ export interface LoginResponse {
     slug: string;
     restaurantCode?: string;
   };
+  currentBranch?: BranchSummary | null;
+  accessibleBranches?: BranchSummary[];
+  requiresBranchSelection?: boolean;
+  branchSelectionToken?: string;
+  branches?: BranchSummary[];
+  expiresIn?: number;
   csrfToken?: string;
 }
 
@@ -52,6 +78,7 @@ export interface StaffLoginResponse {
     slug: string;
     restaurantCode: string;
   };
+  currentBranchId?: string | null;
   csrfToken?: string;
 }
 

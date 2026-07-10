@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Clock, IndianRupee, ShoppingBag, Store, TrendingUp } from 'lucide-react';
+import { Clock, IndianRupee, ShoppingBag, Store, TrendingUp, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { AdminLoginForm, type AdminLoginValues } from '@/components/auth/AdminLoginForm';
@@ -146,6 +146,11 @@ export default function LoginPageContent() {
   const [resendSent, setResendSent] = useState(false);
   const exchangedOAuthCodeRef = useRef<string | null>(null);
 
+  // Multi-branch selection pending state
+  const [pendingBranches, setPendingBranches] = useState<any[]>([]);
+  const [branchSelectionToken, setBranchSelectionToken] = useState<string | null>(null);
+  const [selectionLoading, setSelectionLoading] = useState(false);
+
   const handleResendVerification = async () => {
     if (!resendEmail || resendLoading) return;
     setResendLoading(true);
@@ -194,8 +199,15 @@ export default function LoginPageContent() {
           setCsrfToken(data.data.csrfToken);
         }
 
-        setAuth(data.data.accessToken, data.data.user, data.data.restaurant ?? null);
+        const token = data.data.accessToken;
+        setAuth(token, data.data.user, data.data.restaurant ?? null);
         toast.success('Signed in with Google');
+
+        if (data.data.user.restaurantId) {
+          const { data: meRes } = await api.get('/auth/me');
+          const me = meRes.data;
+          setAuth(token, me.user, me.restaurant, me.currentBranch, me.accessibleBranches);
+        }
 
         const newUrl = new URL(window.location.href);
         newUrl.searchParams.delete('code');
@@ -239,12 +251,26 @@ export default function LoginPageContent() {
         return;
       }
 
-      // Owner/admin login does not include a restaurant payload, so clear any
-      // stale restaurant info from a previous session.
+      if (data.data.requiresBranchSelection) {
+        setPendingBranches(data.data.branches || []);
+        setBranchSelectionToken(data.data.branchSelectionToken || null);
+        if (data.data.csrfToken) {
+          setCsrfToken(data.data.csrfToken);
+        }
+        return;
+      }
+
       if (data.data.csrfToken) {
         setCsrfToken(data.data.csrfToken);
       }
-      setAuth(data.data.accessToken, data.data.user, null);
+      const token = data.data.accessToken;
+      setAuth(token, data.data.user, null);
+
+      // Fetch full profile details
+      const { data: meRes } = await api.get('/auth/me');
+      const me = meRes.data;
+      setAuth(token, me.user, me.restaurant, me.currentBranch, me.accessibleBranches);
+
       toast.success('Signed in successfully');
       const next = searchParams.get('next');
       router.push(next ? decodeURIComponent(next) : getRedirectPath(role));
@@ -263,6 +289,50 @@ export default function LoginPageContent() {
     }
   };
 
+  const handleSelectBranch = async (branchId: string) => {
+    if (!branchSelectionToken || selectionLoading) return;
+    setSelectionLoading(true);
+    setAdminError(null);
+    try {
+      const { data } = await api.post<ApiSuccess<{ accessToken: string; user: any; csrfToken?: string }>>('/auth/select-branch', {
+        branchSelectionToken,
+        branchId,
+      });
+
+      if (data.data.csrfToken) {
+        setCsrfToken(data.data.csrfToken);
+      }
+
+      const token = data.data.accessToken;
+      setAuth(token, data.data.user, null);
+
+      // Fetch full details
+      const { data: meRes } = await api.get('/auth/me');
+      const me = meRes.data;
+
+      setAuth(token, me.user, me.restaurant, me.currentBranch, me.accessibleBranches);
+
+      toast.success('Signed in successfully');
+
+      // Clean up local states
+      setPendingBranches([]);
+      setBranchSelectionToken(null);
+
+      const next = searchParams.get('next');
+      router.push(next ? decodeURIComponent(next) : getRedirectPath(me.user.role));
+    } catch (err: any) {
+      setAdminError(err?.response?.data?.message ?? err?.response?.data?.error?.message ?? 'Failed to select branch');
+    } finally {
+      setSelectionLoading(false);
+    }
+  };
+
+  const handleCancelSelection = () => {
+    setPendingBranches([]);
+    setBranchSelectionToken(null);
+    setAdminError(null);
+  };
+
   const handleStaffSubmit = async (values: StaffLoginValues) => {
     setStaffError(null);
     try {
@@ -274,7 +344,14 @@ export default function LoginPageContent() {
       if (data.data.csrfToken) {
         setCsrfToken(data.data.csrfToken);
       }
-      setAuth(data.data.accessToken, data.data.user, data.data.restaurant);
+      const token = data.data.accessToken;
+      setAuth(token, data.data.user, data.data.restaurant);
+
+      // Fetch me
+      const { data: meRes } = await api.get('/auth/me');
+      const me = meRes.data;
+      setAuth(token, me.user, me.restaurant, me.currentBranch, me.accessibleBranches);
+
       // Remember the restaurant code so staff don't need to re-enter it next time
       saveRestaurantCode(values.restaurantCode, data.data.restaurant?.name);
       toast.success(`Welcome, ${data.data.user.firstName}!`);
@@ -301,81 +378,121 @@ export default function LoginPageContent() {
               <p className="text-[13px] text-fg-muted mt-1.5">Welcome back. Choose your login method below.</p>
             </div>
 
-            <div className="flex gap-1 p-1 rounded-xl bg-surface-2 border border-border mb-6">
-              <TabButton
-                active={activeTab === AUTH_TABS.ADMIN}
-                onClick={() => {
-                  setActiveTab(AUTH_TABS.ADMIN);
-                  setAdminError(null);
-                }}
-              >
-                Owner / Admin
-              </TabButton>
-              <TabButton
-                active={activeTab === AUTH_TABS.STAFF}
-                onClick={() => {
-                  setActiveTab(AUTH_TABS.STAFF);
-                  setStaffError(null);
-                }}
-              >
-                Staff
-              </TabButton>
-            </div>
+            {branchSelectionToken ? (
+              <div className="space-y-4">
+                <div className="mb-6">
+                  <h1 className="text-xl font-semibold tracking-tight text-fg">Select Operational Branch</h1>
+                  <p className="text-xs text-fg-muted mt-1.5 font-medium leading-relaxed">Your account has access to multiple branches. Choose one to operate:</p>
+                </div>
 
-            {activeTab === AUTH_TABS.ADMIN ? (
-              <>
-                <AdminLoginForm onSubmit={handleAdminSubmit} serverError={adminError} />
-
-                {resendEmail && !resendSent && (
-                  <div className="mt-3 rounded-lg border border-warning/30 bg-warning/8 px-3 py-2.5 flex items-center justify-between gap-3">
-                    <p className="text-[11px] text-warning">Did not receive the email?</p>
-                    <button
-                      type="button"
-                      onClick={handleResendVerification}
-                      disabled={resendLoading}
-                      className="text-[11px] font-semibold text-warning underline underline-offset-2 whitespace-nowrap disabled:opacity-50"
-                    >
-                      {resendLoading ? 'Sending...' : 'Resend'}
-                    </button>
+                {adminError && (
+                  <div className="rounded-lg border border-danger/20 bg-danger/5 p-3 text-xs text-danger leading-relaxed">
+                    {adminError}
                   </div>
                 )}
-                {resendSent && (
-                  <div className="mt-3 rounded-lg border border-success/30 bg-success/8 px-3 py-2.5 text-[11px] text-success">
-                    (sent) Verification email sent - check your inbox.
+
+                <div className="space-y-2 max-h-60 overflow-y-auto scrollbar-thin pr-1">
+                  {pendingBranches.map((branch) => (
+                    <button
+                      key={branch.id}
+                      type="button"
+                      disabled={selectionLoading}
+                      onClick={() => handleSelectBranch(branch.id)}
+                      className="flex w-full items-center justify-between rounded-xl border border-border bg-surface hover:bg-surface-2 p-3.5 text-xs font-semibold text-fg transition-all text-left group hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      <span className="truncate group-hover:translate-x-0.5 transition-transform">{branch.name}</span>
+                      <ChevronRight className="h-4 w-4 text-fg-subtle shrink-0 group-hover:text-fg transition-colors" />
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCancelSelection}
+                  className="flex w-full justify-center items-center rounded-lg border border-border bg-transparent hover:bg-surface-2 px-3 py-2.5 text-xs font-semibold text-fg-muted hover:text-fg transition-colors cursor-pointer mt-2"
+                >
+                  Back to login
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-1 p-1 rounded-xl bg-surface-2 border border-border mb-6">
+                  <TabButton
+                    active={activeTab === AUTH_TABS.ADMIN}
+                    onClick={() => {
+                      setActiveTab(AUTH_TABS.ADMIN);
+                      setAdminError(null);
+                    }}
+                  >
+                    Owner / Admin
+                  </TabButton>
+                  <TabButton
+                    active={activeTab === AUTH_TABS.STAFF}
+                    onClick={() => {
+                      setActiveTab(AUTH_TABS.STAFF);
+                      setStaffError(null);
+                    }}
+                  >
+                    Staff
+                  </TabButton>
+                </div>
+
+                {activeTab === AUTH_TABS.ADMIN ? (
+                  <>
+                    <AdminLoginForm onSubmit={handleAdminSubmit} serverError={adminError} />
+
+                    {resendEmail && !resendSent && (
+                      <div className="mt-3 rounded-lg border border-warning/30 bg-warning/8 px-3 py-2.5 flex items-center justify-between gap-3">
+                        <p className="text-[11px] text-warning">Did not receive the email?</p>
+                        <button
+                          type="button"
+                          onClick={handleResendVerification}
+                          disabled={resendLoading}
+                          className="text-[11px] font-semibold text-warning underline underline-offset-2 whitespace-nowrap disabled:opacity-50"
+                        >
+                          {resendLoading ? 'Sending...' : 'Resend'}
+                        </button>
+                      </div>
+                    )}
+                    {resendSent && (
+                      <div className="mt-3 rounded-lg border border-success/30 bg-success/8 px-3 py-2.5 text-[11px] text-success">
+                        (sent) Verification email sent - check your inbox.
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <StaffLoginForm onSubmit={handleStaffSubmit} serverError={staffError} />
+                )}
+
+                {activeTab === AUTH_TABS.ADMIN && (
+                  <div className="mt-5">
+                    <div className="relative flex items-center gap-3 my-1">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-[11px] text-fg-subtle font-medium uppercase tracking-widest">or</span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+                    <div className="mt-3">
+                      <OAuthButtons />
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === AUTH_TABS.ADMIN && (
+                  <div className="mt-5 rounded-xl border border-border bg-surface px-4 py-3.5 flex items-center justify-between gap-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                    <div>
+                      <p className="text-[12px] font-semibold text-fg">New restaurant?</p>
+                      <p className="text-[11px] text-fg-muted mt-0.5">Get set up in under a minute.</p>
+                    </div>
+                    <Link
+                      href="/register"
+                      className="flex items-center gap-1.5 rounded-lg border border-border bg-bg px-3 py-1.5 text-[12px] font-medium text-fg hover:bg-surface-2 hover:border-border-strong transition-all whitespace-nowrap"
+                    >
+                      <Store className="h-3 w-3" />
+                      Register
+                    </Link>
                   </div>
                 )}
               </>
-            ) : (
-              <StaffLoginForm onSubmit={handleStaffSubmit} serverError={staffError} />
-            )}
-
-            {activeTab === AUTH_TABS.ADMIN && (
-              <div className="mt-5">
-                <div className="relative flex items-center gap-3 my-1">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-[11px] text-fg-subtle font-medium uppercase tracking-widest">or</span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
-                <div className="mt-3">
-                  <OAuthButtons />
-                </div>
-              </div>
-            )}
-
-            {activeTab === AUTH_TABS.ADMIN && (
-              <div className="mt-5 rounded-xl border border-border bg-surface px-4 py-3.5 flex items-center justify-between gap-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-                <div>
-                  <p className="text-[12px] font-semibold text-fg">New restaurant?</p>
-                  <p className="text-[11px] text-fg-muted mt-0.5">Get set up in under a minute.</p>
-                </div>
-                <Link
-                  href="/register"
-                  className="flex items-center gap-1.5 rounded-lg border border-border bg-bg px-3 py-1.5 text-[12px] font-medium text-fg hover:bg-surface-2 hover:border-border-strong transition-all whitespace-nowrap"
-                >
-                  <Store className="h-3 w-3" />
-                  Register
-                </Link>
-              </div>
             )}
 
             <p className="mt-6 text-[11px] text-fg-subtle text-center leading-relaxed">

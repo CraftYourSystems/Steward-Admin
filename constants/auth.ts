@@ -37,3 +37,9 @@ export const TOKEN_STORAGE_KEY = 'auth-token';
 
 /** Local-storage key for persisted refresh token fallback. */
 export const REFRESH_TOKEN_STORAGE_KEY = 'auth-refresh-token';
+
+/** Local-storage key for persisted current active branch. */
+export const CURRENT_BRANCH_STORAGE_KEY = 'auth-current-branch';
+
+/** Local-storage key for persisted accessible branches. */
+export const ACCESSIBLE_BRANCHES_STORAGE_KEY = 'auth-accessible-branches';

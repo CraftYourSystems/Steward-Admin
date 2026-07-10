@@ -17,6 +17,8 @@ import { TabSecurity } from "@/components/settings/TabSecurity";
 import { TabPayments } from "@/components/settings/TabPayments";
 import { TabOrderTypes } from "@/components/settings/TabOrderTypes";
 import { TabCustomerExperience } from "@/components/settings/TabCustomerExperience";
+import { TabBranches } from "@/components/settings/TabBranches";
+import { TabQRCodes } from "@/components/settings/TabQRCodes";
 import type { RestaurantSettings } from "@/types/settings";
 import { cn } from "@/lib/utils";
 
@@ -101,6 +103,8 @@ export default function SettingsPageContent() {
   ];
 
   if (isAdmin) {
+    tabs.push({ value: "branches", label: "Branches" });
+    tabs.push({ value: "qrcodes", label: "QR Codes" });
     tabs.push({ value: "security", label: "Security" });
   }
 
@@ -147,7 +151,7 @@ export default function SettingsPageContent() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {isDirty && (
+            {isDirty && activeTab !== "branches" && activeTab !== "qrcodes" && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -159,20 +163,22 @@ export default function SettingsPageContent() {
                 Reset
               </Button>
             )}
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={(!isDirty && !isSaved) || isSaving}
-              className={isSaved ? 'bg-success hover:bg-success/90 text-white' : ''}
-            >
-              {isSaving ? (
-                <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Saving…</>
-              ) : isSaved ? (
-                <><Check className="h-3.5 w-3.5 mr-1.5" />Saved</>
-              ) : (
-                <><Save className="h-3.5 w-3.5 mr-1.5" />Save changes</>
-              )}
-            </Button>
+            {activeTab !== "branches" && activeTab !== "qrcodes" && (
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={(!isDirty && !isSaved) || isSaving}
+                className={isSaved ? 'bg-success hover:bg-success/90 text-white' : ''}
+              >
+                {isSaving ? (
+                  <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Saving…</>
+                ) : isSaved ? (
+                  <><Check className="h-3.5 w-3.5 mr-1.5" />Saved</>
+                ) : (
+                  <><Save className="h-3.5 w-3.5 mr-1.5" />Save changes</>
+                )}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -241,9 +247,17 @@ export default function SettingsPageContent() {
               <TabShifts />
             </TabsContent>
             {isAdmin && (
-              <TabsContent value="security" className="mt-0 focus-visible:outline-none">
-                <TabSecurity />
-              </TabsContent>
+              <>
+                <TabsContent value="branches" className="mt-0 focus-visible:outline-none">
+                  <TabBranches />
+                </TabsContent>
+                <TabsContent value="qrcodes" className="mt-0 focus-visible:outline-none">
+                  <TabQRCodes />
+                </TabsContent>
+                <TabsContent value="security" className="mt-0 focus-visible:outline-none">
+                  <TabSecurity />
+                </TabsContent>
+              </>
             )}
           </Tabs>
         </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -7,7 +8,7 @@ import {
   LogOut, X, Settings, ToggleLeft, WifiOff, Kanban,
   Soup, ClipboardList, BanknoteIcon, Home, BarChart3, ArrowLeft,
   Megaphone, PackageOpen, Activity, Sparkles, BrainCircuit,
-  PanelLeftClose, PanelLeftOpen
+  PanelLeftClose, PanelLeftOpen, ChevronDown, MapPin, Loader2, GitBranch
 } from "lucide-react";
 import { usePlatformStore } from "@/stores/platform.store";
 import { cn } from "@/lib/utils";
@@ -157,10 +158,34 @@ interface SidebarProps {
 export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const {
+    user,
+    restaurant,
+    currentBranch,
+    accessibleBranches,
+    isSwitchingBranch,
+    switchBranch,
+    logout,
+  } = useAuth();
   const { wsConnected } = useSettingsStore();
   const selectedRestaurant = usePlatformStore((s) => s.selectedRestaurant);
   const exitRestaurant = usePlatformStore((s) => s.exitRestaurant);
+
+  const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
+
+  // Close dropdown on outside click
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setBranchDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const restaurantName = user?.role === "SUPER_ADMIN" ? selectedRestaurant?.name : (restaurant?.name || "");
 
   const initials = user
     ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase()
@@ -261,6 +286,90 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-2 py-3 scrollbar-thin space-y-0">
+
+          {/* Branch Selector */}
+          {(() => {
+            if (collapsed) {
+              return (
+                <div className="flex justify-center py-2 text-fg-subtle border-b border-white/5 mb-3" title={currentBranch?.name ?? "Branch"}>
+                  <GitBranch className="h-4 w-4" />
+                </div>
+              );
+            }
+
+            const isBranchScoped = user?.role === "KITCHEN_STAFF" || user?.role === "WAITER";
+            const hasMultiple = accessibleBranches && accessibleBranches.length > 1;
+
+            return (
+              <div className="mx-1 mb-4 p-2.5 rounded-xl border border-white/5 bg-surface-2/40 backdrop-blur-sm">
+                <div className="mb-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">Restaurant</div>
+                  <div className="text-xs font-semibold text-fg truncate">{restaurantName || "Steward Restaurant"}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle mb-1">Active Branch</div>
+                  {isBranchScoped || !hasMultiple ? (
+                    // Static Branch Context
+                    <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface-3/50 text-xs font-medium text-fg-muted border border-border">
+                      <MapPin className="h-3.5 w-3.5 text-accent shrink-0" />
+                      <span className="truncate">{currentBranch?.name ?? "Main Branch"}</span>
+                    </div>
+                  ) : (
+                    // Multi-Branch Selector
+                    <div className="relative" ref={dropdownRef}>
+                      <button
+                        type="button"
+                        disabled={isSwitchingBranch}
+                        onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
+                        className="flex w-full items-center justify-between gap-1.5 px-2 py-1.5 rounded-lg bg-surface-3 hover:bg-surface-3/80 text-xs font-medium text-fg border border-border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {isSwitchingBranch ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-accent shrink-0" />
+                          ) : (
+                            <MapPin className="h-3.5 w-3.5 text-accent shrink-0" />
+                          )}
+                          <span className="truncate">{currentBranch?.name ?? "Select Branch"}</span>
+                        </div>
+                        <ChevronDown className="h-3.5 w-3.5 text-fg-subtle shrink-0" />
+                      </button>
+
+                      {branchDropdownOpen && (
+                        <div className="absolute left-0 right-0 mt-1 z-50 rounded-lg border border-border bg-surface shadow-[0_4px_16px_rgba(0,0,0,0.5)] max-h-48 overflow-y-auto scrollbar-thin">
+                          <div className="p-1 space-y-0.5">
+                            {accessibleBranches.map((br) => {
+                              const isCurrent = br.id === currentBranch?.id;
+                              return (
+                                <button
+                                  key={br.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setBranchDropdownOpen(false);
+                                    if (br.id !== currentBranch?.id) {
+                                      switchBranch(br.id);
+                                    }
+                                  }}
+                                  className={cn(
+                                    "flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs text-left transition-colors",
+                                    isCurrent
+                                      ? "bg-accent/15 text-accent font-semibold"
+                                      : "text-fg-muted hover:bg-surface-2 hover:text-fg"
+                                  )}
+                                >
+                                  <span className="truncate">{br.name}</span>
+                                  {isCurrent && <span className="h-1.5 w-1.5 rounded-full bg-accent" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Super Admin restaurant context banner */}
           {user?.role === "SUPER_ADMIN" && selectedRestaurant && !collapsed && (
