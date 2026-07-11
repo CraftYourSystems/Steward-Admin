@@ -189,6 +189,9 @@ function MenuQrSection({ slug, restaurantName }: MenuQrSectionProps) {
 
 // ─── TabGeneral ─────────────────────────────────────────────────────────────--
 
+import { useRestaurantSettings } from "@/hooks/useRestaurantSettings";
+import { ImageUpload } from "./ImageUpload";
+
 interface Props {
   settings: RestaurantSettings;
   onChange: (patch: Partial<RestaurantSettings>) => void;
@@ -197,6 +200,24 @@ interface Props {
 export function TabGeneral({ settings, onChange }: Props) {
   const set = <K extends keyof RestaurantSettings>(key: K, val: RestaurantSettings[K]) =>
     onChange({ [key]: val } as Partial<RestaurantSettings>);
+
+  const { data: serverSettings } = useRestaurantSettings();
+
+  const isDirty = (key: keyof RestaurantSettings) => {
+    return serverSettings && serverSettings[key] !== settings[key];
+  };
+
+  const renderLabel = (label: string, keys: (keyof RestaurantSettings)[]) => {
+    const dirty = keys.some(k => serverSettings && serverSettings[k] !== settings[k]);
+    return (
+      <div className="flex items-center gap-1.5">
+        <span>{label}</span>
+        {dirty && (
+          <span className="h-1.5 w-1.5 rounded-full bg-warning animate-pulse animate-duration-1000" title="Unsaved change" />
+        )}
+      </div>
+    );
+  };
 
   const restaurant = useAuthStore((s) => s.restaurant);
   const restaurantCode = restaurant?.restaurantCode ?? null;
@@ -219,99 +240,188 @@ export function TabGeneral({ settings, onChange }: Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
 
-      {/* ── Restaurant code — staff use this to clock in ── */}
-      <div className="rounded-xl border border-border bg-surface px-5 py-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Key className="h-4 w-4 text-fg-subtle" />
-          <span className="text-[13px] font-semibold text-fg">Restaurant code</span>
+      {/* ── 1. Restaurant Identity ── */}
+      <div className="space-y-2.5">
+        <div>
+          <h3 className="text-[14px] font-semibold text-fg tracking-tight">Restaurant Identity</h3>
+          <p className="text-[11px] text-fg-subtle mt-0.5">
+            Configure your restaurant's public brand details, logo, and tagline.
+          </p>
         </div>
-        {restaurantCode ? (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="flex-1">
-              <div className="inline-flex items-center gap-3 rounded-lg border border-border bg-surface-2 px-4 py-2.5">
-                <span className="text-[22px] font-bold font-mono tracking-[0.25em] text-fg select-all">
-                  {restaurantCode}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleCopyCode}
-                  title="Copy code"
-                  className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1.5 text-[11px] font-medium text-fg hover:bg-surface-2 transition-colors"
-                >
-                  {codeCopied
-                    ? <Check className="h-3.5 w-3.5 text-green-500" />
-                    : <Copy className="h-3.5 w-3.5" />}
-                  {codeCopied ? "Copied!" : "Copy"}
-                </button>
+        <SettingsSection>
+          <SettingsRow 
+            label="Branding & Name" 
+            description="Manage your brand logo, public restaurant name, and market tagline"
+          >
+            <div className="flex flex-col sm:flex-row gap-6 items-start">
+              <div className="w-24 shrink-0">
+                <ImageUpload
+                  value={settings.logoUrl}
+                  onChange={(url) => set("logoUrl", url)}
+                  type="logo"
+                  label="Logo"
+                  aspectRatio="aspect-square"
+                />
+              </div>
+              <div className="flex-1 w-full space-y-3">
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">
+                      Restaurant Name
+                    </span>
+                    {isDirty("name") && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-warning animate-pulse" title="Unsaved change" />
+                    )}
+                  </div>
+                  <Input 
+                    value={settings.name} 
+                    onChange={(e) => set("name", e.target.value)} 
+                    placeholder="e.g. My Restaurant" 
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">
+                      Tagline
+                    </span>
+                    {isDirty("tagline") && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-warning animate-pulse" title="Unsaved change" />
+                    )}
+                  </div>
+                  <Input 
+                    value={settings.tagline} 
+                    onChange={(e) => set("tagline", e.target.value)} 
+                    placeholder="e.g. Authentic flavours since 2010" 
+                  />
+                </div>
               </div>
             </div>
-            <p className="text-[11px] text-fg-subtle max-w-xs">
-              Share this code with your staff. They enter it on the Staff login tab together with their 4-digit PIN to clock in.
-            </p>
-          </div>
-        ) : (
-          <p className="text-[12px] text-fg-subtle">
-            Your restaurant code will appear here once your profile is saved.
-          </p>
-        )}
+          </SettingsRow>
+        </SettingsSection>
       </div>
 
-      {/* ── Menu link & QR code — read-only, shown for every restaurant ── */}
-      <MenuQrSection slug={settings.slug} restaurantName={settings.name} />
+      {/* ── 2. Contact Information ── */}
+      <div className="space-y-2.5">
+        <div>
+          <h3 className="text-[14px] font-semibold text-fg tracking-tight">Contact Information</h3>
+          <p className="text-[11px] text-fg-subtle mt-0.5">
+            Public contact details shown to customers on receipts and digital menus.
+          </p>
+        </div>
+        <SettingsSection>
+          <SettingsRow label="Email address" description="For order confirmations and notification updates">
+            <Input 
+              type="email" 
+              value={settings.email} 
+              onChange={(e) => set("email", e.target.value)} 
+              placeholder="restaurant@example.com" 
+            />
+          </SettingsRow>
+          <SettingsRow label="Phone number" description="Customer-facing phone number">
+            <Input 
+              value={settings.phone} 
+              onChange={(e) => set("phone", e.target.value)} 
+              placeholder="+91 98765 43210" 
+            />
+          </SettingsRow>
+          <SettingsRow label="Address" description="Physical address printed on receipts and delivery invoices">
+            <textarea
+              className="w-full min-h-[72px] rounded-md border border-border bg-surface-2 px-3 py-2 text-[13px] text-fg placeholder:text-fg-subtle resize-none focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+              value={settings.address}
+              onChange={(e) => set("address", e.target.value)}
+              placeholder="123 Main Street, Chennai, Tamil Nadu 600001"
+            />
+          </SettingsRow>
+        </SettingsSection>
+      </div>
 
-      {/* ── Restaurant profile ── */}
-      <SettingsSection>
-        <SettingsRow label="Restaurant name" description="Displayed to customers across the platform">
-          <Input value={settings.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. My Restaurant" />
-        </SettingsRow>
-        <SettingsRow label="Tagline" description="Short description shown on menu and receipts">
-          <Input value={settings.tagline} onChange={(e) => set("tagline", e.target.value)} placeholder="e.g. Authentic flavours since 2010" />
-        </SettingsRow>
-        <SettingsRow label="Email" description="For order confirmations and notifications">
-          <Input type="email" value={settings.email} onChange={(e) => set("email", e.target.value)} placeholder="restaurant@example.com" />
-        </SettingsRow>
-        <SettingsRow label="Phone" description="Customer-facing contact number">
-          <Input value={settings.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+91 98765 43210" />
-        </SettingsRow>
-        <SettingsRow label="Address" description="Full address for receipts and delivery">
-          <textarea
-            className="w-full min-h-[72px] rounded-md border border-border bg-surface-2 px-3 py-2 text-[13px] text-fg placeholder:text-fg-subtle resize-none focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-            value={settings.address}
-            onChange={(e) => set("address", e.target.value)}
-            placeholder="123 Main Street, Chennai, Tamil Nadu 600001"
-          />
-        </SettingsRow>
-      </SettingsSection>
+      {/* ── 3. Regional Preferences ── */}
+      <div className="space-y-2.5">
+        <div>
+          <h3 className="text-[14px] font-semibold text-fg tracking-tight">Regional Preferences</h3>
+          <p className="text-[11px] text-fg-subtle mt-0.5">
+            Set local regional standards for display prices and business schedules.
+          </p>
+        </div>
+        <SettingsSection>
+          <SettingsRow label="Currency" description="Standard currency used for all menu prices and checkout totals">
+            <Select value={settings.currency} onValueChange={(v) => set("currency", v)}>
+              <SelectTrigger className="w-64">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </SettingsRow>
+          <SettingsRow label="Timezone" description="Main timezone governing shifts, scheduler, and logs">
+            <Select value={settings.timezone} onValueChange={(v) => set("timezone", v)}>
+              <SelectTrigger className="w-64">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIMEZONES.map((tz) => (
+                  <SelectItem key={tz} value={tz}>{tz}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </SettingsRow>
+        </SettingsSection>
+      </div>
 
-      {/* ── Localisation ── */}
-      <SettingsSection>
-        <SettingsRow label="Currency" description="Used for all pricing and invoices">
-          <Select value={settings.currency} onValueChange={(v) => set("currency", v)}>
-            <SelectTrigger className="w-64">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CURRENCIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </SettingsRow>
-        <SettingsRow label="Timezone" description="Used for scheduling and opening hours">
-          <Select value={settings.timezone} onValueChange={(v) => set("timezone", v)}>
-            <SelectTrigger className="w-64">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TIMEZONES.map((tz) => (
-                <SelectItem key={tz} value={tz}>{tz}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </SettingsRow>
-      </SettingsSection>
+      {/* ── 4. Menu & QR Access ── */}
+      <div className="space-y-2.5">
+        <div>
+          <h3 className="text-[14px] font-semibold text-fg tracking-tight">Menu & QR Access</h3>
+          <p className="text-[11px] text-fg-subtle mt-0.5">
+            Public menu link, customer QR code print assets, and internal staff clock-in security code.
+          </p>
+        </div>
+
+        {/* ── Staff security clock-in code ── */}
+        <div className="rounded-xl border border-border bg-surface px-5 py-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Key className="h-4 w-4 text-fg-subtle" />
+            <span className="text-[13px] font-semibold text-fg">Restaurant code</span>
+          </div>
+          {restaurantCode ? (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex-1">
+                <div className="inline-flex items-center gap-3 rounded-lg border border-border bg-surface-2 px-4 py-2.5">
+                  <span className="text-[22px] font-bold font-mono tracking-[0.25em] text-fg select-all">
+                    {restaurantCode}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyCode}
+                    title="Copy code"
+                    className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1.5 text-[11px] font-medium text-fg hover:bg-surface-2 transition-colors"
+                  >
+                    {codeCopied
+                      ? <Check className="h-3.5 w-3.5 text-green-500" />
+                      : <Copy className="h-3.5 w-3.5" />}
+                    {codeCopied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+              </div>
+              <p className="text-[11px] text-fg-subtle max-w-xs">
+                Share this code with your staff. They enter it on the Staff login tab together with their 4-digit PIN to clock in.
+              </p>
+            </div>
+          ) : (
+            <p className="text-[12px] text-fg-subtle">
+              Your restaurant code will appear here once your profile is saved.
+            </p>
+          )}
+        </div>
+
+        {/* ── Menu QR link and printable asset ── */}
+        <MenuQrSection slug={settings.slug} restaurantName={settings.name} />
+      </div>
 
     </div>
   );
