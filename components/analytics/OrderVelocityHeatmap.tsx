@@ -19,7 +19,6 @@ export function OrderVelocityHeatmap({ totalOrders, loading, heatmap, activeRang
     endLabel = "End of Day";
     descriptionLabel = "Yesterday's Velocity";
   } else if (activeRange === "7d") {
-    startLabel = "7-Day Velocity"; // wait, description is better as "Order Velocity" or "7-Day Order Volume"
     startLabel = "7 Days Ago";
     endLabel = "Now";
     descriptionLabel = "7-Day Velocity";
@@ -30,7 +29,12 @@ export function OrderVelocityHeatmap({ totalOrders, loading, heatmap, activeRang
   }
   if (loading) {
     return (
-      <div className="card-premium p-6 flex flex-col justify-between animate-shimmer min-h-[160px]">
+      <div className="card-premium p-5 sm:p-6 flex flex-col justify-between animate-shimmer min-h-[220px]">
+        <div className="space-y-3">
+          <div className="h-3 w-24 rounded-md bg-white/5" />
+          <div className="h-8 w-36 rounded-md bg-white/5" />
+        </div>
+        <div className="h-10 w-full rounded-md bg-white/5 mt-auto" />
       </div>
     );
   }
@@ -45,19 +49,15 @@ export function OrderVelocityHeatmap({ totalOrders, loading, heatmap, activeRang
     }
   };
 
-  // If we don't have heatmap data yet (e.g. backend still returning old shape), render dummy for now
   const dummyBlocks = Array.from({ length: 48 }).map((_, i) => ({ id: `dummy-${i}`, intensity: Math.floor(Math.random() * 4) }));
   
   let blocksToRender = dummyBlocks;
   if (heatmap && heatmap.length > 0) {
-    // Sort by day and hour
     const sorted = [...heatmap].sort((a, b) => {
       if (a.dayOfWeek === b.dayOfWeek) return a.hour - b.hour;
       return a.dayOfWeek - b.dayOfWeek;
     });
-    // Take the last 48 entries (e.g., last 2 days)
     const sliced = sorted.slice(-48);
-    // Pad with empty blocks if we have less than 48 hours of data
     if (sliced.length < 48) {
       const padding = Array.from({ length: 48 - sliced.length }).map((_, i) => ({ id: `pad-${i}`, intensity: 0 }));
       blocksToRender = [...padding, ...sliced.map(h => ({ id: `real-${h.dayOfWeek}-${h.hour}`, intensity: h.intensity }))];
@@ -81,9 +81,9 @@ export function OrderVelocityHeatmap({ totalOrders, loading, heatmap, activeRang
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
-      className="card-premium p-6 flex flex-col justify-between h-full relative"
+      className="card-premium p-5 sm:p-6 flex flex-col justify-between h-full relative min-h-[220px]"
     >
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex justify-between items-start mb-4">
         <div className="space-y-1">
           <h3 className="label-xs text-fg-muted flex items-center gap-1.5">
             <Activity className="h-3.5 w-3.5" />
@@ -98,8 +98,7 @@ export function OrderVelocityHeatmap({ totalOrders, loading, heatmap, activeRang
         </div>
       </div>
 
-      <div className="mt-auto">
-        {/* Render a clean 2x24 grid (Day 1 and Day 2) */}
+      <div className="mt-auto pt-2">
         <div 
           className="grid gap-1 select-none"
           style={{ gridTemplateColumns: "repeat(24, minmax(0, 1fr))" }}

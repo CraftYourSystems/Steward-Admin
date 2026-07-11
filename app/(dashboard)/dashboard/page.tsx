@@ -147,14 +147,14 @@ export default function DashboardPage() {
     staleTime: 20_000,
   });
 
+  const stepsCompletedCount = (menuItemCount > 0 ? 1 : 0) + (!!restaurant?.slug ? 1 : 0) + (hasAnyOrders ? 1 : 0);
+  const isOnboardingComplete = stepsCompletedCount === 3;
+  const [onboardingMinimized, setOnboardingMinimized] = useState(false);
+
   /**
-   * Show onboarding banner only when:
-   * 1. Not already dismissed.
-   * 2. Not still loading.
-   * 3. The restaurant has NO menu items yet.
-   * (we don't hide it just because there are no orders in the active date range)
+   * Show onboarding banner when not already dismissed and not still loading.
    */
-  const showOnboarding = !onboardingDismissed && !loading && menuItemCount === 0;
+  const showOnboarding = !onboardingDismissed && !loading;
 
   // ── Refresh handler ────────────────────────────────────────────────────────
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -187,10 +187,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="px-3 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6 space-y-4 sm:space-y-5 max-w-[1400px] mx-auto">
+    <div className="px-3 py-6 sm:px-5 sm:py-6 lg:px-6 lg:py-8 space-y-8 max-w-[1400px] mx-auto">
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-1 border-b border-border">
+      {/* ── 1. Header ─────────────────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-border">
         <div className="min-w-0">
           <div className="label-xs mb-1">{restaurant?.name ?? "Restaurant"}</div>
           <div className="flex items-center gap-2">
@@ -219,9 +219,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Live Status Strip ────────────────────────────────────────────────
-           Renders only when there are active orders in the kitchen.
-      ──────────────────────────────────────────────────────────────────────── */}
+      {/* ── Live Status Strip ── */}
       {liveActiveCount > 0 && (
         <div className="flex items-center gap-2 card-premium px-4 py-2.5 text-[12px] text-fg-muted">
           <span className="relative flex h-2 w-2 shrink-0">
@@ -241,111 +239,160 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── Onboarding Checklist ─────────────────────────────────────────────
-           Only shown for brand-new restaurants (no menu items yet).
-           Dismissal is persisted in localStorage so it never reappears.
-      ──────────────────────────────────────────────────────────────────────── */}
+      {/* ── 2. Onboarding Checklist ───────────────────────────────────────────── */}
       {showOnboarding && (
-        <div className="relative mb-2 rounded-xl border border-accent/20 bg-accent/5 p-5">
-          <button
-            type="button"
-            onClick={dismissOnboarding}
-            className="absolute right-3 top-3 rounded-full p-2 text-fg-muted hover:text-fg hover:bg-surface-2 transition-colors"
-            aria-label="Dismiss onboarding checklist"
-          >
-            <X className="h-4 w-4" />
-          </button>
-          <h3 className="text-[13px] font-semibold text-fg mb-1">
-            Welcome — let&apos;s get your restaurant live
-          </h3>
-          <p className="text-[12px] text-fg-muted mb-4">
-            Three steps and you&apos;ll be taking orders.
-          </p>
-          <div className="space-y-2">
-            {[
-              {
-                label: "Add your first menu item",
-                href:  "/menu",
-                // Done when there's at least one menu item.
-                done:  menuItemCount > 0,
-              },
-              {
-                label: "Share your QR code with customers",
-                href:  "/settings?tab=general",
-                // Done when the restaurant has a slug (QR setup complete).
-                done:  !!restaurant?.slug,
-              },
-              {
-                label: "Watch your first order come in",
-                href:  "/orders",
-                // Done when there are orders in any time range — range-independent.
-                done:  hasAnyOrders,
-              },
-            ].map((step, i) => (
-              <Link
-                key={i}
-                href={step.href}
-                className="flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2.5 hover:bg-surface-2 transition-colors group"
-              >
-                <span className={cn(
-                  "h-5 w-5 rounded-full border flex items-center justify-center text-[10px] font-bold shrink-0",
-                  step.done
-                    ? "bg-success border-success/30 text-white"
-                    : "border-border text-fg-subtle"
-                )}>
-                  {step.done ? "✓" : i + 1}
+        <div className="relative rounded-xl border border-accent/20 bg-accent/5 p-4 sm:p-5">
+          {isOnboardingComplete || onboardingMinimized ? (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="h-5 w-5 rounded-full bg-success/20 border border-success/30 text-success flex items-center justify-center text-[10px] font-bold shrink-0">
+                  ✓
                 </span>
-                <span className={cn(
-                  "text-[13px] font-medium",
-                  step.done ? "line-through text-fg-subtle" : "text-fg"
-                )}>
-                  {step.label}
-                </span>
-                <ArrowRight className="h-3.5 w-3.5 text-fg-subtle ml-auto group-hover:text-fg transition-colors" />
-              </Link>
-            ))}
-          </div>
+                <div>
+                  <h3 className="text-[13px] font-semibold text-fg">
+                    {isOnboardingComplete 
+                      ? "Onboarding completed — your restaurant is live!" 
+                      : `Onboarding checklist in progress (${stepsCompletedCount}/3 completed)`
+                    }
+                  </h3>
+                  <p className="text-[11px] text-fg-muted mt-0.5">
+                    {isOnboardingComplete 
+                      ? "All initial setup steps are completed and you're ready to receive orders."
+                      : "Complete the remaining steps to get your restaurant up and running."
+                    }
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                <button
+                  type="button"
+                  onClick={() => setOnboardingMinimized(!onboardingMinimized)}
+                  className="rounded-md border border-border bg-surface px-2.5 py-1.5 text-[11px] font-medium text-fg hover:bg-surface-2 transition-colors cursor-pointer"
+                >
+                  {onboardingMinimized ? "Show Checklist" : "Minimize"}
+                </button>
+                <button
+                  type="button"
+                  onClick={dismissOnboarding}
+                  className="rounded-md border border-border bg-surface px-2.5 py-1.5 text-[11px] font-medium text-fg-subtle hover:text-fg hover:bg-surface-2 transition-colors cursor-pointer"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-[13px] font-semibold text-fg">
+                    Welcome — let's get your restaurant live
+                  </h3>
+                  <p className="text-[11px] text-fg-muted mt-0.5">
+                    Three steps and you'll be taking orders.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setOnboardingMinimized(true)}
+                    className="rounded-md border border-border bg-surface px-2.5 py-1 text-[11px] font-medium text-fg-subtle hover:text-fg hover:bg-surface-2 transition-colors cursor-pointer"
+                  >
+                    Minimize
+                  </button>
+                  <button
+                    type="button"
+                    onClick={dismissOnboarding}
+                    className="rounded-md border border-border bg-surface px-2.5 py-1 text-[11px] font-medium text-fg-subtle hover:text-fg hover:bg-surface-2 transition-colors cursor-pointer"
+                    aria-label="Dismiss onboarding checklist"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {[
+                  {
+                    label: "Add your first menu item",
+                    href:  "/menu",
+                    done:  menuItemCount > 0,
+                  },
+                  {
+                    label: "Share your QR code with customers",
+                    href:  "/settings?tab=general",
+                    done:  !!restaurant?.slug,
+                  },
+                  {
+                    label: "Watch your first order come in",
+                    href:  "/orders",
+                    done:  hasAnyOrders,
+                  },
+                ].map((step, i) => (
+                  <Link
+                    key={i}
+                    href={step.href}
+                    className="flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2.5 hover:bg-surface-2 transition-colors group"
+                  >
+                    <span className={cn(
+                      "h-5 w-5 rounded-full border flex items-center justify-center text-[10px] font-bold shrink-0",
+                      step.done
+                        ? "bg-success border-success/30 text-white"
+                        : "border-border text-fg-subtle"
+                    )}>
+                      {step.done ? "✓" : i + 1}
+                    </span>
+                    <span className={cn(
+                      "text-[13px] font-medium",
+                      step.done ? "line-through text-fg-subtle" : "text-fg"
+                    )}>
+                      {step.label}
+                    </span>
+                    <ArrowRight className="h-3.5 w-3.5 text-fg-subtle ml-auto group-hover:text-fg transition-colors" />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* ── Section label ─────────────────────────────────────────────────── */}
-      <motion.p 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        transition={{ delay: 0.2 }}
-        className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle pt-4"
-      >
-        Live Pulse
-      </motion.p>
+      {/* ── 3. Live Pulse Section ───────────────────────────────────────────── */}
+      <div className="space-y-4">
+        <motion.p 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          transition={{ delay: 0.2 }}
+          className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle"
+        >
+          Live Pulse
+        </motion.p>
+        <HealthSummary data={summary.data} loading={loading} activeRange={activeRange} />
+      </div>
 
-      {/* ── Health Summary ─────────────────────────────────────────────────── */}
-      <HealthSummary data={summary.data} loading={loading} activeRange={activeRange} />
-
-      {/* ── Bespoke Data Visualizations ────────────────────────────────────── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-6">
+      {/* ── 4. KPI Cards Section ────────────────────────────────────────────── */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <RevenueRing current={Number(d?.totalRevenue || 0)} loading={loading} activeRange={activeRange} />
         <KitchenThroughput avgPrepTimeMins={d?.avgPrepTimeMins || 0} loading={loading} />
         <OrderVelocityHeatmap totalOrders={d?.totalOrders || 0} loading={loading} heatmap={peakHourQuery.data?.heatmap} activeRange={activeRange} />
       </div>
 
-      {/* ── Section label ─────────────────────────────────────────────────── */}
-      <motion.p 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        transition={{ delay: 0.3 }}
-        className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle pt-6"
-      >
-        Recent Activity
-      </motion.p>
-
-      {/* ── Order List ─────────────────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
-      >
-        <RecentOrdersTable params={params} activeRange={activeRange} />
-      </motion.div>
+      {/* ── 5. Recent Activity Section ───────────────────────────────────────── */}
+      <div className="space-y-4">
+        <motion.p 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          transition={{ delay: 0.3 }}
+          className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle"
+        >
+          Recent Activity
+        </motion.p>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
+        >
+          <RecentOrdersTable params={params} activeRange={activeRange} />
+        </motion.div>
+      </div>
     </div>
   );
 }

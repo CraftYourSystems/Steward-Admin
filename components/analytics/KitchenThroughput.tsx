@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Clock } from "lucide-react";
 
 interface KitchenThroughputProps {
@@ -8,7 +8,6 @@ interface KitchenThroughputProps {
   loading: boolean;
 }
 
-// Dummy data for visual effect since backend doesn't provide hourly timeline yet
 const data = [
   { time: '10am', prep: 12 },
   { time: '11am', prep: 14 },
@@ -21,7 +20,12 @@ const data = [
 export function KitchenThroughput({ avgPrepTimeMins, loading }: KitchenThroughputProps) {
   if (loading) {
     return (
-      <div className="card-premium p-6 flex flex-col justify-between animate-shimmer min-h-[160px]">
+      <div className="card-premium p-5 sm:p-6 flex flex-col justify-between animate-shimmer min-h-[220px]">
+        <div className="space-y-3">
+          <div className="h-3 w-24 rounded-md bg-white/5" />
+          <div className="h-8 w-36 rounded-md bg-white/5" />
+        </div>
+        <div className="h-16 w-full rounded-md bg-white/5 mt-auto" />
       </div>
     );
   }
@@ -31,9 +35,9 @@ export function KitchenThroughput({ avgPrepTimeMins, loading }: KitchenThroughpu
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-      className="card-premium p-6 flex flex-col justify-between h-full relative group"
+      className="card-premium p-5 sm:p-6 flex flex-col justify-between h-full relative group min-h-[220px]"
     >
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex justify-between items-start mb-4">
         <div className="space-y-1">
           <h3 className="label-xs text-fg-muted flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
@@ -51,7 +55,7 @@ export function KitchenThroughput({ avgPrepTimeMins, loading }: KitchenThroughpu
         </div>
       </div>
 
-      <div className="h-[80px] w-full -mx-2">
+      <div className="h-[80px] w-full -mx-2 mt-auto pt-2">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data}>
             <defs>
