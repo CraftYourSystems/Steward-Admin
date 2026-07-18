@@ -77,6 +77,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Per-route permission check
     const canUseAdminPage =
       (pathname.startsWith("/dashboard")     && hasPermission(user.role, Permissions.RESTAURANT_MANAGEMENT)) ||
+      (pathname.startsWith("/needle")        && hasPermission(user.role, Permissions.RESTAURANT_MANAGEMENT)) ||
       (pathname.startsWith("/analytics")     && hasPermission(user.role, Permissions.RESTAURANT_MANAGEMENT)) ||
       (pathname.startsWith("/orders")        && (hasPermission(user.role, Permissions.ORDER_MANAGEMENT) || hasPermission(user.role, Permissions.ORDER_VIEW))) ||
       (pathname.startsWith("/pay-at-counter")&& hasPermission(user.role, Permissions.ORDER_MANAGEMENT)) ||
@@ -90,6 +91,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       (pathname.startsWith("/audit")         && hasPermission(user.role, Permissions.RESTAURANT_MANAGEMENT)) ||
       // Any unlisted path is allowed through (avoids false negatives for new routes)
       (!pathname.startsWith("/dashboard")    &&
+       !pathname.startsWith("/needle")       &&
        !pathname.startsWith("/analytics")    &&
        !pathname.startsWith("/orders")       &&
        !pathname.startsWith("/pay-at-counter")&&
