@@ -1,10 +1,13 @@
 "use client";
 
 import { useInsights, useGenerateInsights, useUpdateInsightStatus } from "@/hooks/useInsights";
-import { cn } from "@/lib/utils";
+import { useOperationalPhase } from "@/hooks/useOperationalPhase";
+import { resolveNeedleExperience } from "@/lib/needle";
+import { useLiveOpsSummary } from "@/hooks/useLiveOps";
+import { useAnalyticsSummary } from "@/hooks/useAnalytics";
+import { cn, formatCurrency } from "@/lib/utils";
 import {
   Sparkles,
-  Brain,
   AlertOctagon,
   TrendingDown,
   Target,
@@ -16,16 +19,26 @@ import {
   Clock,
   TrendingUp,
   ShieldAlert,
+  CheckCircle,
+  CircleDot,
+  UtensilsCrossed,
+  Users,
+  PackageOpen,
+  AlertTriangle,
+  ArrowRight,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { startOfDay, endOfDay } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORY_ICONS: any = {
   THRESHOLD: AlertOctagon,
   TREND: TrendingDown,
   COMPARISON: Target,
-  CORRELATION: Brain,
+  CORRELATION: Lightbulb,
   OPPORTUNITY: Lightbulb,
 };
 
@@ -52,82 +65,131 @@ interface HistoricalInsight {
 
 const getSection = (title: string, desc: string, category: string): string => {
   const text = `${title} ${desc} ${category}`.toLowerCase();
-  if (
-    text.includes("revenue") ||
-    text.includes("cost") ||
-    text.includes("sale") ||
-    text.includes("price") ||
-    text.includes("pricing") ||
-    text.includes("spend")
-  ) {
-    return "Revenue";
-  }
-  if (
-    text.includes("inventory") ||
-    text.includes("stock") ||
-    text.includes("waste") ||
-    text.includes("ingredient") ||
-    text.includes("spoilage")
-  ) {
-    return "Inventory";
-  }
-  if (
-    text.includes("kitchen") ||
-    text.includes("prep") ||
-    text.includes("cook") ||
-    text.includes("kds") ||
-    text.includes("throughput")
-  ) {
-    return "Kitchen";
-  }
-  if (
-    text.includes("staff") ||
-    text.includes("waiter") ||
-    text.includes("shift") ||
-    text.includes("operator")
-  ) {
-    return "Staff";
-  }
-  if (
-    text.includes("customer") ||
-    text.includes("experience") ||
-    text.includes("review") ||
-    text.includes("delay") ||
-    text.includes("rating") ||
-    text.includes("wait time")
-  ) {
-    return "Customer Experience";
-  }
+  if (text.includes("revenue") || text.includes("cost") || text.includes("sale") || text.includes("price") || text.includes("pricing") || text.includes("spend")) return "Revenue";
+  if (text.includes("inventory") || text.includes("stock") || text.includes("waste") || text.includes("ingredient") || text.includes("spoilage")) return "Inventory";
+  if (text.includes("kitchen") || text.includes("prep") || text.includes("cook") || text.includes("kds") || text.includes("throughput")) return "Kitchen";
+  if (text.includes("staff") || text.includes("waiter") || text.includes("shift") || text.includes("operator")) return "Staff";
+  if (text.includes("customer") || text.includes("experience") || text.includes("review") || text.includes("delay") || text.includes("rating") || text.includes("wait time")) return "Customer Experience";
   return "Operations";
 };
 
-const getImpactMetric = (priority: string, category: string): string => {
+const getImpactMetric = (priority: string): string => {
   switch (priority) {
-    case "CRITICAL":
-      return "+18% efficiency / save ~₹15,000";
-    case "HIGH":
-      return "+12% performance / save ~₹8,000";
-    case "MEDIUM":
-      return "+6% performance improvement";
-    default:
-      return "+2% performance boost";
+    case "CRITICAL": return "+18% efficiency / save ~₹15,000";
+    case "HIGH": return "+12% performance / save ~₹8,000";
+    case "MEDIUM": return "+6% performance improvement";
+    default: return "+2% performance boost";
   }
 };
 
 const getConfidenceScore = (priority: string): string => {
   switch (priority) {
-    case "CRITICAL":
-      return "98% Confidence";
-    case "HIGH":
-      return "92% Confidence";
-    case "MEDIUM":
-      return "86% Confidence";
-    default:
-      return "78% Confidence";
+    case "CRITICAL": return "98% Confidence";
+    case "HIGH": return "92% Confidence";
+    case "MEDIUM": return "86% Confidence";
+    default: return "78% Confidence";
   }
 };
 
-// ─── Card Component ──────────────────────────────────────────────────────────
+// ─── Opening Readiness Checklist ──────────────────────────────────────────────
+
+function OpeningChecklist({ liveOps, insights }: { liveOps: any; insights: any[] }) {
+  const stationCount = Object.keys(liveOps?.stationLoad || {}).length;
+  const kitchenOnline = stationCount > 0 || (liveOps?.staff?.online ?? 0) > 0;
+  const staffMet = (liveOps?.staff?.online ?? 0) >= (liveOps?.staff?.scheduled ?? 1);
+  const thresholdAlerts = insights.filter((i: any) => i.category === "THRESHOLD").length;
+  const availabilityAlerts = insights.filter((i: any) =>
+    i.action === "ITEM_AVAILABILITY" || i.title?.toLowerCase().includes("unavailable") || i.title?.toLowerCase().includes("availability")
+  ).length;
+  const criticalCount = insights.filter((i: any) => i.priority === "CRITICAL").length;
+
+  const checks = [
+    { label: "Kitchen stations online", ok: kitchenOnline, icon: UtensilsCrossed },
+    { label: thresholdAlerts > 0 ? `${thresholdAlerts} item${thresholdAlerts !== 1 ? "s" : ""} below reorder level` : "Stock levels healthy", ok: thresholdAlerts === 0, icon: PackageOpen },
+    { label: "Staff attendance met", ok: staffMet, icon: Users },
+    { label: availabilityAlerts > 0 ? `${availabilityAlerts} menu item${availabilityAlerts !== 1 ? "s" : ""} marked unavailable` : "All menu items available", ok: availabilityAlerts === 0, icon: AlertTriangle },
+    { label: criticalCount > 0 ? `${criticalCount} unresolved critical issue${criticalCount !== 1 ? "s" : ""}` : "No unresolved critical issues", ok: criticalCount === 0, icon: ShieldAlert },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-white/5 bg-white/[0.01] p-5 space-y-3">
+      <h3 className="text-[12px] font-bold uppercase tracking-wider text-fg-subtle select-none">Readiness Check</h3>
+      <div className="space-y-2.5">
+        {checks.map((c) => {
+          const Icon = c.icon;
+          return (
+            <div key={c.label} className="flex items-center gap-3 text-[12.5px]">
+              <div className={cn("p-1.5 rounded-lg shrink-0", c.ok ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
+                {c.ok ? <CheckCircle className="w-3.5 h-3.5" /> : <CircleDot className="w-3.5 h-3.5" />}
+              </div>
+              <span className={cn("font-medium", c.ok ? "text-fg-muted" : "text-fg")}>{c.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Closing Summary Card ─────────────────────────────────────────────────────
+
+function ClosingSummary({ summary, insights, liveOps }: { summary: any; insights: any[]; liveOps: any }) {
+  const revenue = summary?.totalRevenue ?? 0;
+  const completedOrders = summary?.completedOrders ?? 0;
+  const avgPrep = summary?.avgPrepTimeMins ?? 0;
+  const stockAlerts = insights.filter((i: any) => i.category === "THRESHOLD").length;
+  const criticalCount = insights.filter((i: any) => i.priority === "CRITICAL" || i.priority === "HIGH").length;
+  const kitchenIdle = Object.keys(liveOps?.stationLoad || {}).length === 0;
+
+  const metrics = [
+    { label: "Revenue", value: formatCurrency(revenue, "INR") },
+    { label: "Orders Completed", value: `${completedOrders}` },
+    { label: "Avg Prep Time", value: `${Math.round(avgPrep)} min` },
+    { label: "Items Needing Restock", value: `${stockAlerts}` },
+    { label: "Open Issues", value: `${criticalCount}` },
+  ];
+
+  const closingChecks = [
+    { label: "Revenue reconciled", ok: revenue > 0 },
+    { label: "Kitchen stations idle", ok: kitchenIdle },
+    { label: stockAlerts > 0 ? `${stockAlerts} low-stock item${stockAlerts !== 1 ? "s" : ""} noted for tomorrow` : "Stock levels healthy", ok: stockAlerts === 0 },
+    { label: "No unresolved critical issues", ok: criticalCount === 0 },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Today's Metrics */}
+      <div className="rounded-2xl border border-white/5 bg-white/[0.01] p-5 space-y-4">
+        <h3 className="text-[12px] font-bold uppercase tracking-wider text-fg-subtle select-none">Today's Summary</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {metrics.map((m) => (
+            <div key={m.label} className="flex flex-col gap-0.5 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle select-none">{m.label}</span>
+              <span className="text-[15px] font-black text-fg num">{m.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Closing Readiness */}
+      <div className="rounded-2xl border border-white/5 bg-white/[0.01] p-5 space-y-3">
+        <h3 className="text-[12px] font-bold uppercase tracking-wider text-fg-subtle select-none">Closing Readiness</h3>
+        <div className="space-y-2.5">
+          {closingChecks.map((c) => (
+            <div key={c.label} className="flex items-center gap-3 text-[12.5px]">
+              <div className={cn("p-1.5 rounded-lg shrink-0", c.ok ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
+                {c.ok ? <CheckCircle className="w-3.5 h-3.5" /> : <CircleDot className="w-3.5 h-3.5" />}
+              </div>
+              <span className={cn("font-medium", c.ok ? "text-fg-muted" : "text-fg")}>{c.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Insight Card ─────────────────────────────────────────────────────────────
 
 function InsightCard({
   insight,
@@ -191,7 +253,7 @@ function InsightCard({
           {/* Impact Metric */}
           <div className="text-[11px] text-fg-subtle flex items-center gap-1.5">
             <span className="font-semibold text-fg-muted uppercase tracking-wider text-[9px]">Est. Impact:</span>
-            <span className="font-bold text-success num">{getImpactMetric(insight.priority, insight.category)}</span>
+            <span className="font-bold text-success num">{getImpactMetric(insight.priority)}</span>
           </div>
         </div>
 
@@ -220,6 +282,17 @@ function InsightCard({
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export function BriefingView() {
+  const { phase } = useOperationalPhase();
+  const experience = resolveNeedleExperience(phase);
+  const { data: liveOps } = useLiveOpsSummary();
+
+  // Today's analytics for closing summary
+  const todayParams = useMemo(() => {
+    const now = new Date();
+    return { from: startOfDay(now).toISOString(), to: endOfDay(now).toISOString() };
+  }, []);
+  const { data: todaySummary } = useAnalyticsSummary(todayParams, "today");
+
   const { data: insights = [], isLoading, refetch } = useInsights();
   const { mutate: generate, isPending: isGenerating } = useGenerateInsights();
   const { mutate: updateStatus } = useUpdateInsightStatus();
@@ -288,22 +361,31 @@ export function BriefingView() {
         const stamp = `Today, ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
         setLastGenerated(stamp);
         localStorage.setItem("steward_insights_last_generated", stamp);
-        toast.success("Insights regenerated successfully");
+        toast.success("Insights refreshed successfully");
         refetch();
       },
     });
   };
 
-  // ─── Executive Summary calculations ──────────────────────────────────────────
+  // ─── Insight Filtering & Sorting ──────────────────────────────────────────
   const activeInsights = insights.filter((i: any) => i.status === "NEW" || i.status === "TODO");
+
+  // During opening, prioritize THRESHOLD and OPPORTUNITY insights
+  const sortedInsights = useMemo(() => {
+    if (phase !== "opening") return activeInsights;
+    const priorityCategories = ["THRESHOLD", "OPPORTUNITY"];
+    return [...activeInsights].sort((a: any, b: any) => {
+      const aIsPriority = priorityCategories.includes(a.category) ? 0 : 1;
+      const bIsPriority = priorityCategories.includes(b.category) ? 0 : 1;
+      return aIsPriority - bIsPriority;
+    });
+  }, [activeInsights, phase]);
 
   const hasCritical = activeInsights.some((i: any) => i.priority === "CRITICAL");
   const hasHigh = activeInsights.some((i: any) => i.priority === "HIGH");
   const todayPriority = hasCritical ? "Critical" : hasHigh ? "High" : activeInsights.length > 0 ? "Medium" : "None";
-
   const highestImpactRec = activeInsights.length > 0 ? activeInsights[0].title : "All Clear";
 
-  // Potential Revenue Opportunity calculation: sum ₹15k per critical, ₹8k per high
   const criticalCount = activeInsights.filter((i: any) => i.priority === "CRITICAL").length;
   const highCount = activeInsights.filter((i: any) => i.priority === "HIGH").length;
   const revOpp = criticalCount * 15000 + highCount * 8000;
@@ -322,7 +404,7 @@ export function BriefingView() {
     "Customer Experience": [],
   };
 
-  activeInsights.forEach((i: any) => {
+  sortedInsights.forEach((i: any) => {
     const sec = getSection(i.title, i.description, i.category);
     if (sections[sec]) {
       sections[sec].push(i);
@@ -339,15 +421,14 @@ export function BriefingView() {
 
   return (
     <div className="px-5 py-5 lg:px-6 lg:py-6 space-y-5 max-w-[1100px] mx-auto text-fg">
-      {/* Header */}
+      {/* ── Phase-Aware Header ─────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 gap-4 border-b border-white/5">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-fg flex items-center gap-2 select-none">
-            AI Operational Insights
-            <Brain className="w-4.5 h-4.5 text-accent animate-pulse" />
+          <h2 className="text-xl font-semibold tracking-tight text-fg select-none">
+            {experience.title}
           </h2>
           <p className="text-[12px] text-fg-subtle mt-1 font-normal">
-            Automated recommendations scanning menu velocity, wastage, and kitchen prep throughput.
+            {experience.greeting}
           </p>
         </div>
         <div className="flex flex-col sm:items-end gap-1.5 shrink-0">
@@ -358,15 +439,25 @@ export function BriefingView() {
             className="gap-1.5 bg-accent hover:bg-accent/90 text-white font-semibold cursor-pointer h-9"
           >
             <RefreshCw className={cn("w-3.5 h-3.5", isGenerating && "animate-spin")} />
-            Refresh AI
+            Refresh Insights
           </Button>
           <span className="text-[10px] text-fg-muted font-normal italic select-none">
-            Last Generated: {lastGenerated || "Checking..."}
+            Last scanned: {lastGenerated || "Checking..."}
           </span>
         </div>
       </div>
 
-      {/* Historical Tabs toggles */}
+      {/* ── Opening Readiness Checklist ─────────────────────────────────── */}
+      {phase === "opening" && !isLoading && (
+        <OpeningChecklist liveOps={liveOps} insights={activeInsights} />
+      )}
+
+      {/* ── Closing Summary ────────────────────────────────────────────── */}
+      {phase === "closing" && !isLoading && (
+        <ClosingSummary summary={todaySummary} insights={activeInsights} liveOps={liveOps} />
+      )}
+
+      {/* ── Historical Tabs ────────────────────────────────────────────── */}
       <div className="flex gap-1.5 border-b border-white/5 pb-2">
         {[
           { id: "active", label: `Active (${activeInsights.length})` },
@@ -388,7 +479,7 @@ export function BriefingView() {
         ))}
       </div>
 
-      {/* Render Active View */}
+      {/* ── Active Insights View ───────────────────────────────────────── */}
       {activeTab === "active" && (
         <div className="space-y-6">
           {/* Executive Summary strip */}
@@ -435,16 +526,21 @@ export function BriefingView() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <Loader2 className="w-7 h-7 animate-spin text-accent" />
-              <span className="text-[12px] text-fg-subtle animate-pulse">Running AI Engine rules...</span>
+              <span className="text-[12px] text-fg-subtle animate-pulse">Scanning operations...</span>
             </div>
           ) : activeInsights.length === 0 ? (
-            /* Empty State */
+            /* Empty State — phase-aware */
             <div className="text-center py-16 bg-white/[0.01] rounded-2xl border border-white/5">
-              <Sparkles className="w-10 h-10 text-fg-muted mx-auto mb-3.5 opacity-55" />
-              <h3 className="text-[13.5px] font-bold text-fg">No active optimization targets</h3>
+              <CheckCircle className="w-10 h-10 text-success mx-auto mb-3.5 opacity-55" />
+              <h3 className="text-[13.5px] font-bold text-fg">
+                {phase === "quiet"
+                  ? "Operations are running smoothly"
+                  : "No active recommendations"}
+              </h3>
               <p className="text-[11.5px] text-fg-subtle max-w-sm mx-auto mt-1 font-normal leading-relaxed">
-                Steward hasn't detected any pricing or waste bottlenecks today. Continue processing floor orders to feed
-                operational history records.
+                {phase === "quiet"
+                  ? "No immediate action is required. Needle will surface recommendations if anything changes."
+                  : "Operational recommendations based on today's activity will appear here as your restaurant operates."}
               </p>
             </div>
           ) : (
@@ -455,7 +551,7 @@ export function BriefingView() {
                   <div>
                     <h3 className="text-[14px] font-bold text-fg">{sectionKey} Advisory</h3>
                     <p className="text-[11px] text-fg-subtle font-normal">
-                      Recommendations and impact diagnostics scoped to {sectionKey.toLowerCase()} parameters.
+                      Recommendations scoped to {sectionKey.toLowerCase()} operations.
                     </p>
                   </div>
 
@@ -471,7 +567,7 @@ export function BriefingView() {
         </div>
       )}
 
-      {/* Resolved history Tab */}
+      {/* ── Resolved Tab ───────────────────────────────────────────────── */}
       {activeTab === "resolved" && (
         <div className="space-y-4 animate-fade-in">
           {resolvedList.length === 0 ? (
@@ -488,7 +584,7 @@ export function BriefingView() {
         </div>
       )}
 
-      {/* Dismissed Tab */}
+      {/* ── Dismissed Tab ──────────────────────────────────────────────── */}
       {activeTab === "dismissed" && (
         <div className="space-y-4 animate-fade-in">
           {dismissedList.length === 0 ? (
