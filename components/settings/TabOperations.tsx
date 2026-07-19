@@ -2,11 +2,11 @@
 
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { SettingsSection, SettingsRow } from "./SettingsShell";
+import { SettingsSection, SettingsRow, SystemOverviewCard } from "./SettingsShell";
 import type { RestaurantSettings, DayOfWeek } from "@/types/settings";
 import { DAY_LABELS } from "@/types/settings";
 import { cn } from "@/lib/utils";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Activity, Clock, DollarSign, Utensils } from "lucide-react";
 
 interface Props {
   settings: RestaurantSettings;
@@ -30,108 +30,150 @@ export function TabOperations({ settings, onChange }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Pricing */}
-      <SettingsSection>
-        <SettingsRow label="Tax rate (%)" description="Applied to all orders (e.g. GST)">
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              min={0}
-              max={100}
-              step={0.5}
-              className="w-24"
-              value={settings.taxRate}
-              onChange={(e) => set("taxRate", parseFloat(e.target.value) || 0)}
-            />
-            <span className="text-[12px] text-fg-subtle">%</span>
-          </div>
-        </SettingsRow>
-        <SettingsRow label="Service charge (%)" description="Optional service charge added to bill">
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              min={0}
-              max={100}
-              step={0.5}
-              className="w-24"
-              value={settings.serviceCharge}
-              onChange={(e) => set("serviceCharge", parseFloat(e.target.value) || 0)}
-            />
-            <span className="text-[12px] text-fg-subtle">%</span>
-          </div>
-        </SettingsRow>
-        <SettingsRow label="Service charge label" description="Shown on receipt line item">
-          <Input
-            className="w-48"
-            value={settings.serviceChargeLabel}
-            onChange={(e) => set("serviceChargeLabel", e.target.value)}
-            placeholder="Service Charge"
-          />
-        </SettingsRow>
-      </SettingsSection>
 
-      {/* Order settings */}
-      <SettingsSection>
-        <SettingsRow label="Auto-accept orders" description="Automatically move new orders to Confirmed without manual approval">
-          <Switch checked={settings.autoAcceptOrders} onCheckedChange={(v) => set("autoAcceptOrders", v)} />
-        </SettingsRow>
-        <SettingsRow label="Default prep time" description="Estimated preparation time shown to customers (minutes)">
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              min={1}
-              max={120}
-              className="w-24"
-              value={settings.estimatedPrepMins}
-              onChange={(e) => set("estimatedPrepMins", parseInt(e.target.value) || 20)}
-            />
-            <span className="text-[12px] text-fg-subtle">min</span>
-          </div>
-        </SettingsRow>
-      </SettingsSection>
+      {/* ── Operational Readiness Overview Card ── */}
+      <SystemOverviewCard
+        title="Kitchen & Service Operations Readiness"
+        description="Current operational status, order reception automation, and kitchen prep parameters."
+        icon={<Activity className="h-4 w-4 text-accent" />}
+        statusBadge={{
+          text: settings.offlineMode ? "Offline" : "Receiving Orders",
+          variant: settings.offlineMode ? "warning" : "success",
+        }}
+        items={[
+          { label: "Order Acceptance", value: settings.autoAcceptOrders ? "Auto-Confirmed" : "Manual Approval", icon: <Activity className="h-3 w-3" /> },
+          { label: "Est. Preparation", value: `${settings.estimatedPrepMins || 20} mins`, icon: <Clock className="h-3 w-3" /> },
+          { label: "Tax & Service", value: `GST ${settings.taxRate}% • Service ${settings.serviceCharge}%`, icon: <DollarSign className="h-3 w-3" /> },
+        ]}
+      />
 
-      {/* Dosa Counter */}
-      <SettingsSection>
-        <SettingsRow
-          label="Max dosas per batch"
-          description="Maximum dosa quantity in the 'Current' section of the Dosa Counter. Orders beyond this flow to 'Upcoming'."
-        >
-          <div className="flex items-center gap-2">
+      {/* ── Pricing & Tax Rules ── */}
+      <div className="space-y-2.5">
+        <div>
+          <h3 className="text-[14px] font-semibold text-fg tracking-tight">Pricing, Taxes & Charges</h3>
+          <p className="text-[11px] text-fg-subtle mt-0.5">
+            Configure GST tax rates, service charges, and receipt line items applied to customer orders.
+          </p>
+        </div>
+        <SettingsSection>
+          <SettingsRow label="Tax rate (%)" description="Standard statutory tax applied to all orders (e.g. GST)">
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step={0.5}
+                className="w-24"
+                value={settings.taxRate}
+                onChange={(e) => set("taxRate", parseFloat(e.target.value) || 0)}
+              />
+              <span className="text-[12px] text-fg-subtle">%</span>
+            </div>
+          </SettingsRow>
+          <SettingsRow label="Service charge (%)" description="Optional service charge added to dine-in bill">
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step={0.5}
+                className="w-24"
+                value={settings.serviceCharge}
+                onChange={(e) => set("serviceCharge", parseFloat(e.target.value) || 0)}
+              />
+              <span className="text-[12px] text-fg-subtle">%</span>
+            </div>
+          </SettingsRow>
+          <SettingsRow label="Service charge label" description="Printed label shown on receipt line item">
             <Input
-              type="number"
-              min={1}
-              max={100}
-              className="w-24"
-              value={settings.maxDosaCount ?? 8}
-              onChange={(e) => set("maxDosaCount", parseInt(e.target.value) || 8)}
-            />
-            <span className="text-[12px] text-fg-subtle">dosas</span>
-          </div>
-        </SettingsRow>
-      </SettingsSection>
-
-      {/* Offline mode */}
-      <SettingsSection>
-        <SettingsRow label="Offline mode" description="Pause all incoming orders and show a custom message to customers">
-          <Switch
-            checked={settings.offlineMode}
-            onCheckedChange={(v) => set("offlineMode", v)}
-          />
-        </SettingsRow>
-        {settings.offlineMode && (
-          <SettingsRow label="Offline message" description="Message displayed on customer-facing menu when offline">
-            <Input
-              value={settings.offlineModeMessage}
-              onChange={(e) => set("offlineModeMessage", e.target.value)}
-              placeholder="We're currently closed. Please check back later."
+              className="w-48"
+              value={settings.serviceChargeLabel}
+              onChange={(e) => set("serviceChargeLabel", e.target.value)}
+              placeholder="Service Charge"
             />
           </SettingsRow>
-        )}
-      </SettingsSection>
+        </SettingsSection>
+      </div>
 
-      {/* Opening Hours */}
-      <div>
-        <div className="label-xs mb-3">Opening hours</div>
+      {/* ── Kitchen Prep & Batch Limits ── */}
+      <div className="space-y-2.5">
+        <div>
+          <h3 className="text-[14px] font-semibold text-fg tracking-tight">Kitchen Prep & Batch Limits</h3>
+          <p className="text-[11px] text-fg-subtle mt-0.5">
+            Set default prep estimation and batch capacity rules for high-volume kitchen counters.
+          </p>
+        </div>
+        <SettingsSection>
+          <SettingsRow label="Auto-accept orders" description="Automatically move incoming orders to Confirmed state without manual kitchen approval">
+            <Switch checked={settings.autoAcceptOrders} onCheckedChange={(v) => set("autoAcceptOrders", v)} />
+          </SettingsRow>
+          <SettingsRow label="Default prep time" description="Estimated preparation time shown to customers on checkout (minutes)">
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={1}
+                max={120}
+                className="w-24"
+                value={settings.estimatedPrepMins}
+                onChange={(e) => set("estimatedPrepMins", parseInt(e.target.value) || 20)}
+              />
+              <span className="text-[12px] text-fg-subtle">min</span>
+            </div>
+          </SettingsRow>
+          <SettingsRow
+            label="Max dosas per batch"
+            description="Maximum item quantity in the 'Current' section of the Dosa Counter. Overflow orders automatically flow to 'Upcoming'."
+          >
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={1}
+                max={100}
+                className="w-24"
+                value={settings.maxDosaCount ?? 8}
+                onChange={(e) => set("maxDosaCount", parseInt(e.target.value) || 8)}
+              />
+              <span className="text-[12px] text-fg-subtle">dosas</span>
+            </div>
+          </SettingsRow>
+        </SettingsSection>
+      </div>
+
+      {/* ── Offline Mode ── */}
+      <div className="space-y-2.5">
+        <div>
+          <h3 className="text-[14px] font-semibold text-fg tracking-tight">Store Storefront Availability</h3>
+          <p className="text-[11px] text-fg-subtle mt-0.5">
+            Temporarily pause incoming digital orders during extreme rushes or emergencies.
+          </p>
+        </div>
+        <SettingsSection>
+          <SettingsRow label="Offline mode" description="Pause all incoming customer orders and show a custom message on digital menu">
+            <Switch
+              checked={settings.offlineMode}
+              onCheckedChange={(v) => set("offlineMode", v)}
+            />
+          </SettingsRow>
+          {settings.offlineMode && (
+            <SettingsRow label="Offline message" description="Notice displayed to customers when accessing digital menu">
+              <Input
+                value={settings.offlineModeMessage}
+                onChange={(e) => set("offlineModeMessage", e.target.value)}
+                placeholder="We're currently closed. Please check back later."
+              />
+            </SettingsRow>
+          )}
+        </SettingsSection>
+      </div>
+
+      {/* ── Opening Hours ── */}
+      <div className="space-y-2.5">
+        <div>
+          <h3 className="text-[14px] font-semibold text-fg tracking-tight">Operating Hours</h3>
+          <p className="text-[11px] text-fg-subtle mt-0.5">
+            Define weekly opening and closing hours for customer ordering.
+          </p>
+        </div>
         <div className="rounded-xl border border-border bg-surface overflow-hidden">
           {DAYS.map((day, i) => {
             const h = settings.openingHours[day];
@@ -179,25 +221,22 @@ export function TabOperations({ settings, onChange }: Props) {
         </div>
       </div>
 
-      {/* Shifts management */}
-      <div className="mt-6">
+      {/* ── Shifts Link ── */}
+      <div className="pt-2">
         <div className="flex items-center justify-between mb-3">
-          <div className="label-xs">Shift Management</div>
+          <div>
+            <h4 className="text-[13px] font-semibold text-fg">Shift Roster Management</h4>
+            <p className="text-[11px] text-fg-subtle">Weekly staff shifts for kitchen throughput tracking.</p>
+          </div>
           <a
             href="/settings?tab=shifts"
             className="inline-flex items-center gap-1.5 text-[11px] font-medium text-accent hover:text-accent/80 transition-colors"
           >
-            Manage shifts
-            <ChevronRight className="h-3 w-3" />
+            Manage shifts <ChevronRight className="h-3 w-3" />
           </a>
         </div>
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <p className="text-[12px] text-fg-subtle">
-            Define weekly shifts to track kitchen throughput and staff scheduling.
-            Shifts appear on the kitchen board as contextual labels.
-          </p>
-        </div>
       </div>
+
     </div>
   );
 }
