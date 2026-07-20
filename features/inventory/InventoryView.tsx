@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { useWastePercentage, useStockoutIncidents, useCostTrends } from "@/hooks/useInventoryAnalytics";
+import {
+  useWastePercentage,
+  useStockoutIncidents,
+  useCostTrends,
+  useInventoryItems,
+  useCreateInventoryItem,
+  useUpdateInventoryItem,
+  useDeleteInventoryItem,
+  InventoryItem,
+} from "@/hooks/useInventoryAnalytics";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   PackageOpen,
@@ -42,39 +51,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
-interface InventoryItem {
-  id: string;
-  name: string;
-  category: string;
-  currentStock: number;
-  minStock: number;
-  unit: string;
-  supplier: string;
-  lastUpdated: string;
-}
-
-const INITIAL_INVENTORY: InventoryItem[] = [
-  { id: "1", name: "Tomatoes", category: "Vegetables", currentStock: 15.5, minStock: 10, unit: "kg", supplier: "Fresh Farms", lastUpdated: "Today, 10:30 AM" },
-  { id: "2", name: "Chicken Breast", category: "Meat & Poultry", currentStock: 4.2, minStock: 15, unit: "kg", supplier: "Apex Poultry", lastUpdated: "Today, 09:15 AM" },
-  { id: "3", name: "Mozzarella Cheese", category: "Dairy", currentStock: 0, minStock: 8, unit: "kg", supplier: "Dairy Land", lastUpdated: "Yesterday" },
-  { id: "4", name: "Salted Butter", category: "Dairy", currentStock: 12.0, minStock: 5, unit: "kg", supplier: "Dairy Land", lastUpdated: "2 days ago" },
-  { id: "5", name: "Onions", category: "Vegetables", currentStock: 35.0, minStock: 20, unit: "kg", supplier: "Fresh Farms", lastUpdated: "Today, 08:00 AM" },
-  { id: "6", name: "Refined Flour", category: "Grains & Baking", currentStock: 60.0, minStock: 25, unit: "kg", supplier: "Global Grains", lastUpdated: "3 days ago" },
-  { id: "7", name: "Fresh Milk", category: "Dairy", currentStock: 3.0, minStock: 10, unit: "liters", supplier: "Dairy Land", lastUpdated: "Just now" },
-  { id: "8", name: "Eggs", category: "Meat & Poultry", currentStock: 120, minStock: 50, unit: "units", supplier: "Apex Poultry", lastUpdated: "Today, 11:00 AM" },
-  { id: "9", name: "Salmon Fillet", category: "Seafood", currentStock: 0, minStock: 5, unit: "kg", supplier: "Ocean Catch", lastUpdated: "Yesterday" },
-  { id: "10", name: "Garlic Paste", category: "Spices & Pastes", currentStock: 1.5, minStock: 2, unit: "kg", supplier: "Spices Inc.", lastUpdated: "Today, 10:00 AM" },
-];
-
 export function InventoryView() {
+  // Backend Queries & Mutations
+  const { data: stock = [], isLoading: isLoadingItems } = useInventoryItems();
+  const createMutation = useCreateInventoryItem();
+  const updateMutation = useUpdateInventoryItem();
+  const deleteMutation = useDeleteInventoryItem();
+
   const waste = useWastePercentage();
   const stockouts = useStockoutIncidents();
   const costs = useCostTrends();
 
   const isLoadingAnalytics = waste.isLoading || stockouts.isLoading || costs.isLoading;
 
+  // Local UI state (search, filters, expanded categories, dialogs, form inputs)
   const [activeTab, setActiveTab] = useState("levels");
-  const [stock, setStock] = useState<InventoryItem[]>(INITIAL_INVENTORY);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -111,20 +102,20 @@ export function InventoryView() {
 
   // Form Fields State
   const [formName, setFormName] = useState("");
-  const [formCategory, setFormCategory] = useState("");
+  const [formCategory, setFormCategory] = useState("Vegetables");
   const [formStock, setFormStock] = useState("");
-  const [formMinStock, setFormMinStock] = useState("");
+  const [formMinStock, setFormMinStock] = useState("5");
   const [formUnit, setFormUnit] = useState("kg");
-  const [formSupplier, setFormSupplier] = useState("");
+  const [formSupplier, setFormSupplier] = useState("Fresh Farms");
 
-  // Unique lists for filters
+  // Dynamic category and supplier lists from backend stock data
   const categories = useMemo(() => {
-    const predefined = ["Vegetables", "Meat & Poultry", "Dairy", "Grains & Baking", "Seafood", "Spices & Pastes"];
-    const fromStock = stock.map((i) => i.category);
-    return Array.from(new Set([...predefined, ...fromStock]));
+    return Array.from(new Set(stock.map((i) => i.category)));
   }, [stock]);
 
-  const suppliers = useMemo(() => Array.from(new Set(stock.map((i) => i.supplier))), [stock]);
+  const suppliers = useMemo(() => {
+    return Array.from(new Set(stock.map((i) => i.supplier)));
+  }, [stock]);
 
   const handleOpenCreate = () => {
     setEditItem(null);
@@ -148,58 +139,57 @@ export function InventoryView() {
     setSheetOpen(true);
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formCategory.trim() || !formSupplier.trim()) return;
 
-    if (editItem) {
-      setStock((prev) =>
-        prev.map((i) =>
-          i.id === editItem.id
-            ? {
-                ...i,
-                name: formName,
-                category: formCategory,
-                currentStock: parseFloat(formStock) || 0,
-                minStock: parseFloat(formMinStock) || 0,
-                unit: formUnit,
-                supplier: formSupplier,
-                lastUpdated: "Just now",
-              }
-            : i
-        )
-      );
-      toast.success("Ingredient updated");
-    } else {
-      const newItem: InventoryItem = {
-        id: (stock.length + 1).toString(),
-        name: formName,
-        category: formCategory,
-        currentStock: parseFloat(formStock) || 0,
-        minStock: parseFloat(formMinStock) || 0,
-        unit: formUnit,
-        supplier: formSupplier,
-        lastUpdated: "Just now",
-      };
-      setStock((prev) => [...prev, newItem]);
-      toast.success("Ingredient added");
+    try {
+      if (editItem) {
+        await updateMutation.mutateAsync({
+          id: editItem.id,
+          name: formName,
+          category: formCategory,
+          currentStock: parseFloat(formStock) || 0,
+          minStock: parseFloat(formMinStock) || 0,
+          unit: formUnit,
+          supplier: formSupplier,
+        });
+        toast.success("Ingredient updated");
+      } else {
+        await createMutation.mutateAsync({
+          name: formName,
+          category: formCategory,
+          currentStock: parseFloat(formStock) || 0,
+          minStock: parseFloat(formMinStock) || 0,
+          unit: formUnit,
+          supplier: formSupplier,
+        });
+        toast.success("Ingredient added");
+      }
+      setSheetOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message || "Operation failed");
     }
-    setSheetOpen(false);
   };
 
-  const handleStockUpdate = (itemId: string, newStock: number) => {
-    setStock((prev) =>
-      prev.map((i) =>
-        i.id === itemId
-          ? { ...i, currentStock: newStock, lastUpdated: "Just now" }
-          : i
-      )
-    );
+  const handleStockUpdate = async (itemId: string, newStock: number) => {
+    try {
+      await updateMutation.mutateAsync({
+        id: itemId,
+        currentStock: newStock,
+      });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update stock");
+    }
   };
 
-  const handleDelete = (itemId: string) => {
-    setStock((prev) => prev.filter((i) => i.id !== itemId));
-    toast.success("Ingredient deleted");
+  const handleDelete = async (itemId: string) => {
+    try {
+      await deleteMutation.mutateAsync(itemId);
+      toast.success("Ingredient deleted");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete ingredient");
+    }
   };
 
   // Filter & Sort inventory list
@@ -234,7 +224,7 @@ export function InventoryView() {
     });
   }, [filteredStock, sortBy]);
 
-  // Group items by category (including empty categories)
+  // Group items by category
   const itemsByCategory = useMemo(() => {
     const groups = categories.map((cat) => {
       const catItems = sortedStock.filter((item) => item.category === cat);
@@ -255,14 +245,16 @@ export function InventoryView() {
     return groups;
   }, [categories, sortedStock]);
 
-  // Derived Operational Metrics
+  // Derived Operational Metrics (calculated strictly from backend stock data)
   const healthyCount = stock.filter((i) => i.currentStock > i.minStock).length;
   const lowCount = stock.filter((i) => i.currentStock > 0 && i.currentStock <= i.minStock).length;
   const outCount = stock.filter((i) => i.currentStock === 0).length;
 
-  const inventoryHealth = outCount > 0 ? "Critical" : lowCount > 0 ? "Attention Needed" : "Healthy";
+  const inventoryHealth = stock.length === 0 ? "Empty" : outCount > 0 ? "Critical" : lowCount > 0 ? "Attention Needed" : "Healthy";
   const healthReason =
-    inventoryHealth === "Critical"
+    stock.length === 0
+      ? "No inventory items recorded."
+      : inventoryHealth === "Critical"
       ? `${outCount} item(s) out of stock.`
       : inventoryHealth === "Attention Needed"
       ? `${lowCount} item(s) running low.`
@@ -302,7 +294,7 @@ export function InventoryView() {
           {activeTab === "levels" && (
             <Button
               size="sm"
-              className="gap-1.5 bg-accent hover:bg-accent/90 text-white"
+              className="gap-1.5 bg-accent hover:bg-accent/90 text-white cursor-pointer"
               onClick={handleOpenCreate}
             >
               <Plus className="h-3.5 w-3.5" /> Add Ingredient
@@ -335,34 +327,42 @@ export function InventoryView() {
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
             <div className="flex flex-col p-4 rounded-2xl border border-white/5 bg-white/[0.01]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle">Healthy Items</span>
-              <span className="text-xl font-black text-success num mt-1">{healthyCount}</span>
+              {isLoadingItems ? <Skeleton className="h-7 w-12 bg-white/5 mt-1" /> : <span className="text-xl font-black text-success num mt-1">{healthyCount}</span>}
             </div>
             <div className="flex flex-col p-4 rounded-2xl border border-white/5 bg-white/[0.01]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle">Low Stock</span>
-              <span className="text-xl font-black text-warning num mt-1">{lowCount}</span>
+              {isLoadingItems ? <Skeleton className="h-7 w-12 bg-white/5 mt-1" /> : <span className="text-xl font-black text-warning num mt-1">{lowCount}</span>}
             </div>
             <div className="flex flex-col p-4 rounded-2xl border border-white/5 bg-white/[0.01]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle">Out of Stock</span>
-              <span className="text-xl font-black text-danger num mt-1">{outCount}</span>
+              {isLoadingItems ? <Skeleton className="h-7 w-12 bg-white/5 mt-1" /> : <span className="text-xl font-black text-danger num mt-1">{outCount}</span>}
             </div>
             <div className="flex flex-col p-4 rounded-2xl border border-white/5 bg-white/[0.01]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-fg-subtle">Categories</span>
-              <span className="text-xl font-black text-fg num mt-1">{categories.length}</span>
+              {isLoadingItems ? <Skeleton className="h-7 w-12 bg-white/5 mt-1" /> : <span className="text-xl font-black text-fg num mt-1">{categories.length}</span>}
             </div>
-            <div className={cn("col-span-2 lg:col-span-1 flex flex-col p-4 rounded-2xl border justify-center", inventoryHealth === "Healthy" ? "border-success/20 bg-success/5 text-success" : inventoryHealth === "Attention Needed" ? "border-warning/20 bg-warning/5 text-warning" : "border-danger/20 bg-danger/5 text-danger")}>
+            <div className={cn("col-span-2 lg:col-span-1 flex flex-col p-4 rounded-2xl border justify-center", inventoryHealth === "Empty" ? "border-white/10 bg-white/5 text-fg-muted" : inventoryHealth === "Healthy" ? "border-success/20 bg-success/5 text-success" : inventoryHealth === "Attention Needed" ? "border-warning/20 bg-warning/5 text-warning" : "border-danger/20 bg-danger/5 text-danger")}>
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider opacity-85 select-none">Inventory Health</span>
-                {inventoryHealth === "Healthy" ? <CheckCircle className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                {inventoryHealth === "Healthy" || inventoryHealth === "Empty" ? <CheckCircle className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
               </div>
-              <span className="text-[15.5px] font-black tracking-tight mt-1">{inventoryHealth.toUpperCase()}</span>
-              <span className="text-[10px] opacity-75 mt-0.5 font-normal truncate">{healthReason}</span>
+              {isLoadingItems ? (
+                <Skeleton className="h-6 w-24 bg-white/5 mt-1" />
+              ) : (
+                <>
+                  <span className="text-[15.5px] font-black tracking-tight mt-1">{inventoryHealth.toUpperCase()}</span>
+                  <span className="text-[10px] opacity-75 mt-0.5 font-normal truncate">{healthReason}</span>
+                </>
+              )}
             </div>
           </div>
 
-          {/* ── Section 2: Needs Replenishment ── */}
+          {/* Section 2: Needs Replenishment */}
           <div className="space-y-3">
             <h3 className="text-[13px] font-bold uppercase tracking-wider text-fg-subtle select-none">Needs Replenishment</h3>
-            {replenishmentItems.length === 0 ? (
+            {isLoadingItems ? (
+              <Skeleton className="h-14 w-full bg-white/5 rounded-xl" />
+            ) : replenishmentItems.length === 0 ? (
               <div className="rounded-xl border border-success/20 bg-success/5 p-4 flex items-center gap-3">
                 <CheckCircle className="h-4.5 w-4.5 text-success shrink-0" />
                 <span className="text-[12.5px] font-semibold text-success">✓ Stock levels are fully replenished. You are ready for today's service.</span>
@@ -402,7 +402,7 @@ export function InventoryView() {
             )}
           </div>
 
-          {/* Unified Search & Filters Toolbar */}
+          {/* Search & Filters Toolbar */}
           <div className="flex flex-col lg:flex-row gap-2.5 items-stretch lg:items-center bg-white/[0.01] border border-white/5 p-3 rounded-xl">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-fg-subtle" />
@@ -464,7 +464,7 @@ export function InventoryView() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-10 text-[11px] px-2.5 hover:bg-white/5 text-fg-subtle hover:text-fg"
+                  className="h-10 text-[11px] px-2.5 hover:bg-white/5 text-fg-subtle hover:text-fg cursor-pointer"
                   onClick={() => {
                     setSearch("");
                     setCategoryFilter("all");
@@ -479,18 +479,28 @@ export function InventoryView() {
             </div>
           </div>
 
-          {/* Catalog Listing grouped by Categories */}
+          {/* Catalog Listing */}
           <div className="card-premium overflow-hidden border border-white/5 rounded-2xl bg-white/[0.01]">
-            {stock.length === 0 ? (
-              <div className="flex flex-col items-center gap-3 py-16 text-center">
+            {isLoadingItems ? (
+              <div className="p-6 space-y-4">
+                <Skeleton className="h-8 w-full bg-white/5 rounded-lg" />
+                <Skeleton className="h-8 w-full bg-white/5 rounded-lg" />
+                <Skeleton className="h-8 w-full bg-white/5 rounded-lg" />
+              </div>
+            ) : stock.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+                <PackageOpen className="w-10 h-10 text-fg-subtle opacity-50 mb-1" />
                 <p className="text-[13px] font-medium text-fg">Your inventory is empty.</p>
                 <p className="text-[11px] text-fg-subtle font-normal">Start by adding your first inventory item.</p>
+                <Button size="sm" className="mt-2 gap-1.5 bg-accent hover:bg-accent/90 text-white cursor-pointer" onClick={handleOpenCreate}>
+                  <Plus className="h-3.5 w-3.5" /> Add Ingredient
+                </Button>
               </div>
             ) : sortedStock.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-16 text-center">
                 <p className="text-[13px] font-bold text-fg">No inventory items match your current search.</p>
                 <p className="text-[11px] text-fg-subtle">Try adjusting your search or clearing filters.</p>
-                <Button size="sm" variant="secondary" className="mt-2" onClick={() => { setSearch(""); setCategoryFilter("all"); setStatusFilter("all"); setSupplierFilter("all"); setSortBy("nameAsc"); }}>
+                <Button size="sm" variant="secondary" className="mt-2 cursor-pointer" onClick={() => { setSearch(""); setCategoryFilter("all"); setStatusFilter("all"); setSupplierFilter("all"); setSortBy("nameAsc"); }}>
                   Reset Filters
                 </Button>
               </div>
@@ -656,7 +666,7 @@ export function InventoryView() {
                       </div>
                     </div>
                   ))}
-                  {waste.data?.length === 0 && <p className="text-sm text-fg-muted italic">No waste data.</p>}
+                  {(!waste.data || waste.data.length === 0) && <p className="text-sm text-fg-muted italic">No waste data.</p>}
                 </div>
               )}
             </div>
@@ -692,7 +702,7 @@ export function InventoryView() {
                       )}
                     </div>
                   ))}
-                  {costs.data?.length === 0 && <p className="text-sm text-fg-muted italic">No cost changes tracked.</p>}
+                  {(!costs.data || costs.data.length === 0) && <p className="text-sm text-fg-muted italic">No cost changes tracked.</p>}
                 </div>
               )}
             </div>
@@ -724,7 +734,7 @@ export function InventoryView() {
                       </div>
                     </div>
                   ))}
-                  {stockouts.data?.length === 0 && <p className="text-sm text-fg-muted italic">No recent stockouts.</p>}
+                  {(!stockouts.data || stockouts.data.length === 0) && <p className="text-sm text-fg-muted italic">No recent stockouts.</p>}
                 </div>
               )}
             </div>
@@ -832,10 +842,10 @@ export function InventoryView() {
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t border-white/5 mt-6">
-              <Button type="button" variant="outline" onClick={() => setSheetOpen(false)} className="border-white/10 hover:bg-white/5 text-fg animate-scale-in">
+              <Button type="button" variant="outline" onClick={() => setSheetOpen(false)} className="border-white/10 hover:bg-white/5 text-fg animate-scale-in cursor-pointer">
                 Cancel
               </Button>
-              <Button type="submit" className="bg-accent hover:bg-accent/90 text-white">
+              <Button type="submit" className="bg-accent hover:bg-accent/90 text-white cursor-pointer" disabled={createMutation.isPending || updateMutation.isPending}>
                 {editItem ? "Save changes" : "Add ingredient"}
               </Button>
             </div>
@@ -867,7 +877,7 @@ export function InventoryView() {
                       key={val}
                       variant="secondary"
                       size="sm"
-                      className="flex-1 h-8 text-[12px] bg-white/5 hover:bg-white/10 border-white/10 text-fg"
+                      className="flex-1 h-8 text-[12px] bg-white/5 hover:bg-white/10 border-white/10 text-fg cursor-pointer"
                       onClick={() => {
                         const newStock = Math.max(0, adjustItem.currentStock + val);
                         handleStockUpdate(adjustItem.id, newStock);
@@ -899,7 +909,7 @@ export function InventoryView() {
                         setAdjustVal("");
                       }
                     }}
-                    className="bg-accent hover:bg-accent/90 text-white h-9 text-[12px] px-3"
+                    className="bg-accent hover:bg-accent/90 text-white h-9 text-[12px] px-3 cursor-pointer"
                   >
                     Set
                   </Button>
@@ -907,7 +917,7 @@ export function InventoryView() {
               </div>
 
               <div className="flex justify-end pt-4 border-t border-white/5 mt-4">
-                <Button variant="outline" size="sm" onClick={() => setAdjustItem(null)} className="h-8 text-[11px] border-white/10 hover:bg-white/5 text-fg">
+                <Button variant="outline" size="sm" onClick={() => setAdjustItem(null)} className="h-8 text-[11px] border-white/10 hover:bg-white/5 text-fg cursor-pointer">
                   Close
                 </Button>
               </div>

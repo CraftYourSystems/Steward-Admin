@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 
 export function useWastePercentage() {
@@ -30,3 +30,109 @@ export function useCostTrends() {
     }
   });
 }
+
+export interface InventoryItem {
+
+  id: string;
+  name: string;
+  category: string;
+  currentStock: number;
+  minStock: number;
+  unit: string;
+  supplier: string;
+  lastUpdated: string;
+}
+
+export function useInventoryItems() {
+  return useQuery({
+    queryKey: ["inventory-items"],
+    queryFn: async () => {
+      const { data } = await api.get("/admin/inventory-analytics/items");
+      return (data.data || []) as InventoryItem[];
+    }
+  });
+}
+
+export function useCreateInventoryItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (newItem: Omit<InventoryItem, "id" | "lastUpdated">) => {
+      const { data } = await api.post("/admin/inventory-analytics/items", newItem);
+      return data.data as InventoryItem;
+    },
+    onMutate: async (newItem) => {
+      await queryClient.cancelQueries({ queryKey: ["inventory-items"] });
+      const previousItems = queryClient.getQueryData<InventoryItem[]>(["inventory-items"]) || [];
+      const optimisticItem: InventoryItem = {
+        ...newItem,
+        id: `temp-${Date.now()}`,
+        lastUpdated: "Just now"
+      };
+      queryClient.setQueryData<InventoryItem[]>(["inventory-items"], [...previousItems, optimisticItem]);
+      return { previousItems };
+    },
+    onError: (_err, _newItem, context) => {
+      if (context?.previousItems) {
+        queryClient.setQueryData(["inventory-items"], context.previousItems);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
+    }
+  });
+}
+
+export function useUpdateInventoryItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updatedFields }: Partial<InventoryItem> & { id: string }) => {
+      const { data } = await api.patch(`/admin/inventory-analytics/items/${id}`, updatedFields);
+      return data.data as InventoryItem;
+    },
+    onMutate: async (updatedItem) => {
+      await queryClient.cancelQueries({ queryKey: ["inventory-items"] });
+      const previousItems = queryClient.getQueryData<InventoryItem[]>(["inventory-items"]) || [];
+      queryClient.setQueryData<InventoryItem[]>(
+        ["inventory-items"],
+        previousItems.map((item) => (item.id === updatedItem.id ? { ...item, ...updatedItem, lastUpdated: "Just now" } : item))
+      );
+      return { previousItems };
+    },
+    onError: (_err, _updatedItem, context) => {
+      if (context?.previousItems) {
+        queryClient.setQueryData(["inventory-items"], context.previousItems);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
+    }
+  });
+}
+
+export function useDeleteInventoryItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/admin/inventory-analytics/items/${id}`);
+      return id;
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["inventory-items"] });
+      const previousItems = queryClient.getQueryData<InventoryItem[]>(["inventory-items"]) || [];
+      queryClient.setQueryData<InventoryItem[]>(
+        ["inventory-items"],
+        previousItems.filter((item) => item.id !== id)
+      );
+      return { previousItems };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousItems) {
+        queryClient.setQueryData(["inventory-items"], context.previousItems);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
+    }
+  });
+}
+
