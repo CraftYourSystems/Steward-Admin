@@ -15,13 +15,59 @@ export type KitchenType = "MAIN" | "TIME_TAKING" | "READY_TO_SERVE";
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
+export interface DayHours {
+  open: string;
+  close: string;
+  isClosed: boolean;
+}
+
+export interface OpeningHoursDTO {
+  monday?: DayHours;
+  tuesday?: DayHours;
+  wednesday?: DayHours;
+  thursday?: DayHours;
+  friday?: DayHours;
+  saturday?: DayHours;
+  sunday?: DayHours;
+}
+
+export interface BranchStatisticsDTO {
+  todayOrders: number;
+  staffCount: number;
+  qrCount: number;
+  lastOperationalActivity: string | null;
+}
+
 export interface BranchSummary {
   id: string;
+  restaurantId: string;
   name: string;
   slug: string;
+  branchCode: string | null;
+  managerName: string | null;
+  managerPhone: string | null;
+  managerEmail: string | null;
+  phone: string | null;
+  address: string | null;
   sortOrder: number;
-  isActive?: boolean;
-  createdAt?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+
+  statistics?: BranchStatisticsDTO | null;
+
+  settings: {
+    timezone: string | null;
+    openingHours: OpeningHoursDTO | null;
+    taxPercent: number;
+    serviceChargePercent: number;
+    offlineMode: boolean;
+    autoAcceptOrders: boolean;
+    estimatedPrepTime: number;
+    notificationEmail: string | null;
+    gstNumber: string | null;
+    upiId: string | null;
+  };
 }
 
 export interface QrCode {

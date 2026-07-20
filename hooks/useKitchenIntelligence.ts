@@ -1,6 +1,67 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 
+export interface HourlyThroughputData {
+  hour: string;
+  completedOrdersCount: number;
+  avgPrepMins: number;
+}
+
+export interface TicketAgingData {
+  id: string;
+  orderNumber: string;
+  orderType: string;
+  createdAt: string;
+  estimatedMins: number;
+  isDelayed: boolean;
+  delayReason: string | null;
+}
+
+export interface StationWorkloadData {
+  station: string;
+  activeItemsCount: number;
+  avgPrepTimeMins: number | null;
+  capacity?: number | null;
+}
+
+export interface KitchenSummaryData {
+  restaurantId: string;
+  queue: {
+    activeOrdersCount: number;
+    receivedCount: number;
+    preparingCount: number;
+    readyTodayCount: number;
+    completedTodayCount: number;
+  };
+  prepTime: {
+    avgPrepTimeMins: number | null;
+    avgKitchenDelayMins: number | null;
+    avgFohDelayMins: number | null;
+    hourlyThroughput: HourlyThroughputData[];
+  };
+  stations: StationWorkloadData[];
+  agingTickets: TicketAgingData[];
+  quality: {
+    totalDelayedOrders: number;
+    delayedRatePct: number;
+    remakeCount: number | null;
+    remakeRatePct: number | null;
+    delayReasonsPareto: { reason: string; count: number }[];
+  };
+}
+
+export function useKitchenSummary(enabled = true) {
+  return useQuery({
+    queryKey: ["kitchen-summary"],
+    queryFn: async () => {
+      const { data } = await api.get("/kitchen/intelligence/summary");
+      return data.data as KitchenSummaryData;
+    },
+    enabled,
+    refetchInterval: 10000,
+  });
+}
+
 export function useQueueHealth(enabled = true) {
   return useQuery({
     queryKey: ["kitchen-queue-health"],
@@ -9,7 +70,7 @@ export function useQueueHealth(enabled = true) {
       return data.data as { activeOrders: number; capacity: number; status: 'green' | 'amber' | 'red' };
     },
     enabled,
-    refetchInterval: 10000, // poll every 10s
+    refetchInterval: 10000,
   });
 }
 
@@ -54,16 +115,7 @@ export function useTicketAging(enabled = true) {
     queryKey: ["kitchen-ticket-aging"],
     queryFn: async () => {
       const { data } = await api.get("/kitchen/intelligence/ticket-aging");
-      return data.data as { 
-        id: string; 
-        orderNumber: string; 
-        createdAt: string; 
-        estimatedMins: number; 
-        orderType: string; 
-        delayReason: string | null;
-        elapsedMins: number;
-        isDelayed: boolean;
-      }[];
+      return data.data as TicketAgingData[];
     },
     enabled,
     refetchInterval: 10000,

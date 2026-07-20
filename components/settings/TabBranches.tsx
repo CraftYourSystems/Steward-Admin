@@ -6,43 +6,27 @@ import { toast } from "sonner";
 import {
   Plus,
   Edit2,
-  CheckCircle2,
-  AlertTriangle,
   Loader2,
   Info,
   MapPin,
   X,
-  ChevronRight,
   Search,
-  Building,
   User,
   Clock,
   Phone,
   Mail,
-  Activity,
-  Users,
-  QrCode,
+  Globe,
+  AlertTriangle,
+  Tag,
 } from "lucide-react";
 import api from "@/lib/axios";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SettingsShell, SettingsSection } from "./SettingsShell";
+import { SettingsShell } from "./SettingsShell";
 import type { ApiSuccess, BranchSummary } from "@/types";
 import { cn } from "@/lib/utils";
 import { disconnectSocket } from "@/lib/sockets";
-
-interface CustomBranchInfo {
-  manager: string;
-  address: string;
-  phone: string;
-  email: string;
-  openingHours: string;
-  todayOrders: number;
-  staffCount: number;
-  qrCount: number;
-  lastActivity: string;
-}
 
 export function TabBranches() {
   const queryClient = useQueryClient();
@@ -62,16 +46,15 @@ export function TabBranches() {
   // Form Field States
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [branchCode, setBranchCode] = useState("");
   const [sortOrder, setSortOrder] = useState<number>(0);
-  const [formError, setFormError] = useState<string | null>(null);
-
-  // Custom Fields (Mock database stored in Local Session State)
-  const [branchDetailsMap, setBranchDetailsMap] = useState<Record<string, CustomBranchInfo>>({});
-  const [manager, setManager] = useState("");
-  const [address, setAddress] = useState("");
+  const [managerName, setManagerName] = useState("");
+  const [managerPhone, setManagerPhone] = useState("");
+  const [managerEmail, setManagerEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [openingHours, setOpeningHours] = useState("");
+  const [address, setAddress] = useState("");
+  const [timezone, setTimezone] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
 
   // ─── Query: Load Branches ──────────────────────────────────────────────────
   const { data: branches = [], isLoading, isError, refetch } = useQuery({
@@ -82,79 +65,63 @@ export function TabBranches() {
     },
   });
 
-  // Helper to load or generate custom details for a branch deterministically
-  const getInfo = (id: string, branchName: string): CustomBranchInfo => {
-    if (branchDetailsMap[id]) {
-      return branchDetailsMap[id];
-    }
-    const hash = branchName.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const todayOrders = (hash % 150) + 35;
-    const staffCount = (hash % 12) + 6;
-    const qrCount = (hash % 15) + 8;
-    const lastActivity = hash % 2 === 0 ? "Just now" : `${(hash % 35) + 5}m ago`;
-    const managerName = hash % 3 === 0 ? "John Doe" : hash % 3 === 1 ? "Jane Smith" : "David Lee";
-    const physicalAddress = `${(hash % 800) + 100} Main Road, Sector ${(hash % 5) + 1}`;
-    const phoneNo = `+91 98765 ${String(10000 + (hash % 89999))}`;
-    const emailAddr = `${branchName.toLowerCase().replace(/\s+/g, "")}@steward.app`;
-    const timings = "09:00 AM - 11:00 PM";
-
-    return {
-      manager: managerName,
-      address: physicalAddress,
-      phone: phoneNo,
-      email: emailAddr,
-      openingHours: timings,
-      todayOrders,
-      staffCount,
-      qrCount,
-      lastActivity,
-    };
-  };
-
   // ─── Mutations ─────────────────────────────────────────────────────────────
-  
+
   // Create Branch
   const createMutation = useMutation({
-    mutationFn: async (payload: { name: string; slug?: string; sortOrder?: number }) => {
+    mutationFn: async (payload: {
+      name: string;
+      slug?: string;
+      branchCode?: string;
+      managerName?: string;
+      managerPhone?: string;
+      managerEmail?: string;
+      phone?: string;
+      address?: string;
+      sortOrder?: number;
+      settings?: { timezone?: string };
+    }) => {
       const { data } = await api.post("/branches", payload);
       return data.data;
     },
     onSuccess: () => {
       toast.success("Branch created successfully.");
       setCreateOpen(false);
-      setName("");
-      setSlug("");
-      setSortOrder(0);
-      setFormError(null);
+      resetForm();
       refetch();
     },
     onError: (err: any) => {
       setFormError(err?.response?.data?.message ?? err?.response?.data?.error?.message ?? "Failed to create branch");
-    }
+    },
   });
 
   // Edit Branch
   const editMutation = useMutation({
-    mutationFn: async (payload: { id: string; name: string; slug: string; sortOrder: number }) => {
-      const { data } = await api.patch(`/branches/${payload.id}`, {
-        name: payload.name,
-        slug: payload.slug,
-        sortOrder: payload.sortOrder,
-      });
+    mutationFn: async (payload: {
+      id: string;
+      name: string;
+      slug: string;
+      branchCode?: string | null;
+      managerName?: string | null;
+      managerPhone?: string | null;
+      managerEmail?: string | null;
+      phone?: string | null;
+      address?: string | null;
+      sortOrder: number;
+      settings?: { timezone?: string | null };
+    }) => {
+      const { data } = await api.patch(`/branches/${payload.id}`, payload);
       return data.data;
     },
     onSuccess: () => {
       toast.success("Branch updated successfully.");
       setEditBranch(null);
-      setName("");
-      setSlug("");
-      setSortOrder(0);
-      setFormError(null);
+      resetForm();
       refetch();
     },
     onError: (err: any) => {
       setFormError(err?.response?.data?.message ?? err?.response?.data?.error?.message ?? "Failed to update branch");
-    }
+    },
   });
 
   // Activate Branch
@@ -168,7 +135,7 @@ export function TabBranches() {
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message ?? "Failed to activate branch");
-    }
+    },
   });
 
   // Deactivate Branch
@@ -181,7 +148,6 @@ export function TabBranches() {
       setDeactivateConfirm(null);
       refetch();
 
-      // If current active branch is deactivated, perform safety log out
       if (branchId === currentBranch?.id) {
         toast.info("You deactivated your active session branch. Logging out...");
         queryClient.clear();
@@ -195,7 +161,7 @@ export function TabBranches() {
       setDeactivateConfirm(null);
       const code = err?.response?.data?.error?.code;
       const message = err?.response?.data?.message ?? err?.response?.data?.error?.message ?? "";
-      
+
       if (code === "LAST_ACTIVE_BRANCH") {
         toast.error("At least one Branch must remain active.");
       } else if (code === "BRANCH_HAS_ASSIGNED_STAFF") {
@@ -203,29 +169,41 @@ export function TabBranches() {
       } else {
         toast.error(message || "Failed to deactivate branch");
       }
-    }
+    },
   });
 
   // ─── Event Handlers ────────────────────────────────────────────────────────
 
-  const handleOpenCreate = () => {
+  const resetForm = () => {
     setName("");
     setSlug("");
+    setBranchCode("");
     setSortOrder(0);
+    setManagerName("");
+    setManagerPhone("");
+    setManagerEmail("");
+    setPhone("");
+    setAddress("");
+    setTimezone("");
     setFormError(null);
+  };
+
+  const handleOpenCreate = () => {
+    resetForm();
     setCreateOpen(true);
   };
 
   const handleOpenEdit = (branch: BranchSummary) => {
-    const info = getInfo(branch.id, branch.name);
     setName(branch.name);
     setSlug(branch.slug);
+    setBranchCode(branch.branchCode || "");
     setSortOrder(branch.sortOrder);
-    setManager(info.manager);
-    setAddress(info.address);
-    setPhone(info.phone);
-    setEmail(info.email);
-    setOpeningHours(info.openingHours);
+    setManagerName(branch.managerName || "");
+    setManagerPhone(branch.managerPhone || "");
+    setManagerEmail(branch.managerEmail || "");
+    setPhone(branch.phone || "");
+    setAddress(branch.address || "");
+    setTimezone(branch.settings?.timezone || "");
     setFormError(null);
     setEditBranch(branch);
   };
@@ -239,7 +217,14 @@ export function TabBranches() {
     createMutation.mutate({
       name: name.trim(),
       slug: slug.trim() ? slug.trim() : undefined,
+      branchCode: branchCode.trim() ? branchCode.trim() : undefined,
+      managerName: managerName.trim() ? managerName.trim() : undefined,
+      managerPhone: managerPhone.trim() ? managerPhone.trim() : undefined,
+      managerEmail: managerEmail.trim() ? managerEmail.trim() : undefined,
+      phone: phone.trim() ? phone.trim() : undefined,
+      address: address.trim() ? address.trim() : undefined,
       sortOrder: sortOrder ? Number(sortOrder) : undefined,
+      settings: timezone.trim() ? { timezone: timezone.trim() } : undefined,
     });
   };
 
@@ -254,21 +239,17 @@ export function TabBranches() {
       id: editBranch.id,
       name: name.trim(),
       slug: slug.trim(),
+      branchCode: branchCode.trim() || null,
+      managerName: managerName.trim() || null,
+      managerPhone: managerPhone.trim() || null,
+      managerEmail: managerEmail.trim() || null,
+      phone: phone.trim() || null,
+      address: address.trim() || null,
       sortOrder: Number(sortOrder),
-    });
-
-    setBranchDetailsMap((prev) => ({
-      ...prev,
-      [editBranch.id]: {
-        ...getInfo(editBranch.id, editBranch.name),
-        manager: manager.trim(),
-        address: address.trim(),
-        phone: phone.trim(),
-        email: email.trim(),
-        openingHours: openingHours.trim(),
-        lastActivity: "Just now",
+      settings: {
+        timezone: timezone.trim() || null,
       },
-    }));
+    });
   };
 
   // ─── Filter & Sort Calculations ──────────────────────────────────────────
@@ -276,42 +257,42 @@ export function TabBranches() {
   const activeCount = branches.filter((b: BranchSummary) => b.isActive).length;
   const inactiveCount = branches.filter((b: BranchSummary) => !b.isActive).length;
 
-  const totalOrdersSum = branches.reduce((sum: number, b: BranchSummary) => sum + getInfo(b.id, b.name).todayOrders, 0);
-  const totalStaffSum = branches.reduce((sum: number, b: BranchSummary) => sum + getInfo(b.id, b.name).staffCount, 0);
-  const totalQrSum = branches.reduce((sum: number, b: BranchSummary) => sum + getInfo(b.id, b.name).qrCount, 0);
+  const totalOrdersSum = branches.reduce((sum: number, b: BranchSummary) => sum + (b.statistics?.todayOrders ?? 0), 0);
+  const totalStaffSum = branches.reduce((sum: number, b: BranchSummary) => sum + (b.statistics?.staffCount ?? 0), 0);
+  const totalQrSum = branches.reduce((sum: number, b: BranchSummary) => sum + (b.statistics?.qrCount ?? 0), 0);
 
-  const uniqueManagers: string[] = Array.from(new Set(branches.map((b: BranchSummary) => getInfo(b.id, b.name).manager)));
+  const uniqueManagers: string[] = Array.from(
+    new Set(branches.map((b: BranchSummary) => b.managerName).filter(Boolean) as string[])
+  );
 
   const filteredBranches = branches.filter((branch: BranchSummary) => {
-    const info = getInfo(branch.id, branch.name);
     const term = search.toLowerCase();
     const matchesSearch =
       branch.name.toLowerCase().includes(term) ||
       branch.slug.toLowerCase().includes(term) ||
-      info.manager.toLowerCase().includes(term) ||
-      info.address.toLowerCase().includes(term);
+      (branch.branchCode && branch.branchCode.toLowerCase().includes(term)) ||
+      (branch.managerName && branch.managerName.toLowerCase().includes(term)) ||
+      (branch.address && branch.address.toLowerCase().includes(term));
 
     const matchesStatus =
       statusFilter === "all" ||
       (statusFilter === "active" ? branch.isActive : !branch.isActive);
 
-    const matchesManager = managerFilter === "all" || info.manager === managerFilter;
+    const matchesManager =
+      managerFilter === "all" || branch.managerName === managerFilter;
 
     return matchesSearch && matchesStatus && matchesManager;
   });
 
   const sortedBranches = [...filteredBranches].sort((a, b) => {
-    const infoA = getInfo(a.id, a.name);
-    const infoB = getInfo(b.id, b.name);
-
     if (sortBy === "nameDesc") {
       return b.name.localeCompare(a.name);
     }
     if (sortBy === "orders") {
-      return infoB.todayOrders - infoA.todayOrders;
+      return (b.statistics?.todayOrders ?? 0) - (a.statistics?.todayOrders ?? 0);
     }
     if (sortBy === "staff") {
-      return infoB.staffCount - infoA.staffCount;
+      return (b.statistics?.staffCount ?? 0) - (a.statistics?.staffCount ?? 0);
     }
     return a.name.localeCompare(b.name);
   });
@@ -352,19 +333,17 @@ export function TabBranches() {
         {/* Unified Search & Filters Toolbar */}
         {!isLoading && branches.length > 0 && (
           <div className="flex flex-col lg:flex-row gap-2.5 items-stretch lg:items-center bg-white/[0.02] border border-white/5 p-3 rounded-xl mb-5">
-            {/* Search Input */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-fg-subtle" />
               <input
                 type="text"
-                placeholder="Search branches by name, manager, address..."
+                placeholder="Search branches by name, manager, code, address..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full h-10 pl-9 pr-3 text-[12px] bg-[#1a1a1c] border border-white/10 rounded-lg text-fg placeholder:text-fg-subtle focus:outline-none focus:border-white/20 transition-colors"
               />
             </div>
 
-            {/* Filters */}
             <div className="flex flex-wrap items-center gap-2">
               <select
                 value={statusFilter}
@@ -467,11 +446,10 @@ export function TabBranches() {
             </Button>
           </div>
         ) : (
-          /* Branches Dashboard Cards Grid */
+          /* Branches Cards Grid */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {sortedBranches.map((branch: BranchSummary) => {
               const isCurrent = branch.id === currentBranch?.id;
-              const info = getInfo(branch.id, branch.name);
 
               return (
                 <div
@@ -492,10 +470,16 @@ export function TabBranches() {
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-fg-subtle font-mono block mt-0.5">slug: {branch.slug}</span>
+                      <div className="flex items-center gap-2 mt-0.5 text-[10px] text-fg-subtle font-mono">
+                        <span>slug: {branch.slug}</span>
+                        {branch.branchCode && (
+                          <span className="bg-white/5 border border-white/10 px-1 rounded text-fg-muted font-mono">
+                            {branch.branchCode}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Status Dot */}
                     <div className="flex items-center gap-1.5">
                       <span
                         className={cn(
@@ -509,23 +493,59 @@ export function TabBranches() {
                     </div>
                   </div>
 
-                  {/* Manager & Address Details */}
+                  {/* Manager & Contact Details (Zero-Trust Persisted Data Only) */}
                   <div className="space-y-1.5 text-[11.5px] text-fg-muted font-normal border-t border-b border-white/5 py-3 mb-3">
-                    <div className="flex items-center gap-1.5">
-                      <User className="h-3.5 w-3.5 text-fg-subtle" />
-                      <span>
-                        Manager: <strong className="text-fg">{info.manager}</strong>
-                      </span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <User className="h-3.5 w-3.5 text-fg-subtle shrink-0" />
+                        <span className="truncate">
+                          Manager:{" "}
+                          {branch.managerName ? (
+                            <strong className="text-fg">{branch.managerName}</strong>
+                          ) : (
+                            <button
+                              onClick={() => handleOpenEdit(branch)}
+                              className="text-accent hover:underline italic font-medium cursor-pointer"
+                            >
+                              Add Manager
+                            </button>
+                          )}
+                        </span>
+                      </div>
+                      {branch.managerPhone && (
+                        <span className="text-[10px] text-fg-subtle font-mono">{branch.managerPhone}</span>
+                      )}
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 text-fg-subtle" />
-                      <span className="truncate" title={info.address}>
-                        {info.address}
-                      </span>
+
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <MapPin className="h-3.5 w-3.5 text-fg-subtle shrink-0" />
+                      {branch.address ? (
+                        <span className="truncate" title={branch.address}>
+                          {branch.address}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleOpenEdit(branch)}
+                          className="text-accent hover:underline italic font-medium cursor-pointer text-[11px]"
+                        >
+                          Add Address
+                        </button>
+                      )}
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-fg-subtle" />
-                      <span>{info.openingHours}</span>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Phone className="h-3.5 w-3.5 text-fg-subtle shrink-0" />
+                        {branch.phone ? (
+                          <span>{branch.phone}</span>
+                        ) : (
+                          <span className="text-fg-subtle italic text-[10.5px]">Not Configured</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-fg-subtle">
+                        <Globe className="h-3 w-3" />
+                        <span>{branch.settings?.timezone || "Not Configured"}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -533,17 +553,16 @@ export function TabBranches() {
                   <div className="grid grid-cols-2 gap-2 text-center bg-white/5 p-2.5 rounded-lg mb-4 border border-white/5">
                     <div className="flex flex-col gap-0.5">
                       <span className="text-[9px] font-semibold uppercase tracking-wider text-fg-subtle">Orders Today</span>
-                      <span className="text-[13px] font-bold text-fg num">{info.todayOrders}</span>
+                      <span className="text-[13px] font-bold text-fg num">{branch.statistics?.todayOrders ?? 0}</span>
                     </div>
                     <div className="flex flex-col gap-0.5 border-l border-white/5">
                       <span className="text-[9px] font-semibold uppercase tracking-wider text-fg-subtle">Active Staff</span>
-                      <span className="text-[13px] font-bold text-fg num">{info.staffCount}</span>
+                      <span className="text-[13px] font-bold text-fg num">{branch.statistics?.staffCount ?? 0}</span>
                     </div>
                   </div>
 
                   {/* Actions area */}
                   <div className="flex items-center gap-2 mt-auto pt-2 border-t border-white/5">
-                    {/* Open Branch CTA */}
                     <Button
                       size="sm"
                       disabled={isCurrent || !branch.isActive}
@@ -561,16 +580,14 @@ export function TabBranches() {
                       {isCurrent ? "Current Outlet" : "Open Branch"}
                     </Button>
 
-                    {/* Edit button */}
                     <button
                       onClick={() => handleOpenEdit(branch)}
                       title="Edit branch details"
-                      className="h-8 w-8 grid place-items-center rounded-md text-fg-muted hover:bg-white/5 hover:text-fg transition-colors border border-white/10 shrink-0"
+                      className="h-8 w-8 grid place-items-center rounded-md text-fg-muted hover:bg-white/5 hover:text-fg transition-colors border border-white/10 shrink-0 cursor-pointer"
                     >
                       <Edit2 className="h-3.5 w-3.5" />
                     </button>
 
-                    {/* Activate/Deactivate Toggle */}
                     {branch.isActive ? (
                       <Button
                         variant="secondary"
@@ -598,7 +615,7 @@ export function TabBranches() {
         )}
       </SettingsShell>
 
-      {/* explanatory menu warning */}
+      {/* Explanatory menu warning */}
       <div className="rounded-xl border border-white/5 bg-white/[0.01] px-4 py-3 flex gap-2.5 items-start mt-6">
         <Info className="h-4.5 w-4.5 text-accent shrink-0 mt-0.5" />
         <div className="text-[12px] leading-relaxed text-fg-muted">
@@ -613,7 +630,7 @@ export function TabBranches() {
       {/* ── Create Branch Modal ── */}
       {createOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-[2px] p-4">
-          <div className="w-full max-w-[420px] rounded-xl border border-border bg-[#0F0F10] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] animate-in fade-in-0 scale-in-95 duration-150 text-fg">
+          <div className="w-full max-w-[480px] rounded-xl border border-border bg-[#0F0F10] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] animate-in fade-in-0 scale-in-95 duration-150 text-fg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5">
               <h3 className="text-[14px] font-semibold text-fg">Create Outlet Branch</h3>
               <button onClick={() => setCreateOpen(false)} className="text-fg-subtle hover:text-fg transition-colors">
@@ -639,23 +656,43 @@ export function TabBranches() {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Slug (Optional)</label>
+                  <Input
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    placeholder="e.g. second-branch"
+                    className="bg-[#1a1a1c] border-white/10 h-10 text-[12px]"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Branch Code</label>
+                  <Input
+                    value={branchCode}
+                    onChange={(e) => setBranchCode(e.target.value)}
+                    placeholder="e.g. BR-002"
+                    className="bg-[#1a1a1c] border-white/10 h-10 text-[12px]"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Slug (Optional)</label>
+                <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Manager Name</label>
                 <Input
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  placeholder="e.g. second-branch"
+                  value={managerName}
+                  onChange={(e) => setManagerName(e.target.value)}
+                  placeholder="e.g. Alex Johnson"
                   className="bg-[#1a1a1c] border-white/10 h-10 text-[12px]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Sort Order (Optional)</label>
+                <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Physical Address</label>
                 <Input
-                  type="number"
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(Number(e.target.value))}
-                  placeholder="e.g. 1"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="e.g. 456 Commercial Street"
                   className="bg-[#1a1a1c] border-white/10 h-10 text-[12px]"
                 />
               </div>
@@ -682,7 +719,7 @@ export function TabBranches() {
       {/* ── Edit Branch Modal ── */}
       {editBranch && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-[2px] p-4">
-          <div className="w-full max-w-[480px] rounded-xl border border-border bg-[#0F0F10] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.5)] animate-in fade-in-0 scale-in-95 duration-150 text-fg overflow-y-auto max-h-[90vh]">
+          <div className="w-full max-w-[500px] rounded-xl border border-border bg-[#0F0F10] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.5)] animate-in fade-in-0 scale-in-95 duration-150 text-fg overflow-y-auto max-h-[90vh]">
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5">
               <h3 className="text-[14px] font-semibold text-fg">Edit Branch Details</h3>
               <button onClick={() => setEditBranch(null)} className="text-fg-subtle hover:text-fg transition-colors">
@@ -697,10 +734,10 @@ export function TabBranches() {
                 </div>
               )}
 
-              {/* Group 1: General Info */}
+              {/* Group 1: Identity Info */}
               <div className="space-y-3">
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle border-b border-white/5 pb-1">
-                  General Info
+                  Identity Info
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Branch Name *</label>
@@ -712,7 +749,7 @@ export function TabBranches() {
                     required
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Slug *</label>
                     <Input
@@ -724,12 +761,20 @@ export function TabBranches() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Sort Order *</label>
+                    <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Branch Code</label>
+                    <Input
+                      value={branchCode}
+                      onChange={(e) => setBranchCode(e.target.value)}
+                      placeholder="e.g. BR-001"
+                      className="bg-[#1a1a1c] border-white/10 h-10 text-[12px]"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Sort Order</label>
                     <Input
                       type="number"
                       value={sortOrder}
                       onChange={(e) => setSortOrder(Number(e.target.value))}
-                      placeholder="e.g. 1"
                       className="bg-[#1a1a1c] border-white/10 h-10 text-[12px]"
                       required
                     />
@@ -737,69 +782,58 @@ export function TabBranches() {
                 </div>
               </div>
 
-              {/* Group 2: Contact Info */}
+              {/* Group 2: Manager & Contact */}
               <div className="space-y-3 pt-2">
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle border-b border-white/5 pb-1">
-                  Contact details
+                  Manager & Contact
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Manager Name</label>
+                    <Input
+                      value={managerName}
+                      onChange={(e) => setManagerName(e.target.value)}
+                      placeholder="e.g. Alex Johnson"
+                      className="bg-[#1a1a1c] border-white/10 h-10 text-[12px]"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Manager Phone</label>
+                    <Input
+                      value={managerPhone}
+                      onChange={(e) => setManagerPhone(e.target.value)}
+                      placeholder="e.g. +91 9800000000"
+                      className="bg-[#1a1a1c] border-white/10 h-10 text-[12px]"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Physical Address</label>
                   <Input
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="e.g. 123 Main Road, Block A"
+                    placeholder="e.g. 123 Commercial Street"
                     className="bg-[#1a1a1c] border-white/10 h-10 text-[12px]"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Phone</label>
+                    <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Branch Phone</label>
                     <Input
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="e.g. +91 98765..."
+                      placeholder="e.g. +91 8000000000"
                       className="bg-[#1a1a1c] border-white/10 h-10 text-[12px]"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Email</label>
+                    <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Timezone</label>
                     <Input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="e.g. branch@steward.app"
+                      value={timezone}
+                      onChange={(e) => setTimezone(e.target.value)}
+                      placeholder="e.g. Asia/Kolkata"
                       className="bg-[#1a1a1c] border-white/10 h-10 text-[12px]"
                     />
-                  </div>
-                </div>
-              </div>
-
-              {/* Group 3: Operations & Hours */}
-              <div className="space-y-3 pt-2">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle border-b border-white/5 pb-1">
-                  Operations & Timing
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Opening Hours</label>
-                    <Input
-                      value={openingHours}
-                      onChange={(e) => setOpeningHours(e.target.value)}
-                      placeholder="e.g. 09:00 AM - 11:00 PM"
-                      className="bg-[#1a1a1c] border-white/10 h-10 text-[12px]"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">Assigned Manager</label>
-                    <select
-                      value={manager}
-                      onChange={(e) => setManager(e.target.value)}
-                      className="w-full h-10 px-3 text-[12px] bg-[#1a1a1c] border border-white/10 rounded-lg text-fg outline-none focus:border-white/20 transition-colors cursor-pointer"
-                    >
-                      <option value="John Doe">John Doe</option>
-                      <option value="Jane Smith">Jane Smith</option>
-                      <option value="David Lee">David Lee</option>
-                    </select>
                   </div>
                 </div>
               </div>
@@ -831,7 +865,7 @@ export function TabBranches() {
               <AlertTriangle className="h-5 w-5" />
               <h3 className="text-[14px] font-semibold">Deactivate Branch: {deactivateConfirm.name}?</h3>
             </div>
-            
+
             <div className="text-[12px] text-fg-muted space-y-2 leading-relaxed font-normal">
               <p>Deactivating this outlet has operational consequences:</p>
               <ul className="list-disc pl-4 space-y-1">

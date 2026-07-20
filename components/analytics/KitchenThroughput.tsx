@@ -1,23 +1,22 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
-import { Clock } from "lucide-react";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Clock, AlertCircle } from "lucide-react";
+import { HourlyThroughputData, useKitchenSummary } from "@/hooks/useKitchenIntelligence";
 
 interface KitchenThroughputProps {
-  avgPrepTimeMins: number;
-  loading: boolean;
+  avgPrepTimeMins?: number | null;
+  throughputData?: HourlyThroughputData[];
+  loading?: boolean;
 }
 
-const data = [
-  { time: '10am', prep: 12 },
-  { time: '11am', prep: 14 },
-  { time: '12pm', prep: 18 },
-  { time: '1pm', prep: 22 },
-  { time: '2pm', prep: 16 },
-  { time: '3pm', prep: 11 },
-];
+export function KitchenThroughput({ avgPrepTimeMins: propAvg, throughputData: propData, loading: propLoading }: KitchenThroughputProps) {
+  const { data: summary, isLoading: summaryLoading } = useKitchenSummary(!propData);
 
-export function KitchenThroughput({ avgPrepTimeMins, loading }: KitchenThroughputProps) {
+  const loading = propLoading !== undefined ? propLoading : summaryLoading;
+  const avgPrepMins = propAvg !== undefined ? propAvg : summary?.prepTime?.avgPrepTimeMins ?? null;
+  const chartData = propData || summary?.prepTime?.hourlyThroughput || [];
+
   if (loading) {
     return (
       <div className="card-premium p-5 sm:p-6 flex flex-col justify-between animate-shimmer min-h-[220px]">
@@ -29,6 +28,8 @@ export function KitchenThroughput({ avgPrepTimeMins, loading }: KitchenThroughpu
       </div>
     );
   }
+
+  const hasData = chartData.length > 0;
 
   return (
     <motion.div
@@ -44,10 +45,16 @@ export function KitchenThroughput({ avgPrepTimeMins, loading }: KitchenThroughpu
             Kitchen Throughput
           </h3>
           <div className="text-3xl font-bold tracking-tighter text-fg flex items-baseline gap-1">
-            {avgPrepTimeMins.toFixed(0)}
-            <span className="text-sm font-medium text-fg-subtle tracking-normal">
-              avg mins
-            </span>
+            {avgPrepMins !== null ? (
+              <>
+                {avgPrepMins.toFixed(0)}
+                <span className="text-sm font-medium text-fg-subtle tracking-normal">
+                  avg mins
+                </span>
+              </>
+            ) : (
+              <span className="text-sm font-semibold text-fg-subtle italic">Not Available</span>
+            )}
           </div>
         </div>
         <div className="text-[11px] font-medium text-warning bg-warning/10 px-2 py-1 rounded-md border border-warning/20">
@@ -55,41 +62,51 @@ export function KitchenThroughput({ avgPrepTimeMins, loading }: KitchenThroughpu
         </div>
       </div>
 
-      <div className="h-[80px] w-full -mx-2 mt-auto pt-2">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data}>
-            <defs>
-              <linearGradient id="prepGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.2} />
-                <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <Tooltip
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  return (
-                    <div className="bg-white/5 border border-white/10 shadow-elevated rounded-lg px-3 py-2 text-[12px]">
-                      <span className="text-fg-subtle">{payload[0].payload.time}: </span>
-                      <span className="text-fg font-bold">{payload[0].value} mins</span>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-              cursor={{ stroke: 'hsl(var(--border-strong))', strokeWidth: 1, strokeDasharray: '4 4' }}
-            />
-            <Area
-              type="monotone"
-              dataKey="prep"
-              stroke="hsl(var(--accent))"
-              strokeWidth={2}
-              fill="url(#prepGradient)"
-              animationDuration={1500}
-              animationEasing="ease-out"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      {!hasData ? (
+        <div className="h-[90px] w-full flex flex-col items-center justify-center border border-dashed border-white/10 rounded-xl bg-white/[0.01] mt-auto">
+          <AlertCircle className="h-4 w-4 text-fg-subtle mb-1" />
+          <span className="text-[11px] font-medium text-fg-subtle">No operational data yet</span>
+          <span className="text-[9px] text-fg-subtle/70">Awaiting historical kitchen activity</span>
+        </div>
+      ) : (
+        <div className="h-[80px] w-full -mx-2 mt-auto pt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="prepGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const item = payload[0].payload as HourlyThroughputData;
+                    return (
+                      <div className="bg-black/90 border border-white/10 shadow-elevated rounded-lg px-3 py-2 text-[12px] text-fg">
+                        <div className="text-fg-subtle font-mono text-[10px] mb-0.5">{item.hour}</div>
+                        <div>Completed: <strong className="text-fg">{item.completedOrdersCount} orders</strong></div>
+                        <div>Avg Prep: <strong className="text-accent">{item.avgPrepMins} mins</strong></div>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+                cursor={{ stroke: 'hsl(var(--border-strong))', strokeWidth: 1, strokeDasharray: '4 4' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="avgPrepMins"
+                stroke="hsl(var(--accent))"
+                strokeWidth={2}
+                fill="url(#prepGradient)"
+                animationDuration={1500}
+                animationEasing="ease-out"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </motion.div>
   );
 }
