@@ -6,6 +6,8 @@ import { resolveNeedleExperience } from "@/lib/needle";
 import { useLiveOpsSummary } from "@/hooks/useLiveOps";
 import { useAnalyticsSummary } from "@/hooks/useAnalytics";
 import { cn, formatCurrency } from "@/lib/utils";
+import { useMorningBriefing, useEndOfDayBriefing } from "@/hooks/useNeedleBriefing";
+import { formatNeedleMessage } from "@/lib/needle-message-formatter";
 import {
   Sparkles,
   AlertOctagon,
@@ -90,6 +92,129 @@ const getConfidenceScore = (priority: string): string => {
     default: return "78% Confidence";
   }
 };
+
+// ─── Backend Operational Briefing Card ───────────────────────────────────────
+
+function NeedleBackendBriefingCard({ phase }: { phase: string }) {
+  const isMorning = phase === "opening" || phase === "quiet";
+  const morningQuery = useMorningBriefing();
+  const eodQuery = useEndOfDayBriefing();
+
+  const briefing = isMorning ? morningQuery.data : eodQuery.data;
+  const isLoading = isMorning ? morningQuery.isLoading : eodQuery.isLoading;
+
+  if (isLoading || !briefing) {
+    return (
+      <div className="rounded-2xl border border-white/5 bg-white/[0.01] p-5 animate-pulse flex items-center justify-between">
+        <span className="text-xs text-fg-subtle">Loading Daily Operational Briefing...</span>
+      </div>
+    );
+  }
+
+  const statusColors: Record<string, string> = {
+    OPTIMAL: "bg-success/10 text-success border-success/20",
+    WARNING: "bg-warning/10 text-warning border-warning/20",
+    CRITICAL: "bg-danger/10 text-danger border-danger/20",
+    NEUTRAL: "bg-white/5 text-fg-muted border-white/10",
+  };
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-4 shadow-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-white/5 pb-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-bold text-fg">{briefing.header.title}</h3>
+            <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-white/10 text-fg-muted">
+              {briefing.header.version}
+            </span>
+          </div>
+          <p className="text-[11px] text-fg-subtle mt-0.5">{briefing.header.periodLabel}</p>
+        </div>
+        <span
+          className={cn(
+            "text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border",
+            statusColors[briefing.overallStatus] || statusColors.NEUTRAL
+          )}
+        >
+          {briefing.overallStatus}
+        </span>
+      </div>
+
+      {/* Priority Items */}
+      {briefing.priorityItems.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-[10.5px] font-bold uppercase tracking-wider text-fg-subtle">
+            Urgent Priorities
+          </h4>
+          <div className="space-y-1.5">
+            {briefing.priorityItems.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-2.5 text-xs p-2.5 rounded-lg bg-white/[0.02] border border-white/5"
+              >
+                <span
+                  className={cn(
+                    "w-2 h-2 rounded-full shrink-0",
+                    item.priority === "CRITICAL"
+                      ? "bg-danger"
+                      : item.priority === "HIGH"
+                      ? "bg-warning"
+                      : "bg-info"
+                  )}
+                />
+                <span className="font-medium text-fg">{formatNeedleMessage(item)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Sections */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+        {briefing.sections.map((section) => (
+          <div
+            key={section.type}
+            className="p-3.5 rounded-xl bg-white/[0.01] border border-white/5 space-y-2"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-fg-muted uppercase tracking-wider">
+                {section.title}
+              </span>
+              <span
+                className={cn(
+                  "text-[9px] font-bold px-1.5 py-0.5 rounded border",
+                  statusColors[section.status] || statusColors.NEUTRAL
+                )}
+              >
+                {section.status}
+              </span>
+            </div>
+
+            {section.items.map((item) => (
+              <p key={item.id} className="text-[11.5px] text-fg-subtle leading-relaxed">
+                • {formatNeedleMessage(item)}
+              </p>
+            ))}
+
+            {section.metrics.length > 0 && (
+              <div className="flex flex-wrap gap-3 pt-1 border-t border-white/5 mt-2">
+                {section.metrics.map((m) => (
+                  <div key={m.key} className="text-[11px]">
+                    <span className="text-fg-subtle">{m.label}: </span>
+                    <span className="font-bold text-fg num">
+                      {m.unit === "INR" ? formatCurrency(m.value, "INR") : m.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // ─── Opening Readiness Checklist ──────────────────────────────────────────────
 
@@ -446,6 +571,9 @@ export function BriefingView() {
           </span>
         </div>
       </div>
+
+      {/* ── Needle Backend Briefing Card ─────────────────────────────────── */}
+      <NeedleBackendBriefingCard phase={phase} />
 
       {/* ── Opening Readiness Checklist ─────────────────────────────────── */}
       {phase === "opening" && !isLoading && (
