@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { getOAuthErrorMessage } from '@/lib/auth/oauthError';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -86,7 +87,18 @@ export default function RegisterPage() {
     }
   };
 
-  const [googleBaseUrl, setGoogleBaseUrl] = useState('');
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      toast.error(getOAuthErrorMessage(errorParam));
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('error');
+      history.replaceState(null, '', newUrl.toString());
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     setGoogleBaseUrl(API_URL.replace(/\/v\d+\/?$/, ''));

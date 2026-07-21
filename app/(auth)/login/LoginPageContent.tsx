@@ -15,6 +15,7 @@ import { getRedirectPath } from '@/constants/auth';
 import { useAuthStore } from '@/stores/auth.store';
 import { setCsrfToken } from '@/lib/auth/csrf';
 import type { ApiSuccess, LoginResponse } from '@/types';
+import { getOAuthErrorMessage } from '@/lib/auth/oauthError';
 
 type AuthTab = 'ADMIN' | 'STAFF';
 const AUTH_TABS: Record<AuthTab, AuthTab> = { ADMIN: 'ADMIN', STAFF: 'STAFF' };
@@ -175,8 +176,9 @@ export default function LoginPageContent() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    if (searchParams.get('error') === 'oauth_failed') {
-      toast.error('Google sign-in failed or was cancelled');
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      toast.error(getOAuthErrorMessage(errorParam));
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete('error');
       history.replaceState(null, '', newUrl.toString());
