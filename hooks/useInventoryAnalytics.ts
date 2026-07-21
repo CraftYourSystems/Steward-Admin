@@ -2,31 +2,31 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 
 export function useWastePercentage() {
-  return useQuery({
+  return useQuery<{ id: string; name: string; unit: string; wastedQuantity: number; theoreticalUsage: number; wastePercent: number }[]>({
     queryKey: ["inventory-waste"],
     queryFn: async () => {
       const { data } = await api.get("/admin/inventory-analytics/waste-percentage");
-      return data.data as { id: string; name: string; unit: string; wastedQuantity: number; theoreticalUsage: number; wastePercent: number }[];
+      return data.data;
     }
   });
 }
 
 export function useStockoutIncidents() {
-  return useQuery({
+  return useQuery<{ id: string; ingredientId: string; name: string; unit: string; createdAt: string; resolvedAt: string | null; durationMins: number | null }[]>({
     queryKey: ["inventory-stockouts"],
     queryFn: async () => {
       const { data } = await api.get("/admin/inventory-analytics/stockout-incidents");
-      return data.data as { id: string; ingredientId: string; name: string; unit: string; createdAt: string; resolvedAt: string | null; durationMins: number | null }[];
+      return data.data;
     }
   });
 }
 
 export function useCostTrends() {
-  return useQuery({
+  return useQuery<{ ingredientId: string; name: string; maxSpikePercent: number; isVolatile: boolean; changes: { date: string; oldCost: number; newCost: number; percentChange: number }[] }[]>({
     queryKey: ["inventory-cost-trends"],
     queryFn: async () => {
       const { data } = await api.get("/admin/inventory-analytics/cost-trends");
-      return data.data as { ingredientId: string; name: string; maxSpikePercent: number; isVolatile: boolean; changes: { date: string; oldCost: number; newCost: number; percentChange: number }[] }[];
+      return data.data;
     }
   });
 }
@@ -44,7 +44,7 @@ export interface InventoryItem {
 }
 
 export function useInventoryItems() {
-  return useQuery({
+  return useQuery<InventoryItem[]>({
     queryKey: ["inventory-items"],
     queryFn: async () => {
       const { data } = await api.get("/admin/inventory-analytics/items");

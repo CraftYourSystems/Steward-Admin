@@ -148,7 +148,7 @@ function NeedleBackendBriefingCard({ phase }: { phase: string }) {
             Urgent Priorities
           </h4>
           <div className="space-y-1.5">
-            {briefing.priorityItems.map((item) => (
+            {briefing.priorityItems.map((item: any) => (
               <div
                 key={item.id}
                 className="flex items-center gap-2.5 text-xs p-2.5 rounded-lg bg-white/[0.02] border border-white/5"
@@ -172,7 +172,7 @@ function NeedleBackendBriefingCard({ phase }: { phase: string }) {
 
       {/* Sections */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-        {briefing.sections.map((section) => (
+        {briefing.sections.map((section: any) => (
           <div
             key={section.type}
             className="p-3.5 rounded-xl bg-white/[0.01] border border-white/5 space-y-2"
@@ -191,7 +191,7 @@ function NeedleBackendBriefingCard({ phase }: { phase: string }) {
               </span>
             </div>
 
-            {section.items.map((item) => (
+            {section.items.map((item: any) => (
               <p key={item.id} className="text-[11.5px] text-fg-subtle leading-relaxed">
                 • {formatNeedleMessage(item)}
               </p>
@@ -199,7 +199,7 @@ function NeedleBackendBriefingCard({ phase }: { phase: string }) {
 
             {section.metrics.length > 0 && (
               <div className="flex flex-wrap gap-3 pt-1 border-t border-white/5 mt-2">
-                {section.metrics.map((m) => (
+                {section.metrics.map((m: any) => (
                   <div key={m.key} className="text-[11px]">
                     <span className="text-fg-subtle">{m.label}: </span>
                     <span className="font-bold text-fg num">

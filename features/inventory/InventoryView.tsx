@@ -53,7 +53,8 @@ import { toast } from "sonner";
 
 export function InventoryView() {
   // Backend Queries & Mutations
-  const { data: stock = [], isLoading: isLoadingItems } = useInventoryItems();
+  const { data: rawStock, isLoading: isLoadingItems } = useInventoryItems();
+  const stock: any[] = rawStock || [];
   const createMutation = useCreateInventoryItem();
   const updateMutation = useUpdateInventoryItem();
   const deleteMutation = useDeleteInventoryItem();
@@ -110,11 +111,11 @@ export function InventoryView() {
 
   // Dynamic category and supplier lists from backend stock data
   const categories = useMemo(() => {
-    return Array.from(new Set(stock.map((i) => i.category)));
+    return Array.from(new Set(stock.map((i: any) => i.category)));
   }, [stock]);
 
   const suppliers = useMemo(() => {
-    return Array.from(new Set(stock.map((i) => i.supplier)));
+    return Array.from(new Set(stock.map((i: any) => i.supplier)));
   }, [stock]);
 
   const handleOpenCreate = () => {

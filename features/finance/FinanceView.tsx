@@ -422,7 +422,7 @@ export function FinanceView() {
                     Highest Margins
                   </span>
                   {data?.topMarginItems && data.topMarginItems.length > 0 ? (
-                    data.topMarginItems.map((item) => (
+                    data.topMarginItems.map((item: any) => (
                       <div key={item.name} className="flex justify-between items-center">
                         <span className="truncate max-w-[120px]">{item.name}</span>
                         <span className="font-bold text-success num">{item.marginPct}%</span>
@@ -438,7 +438,7 @@ export function FinanceView() {
                     Lowest Margins
                   </span>
                   {data?.lowestMarginItems && data.lowestMarginItems.length > 0 ? (
-                    data.lowestMarginItems.map((item) => (
+                    data.lowestMarginItems.map((item: any) => (
                       <div key={item.name} className="flex justify-between items-center">
                         <span className="truncate max-w-[120px]">{item.name}</span>
                         <span className="font-bold text-danger num">{item.marginPct}%</span>
@@ -462,7 +462,7 @@ export function FinanceView() {
               </div>
               <div className="bg-white/[0.01] border border-white/5 rounded-xl p-4 text-[12px] space-y-2.5">
                 {data?.channelSplits && data.channelSplits.length > 0 ? (
-                  data.channelSplits.map((ch) => (
+                  data.channelSplits.map((ch: any) => (
                     <div key={ch.channel} className="space-y-1">
                       <div className="flex justify-between text-[11.5px]">
                         <span>{ch.channel}</span>

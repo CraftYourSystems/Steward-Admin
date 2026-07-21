@@ -61,3 +61,8 @@ export function useCombinedReport(from: string, to: string, enabled = true) {
     staleTime: 60000,
   });
 }
+
+export function useGeneratedReport(range: { from: string; to: string }, enabled = true) {
+  return useCombinedReport(range.from, range.to, enabled && !!range.from && !!range.to);
+}
+
