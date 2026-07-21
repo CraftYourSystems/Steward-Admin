@@ -190,10 +190,22 @@ export default function LoginPageContent() {
 
     const handleExchange = async () => {
       try {
-        const { data } = await api.post<ApiSuccess<{ accessToken: string; user: import('@/types').User; restaurant?: any; csrfToken?: string }>>(
+        const { data } = await api.post<ApiSuccess<{ accessToken: string; user: import('@/types').User; restaurant?: any; csrfToken?: string; requiresBranchSelection?: boolean; branches?: any[]; branchSelectionToken?: string; }>>(
           '/auth/exchange',
           { code },
         );
+
+        if (data.data.requiresBranchSelection) {
+          setPendingBranches(data.data.branches || []);
+          setBranchSelectionToken(data.data.branchSelectionToken || null);
+          if (data.data.csrfToken) {
+            setCsrfToken(data.data.csrfToken);
+          }
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete('code');
+          history.replaceState(null, '', newUrl.toString());
+          return;
+        }
 
         if (data.data.csrfToken) {
           setCsrfToken(data.data.csrfToken);
