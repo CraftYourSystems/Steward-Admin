@@ -36,7 +36,6 @@ const navOperations = [
 
 const navBusiness = [
   { href: "/finance",   label: "Finance",   icon: BanknoteIcon },
-  { href: "/marketing", label: "Marketing", icon: Megaphone },
   { href: "/reports",   label: "Reports",   icon: ClipboardList },
   { href: "/customers", label: "Customers", icon: Users },
 ];
