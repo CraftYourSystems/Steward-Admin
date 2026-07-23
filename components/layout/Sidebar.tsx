@@ -168,6 +168,28 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
   const exitRestaurant = usePlatformStore((s) => s.exitRestaurant);
 
   const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovered(true);
+    }, 100);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovered(false);
+    }, 150);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    };
+  }, []);
 
   // Close dropdown on outside click
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -205,6 +227,8 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
 
   const cfg = ROLE_CONFIGS[user?.role ?? "ADMIN"] ?? ROLE_CONFIGS.ADMIN;
 
+  const effectiveCollapsed = collapsed && !isHovered;
+
   return (
     <>
       {/* Mobile overlay */}
@@ -216,18 +240,29 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
         />
       )}
 
-      <aside
+      {/* Desktop layout width spacer so main content position stays stable */}
+      <div
         className={cn(
-          "fixed left-0 top-0 z-50 flex h-full w-[240px] flex-col",
-          "bg-transparent border-r border-white/5",
-          "transition-[transform,width] duration-300 ease-out lg:relative lg:translate-x-0",
-          collapsed ? "lg:w-[72px]" : "lg:w-[240px]",
-          open ? "translate-x-0" : "-translate-x-full"
+          "hidden lg:block shrink-0 transition-[width] duration-300 ease-out",
+          collapsed ? "w-[72px]" : "w-[240px]"
+        )}
+      />
+
+      <aside
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className={cn(
+          "fixed left-0 top-0 z-50 flex h-full flex-col",
+          "transition-[width,transform,box-shadow,background-color] duration-300 ease-out",
+          "border-r",
+          effectiveCollapsed ? "w-[72px] bg-bg/90 border-white/5" : "w-[240px] bg-bg/95 backdrop-blur-md border-border",
+          collapsed && isHovered && "shadow-[8px_0_32px_rgba(0,0,0,0.6)] bg-bg border-border-strong",
+          open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Brand */}
-        <div className={cn("flex h-14 items-center justify-between border-b border-border shrink-0 transition-all duration-300", collapsed ? "px-3" : "px-4")}>
-          <div className={cn("flex min-w-0 items-center transition-all duration-300", collapsed ? "gap-0" : "gap-2.5")}>
+        <div className={cn("flex h-14 items-center justify-between border-b border-border shrink-0 transition-all duration-300", effectiveCollapsed ? "px-3" : "px-4")}>
+          <div className={cn("flex min-w-0 items-center transition-all duration-300", effectiveCollapsed ? "gap-0" : "gap-2.5")}>
             {/* Logo mark — role-tinted */}
             <div
               className={cn("flex h-7 w-7 items-center justify-center rounded-md shrink-0", cfg.logoBg)}
@@ -235,7 +270,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
             >
               <span className={cn("text-[11px] font-bold", cfg.logoText ?? "text-white")}>S</span>
             </div>
-            <div className={cn("min-w-0 overflow-hidden leading-none transition-all duration-300", collapsed ? "w-0 opacity-0" : "w-[140px] opacity-100")}>
+            <div className={cn("min-w-0 overflow-hidden leading-none transition-all duration-300", effectiveCollapsed ? "w-0 opacity-0" : "w-[140px] opacity-100")}>
               <div className="text-[13px] font-semibold text-fg">Steward</div>
               <div className="flex items-center gap-1 mt-0.5">
                 <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse shrink-0", cfg.statusDot)} />
@@ -254,7 +289,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
               <button
                 onClick={() => onCollapsedChange(!collapsed)}
                 className="hidden lg:grid h-7 w-7 place-items-center rounded-md text-fg-muted hover:bg-surface-2 transition-colors"
-                title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                title={collapsed ? "Pin sidebar open" : "Unpin sidebar (hover mode)"}
               >
                 {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
               </button>
@@ -285,7 +320,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
 
           {/* Branch Selector */}
           {(() => {
-            if (collapsed) {
+            if (effectiveCollapsed) {
               return (
                 <div className="flex justify-center py-2 text-fg-subtle border-b border-white/5 mb-3" title={currentBranch?.name ?? "Branch"}>
                   <GitBranch className="h-4 w-4" />
@@ -368,7 +403,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
           })()}
 
           {/* Super Admin restaurant context banner */}
-          {user?.role === "SUPER_ADMIN" && selectedRestaurant && !collapsed && (
+          {user?.role === "SUPER_ADMIN" && selectedRestaurant && !effectiveCollapsed && (
             <div className="mx-1 mb-3 rounded-lg bg-violet-500/10 border border-violet-500/20 p-2.5">
               <p className="text-[10px] font-medium text-violet-400 uppercase tracking-wider mb-1">Viewing Restaurant</p>
               <p className="text-xs font-semibold text-fg truncate">{selectedRestaurant.name}</p>
@@ -389,24 +424,24 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
           {isKitchen && (
             <>
               <div className="mb-3">
-                <SectionLabel collapsed={collapsed}>Home</SectionLabel>
+                <SectionLabel collapsed={effectiveCollapsed}>Home</SectionLabel>
                 <ul className="space-y-0.5">
-                  <NavLink href="/kitchen-home" label="Kitchen Home" icon={Home} onClose={onClose} accentColor={cfg.accentColor} collapsed={collapsed} />
+                  <NavLink href="/kitchen-home" label="Kitchen Home" icon={Home} onClose={onClose} accentColor={cfg.accentColor} collapsed={effectiveCollapsed} />
                 </ul>
               </div>
               <div className="mb-3">
-                <SectionLabel collapsed={collapsed}>Kitchen</SectionLabel>
+                <SectionLabel collapsed={effectiveCollapsed}>Kitchen</SectionLabel>
                 <ul className="space-y-0.5">
                   {navKitchen.map((item) => (
-                    <NavLink key={item.href} {...item} onClose={onClose} accentColor={cfg.accentColor} collapsed={collapsed} />
+                    <NavLink key={item.href} {...item} onClose={onClose} accentColor={cfg.accentColor} collapsed={effectiveCollapsed} />
                   ))}
                 </ul>
               </div>
               {canViewOrders && (
                 <div className="mb-3">
-                  <SectionLabel collapsed={collapsed}>Records</SectionLabel>
+                  <SectionLabel collapsed={effectiveCollapsed}>Records</SectionLabel>
                   <ul className="space-y-0.5">
-                    <NavLink href="/orders" label="Order History" icon={ShoppingCart} onClose={onClose} accentColor={cfg.accentColor} collapsed={collapsed} />
+                    <NavLink href="/orders" label="Order History" icon={ShoppingCart} onClose={onClose} accentColor={cfg.accentColor} collapsed={effectiveCollapsed} />
                   </ul>
                 </div>
               )}
@@ -417,16 +452,16 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
           {isWaiter && (
             <>
               <div className="mb-3">
-                <SectionLabel collapsed={collapsed}>Home</SectionLabel>
+                <SectionLabel collapsed={effectiveCollapsed}>Home</SectionLabel>
                 <ul className="space-y-0.5">
-                  <NavLink href="/waiter-home" label="Service Home" icon={Home} onClose={onClose} accentColor={cfg.accentColor} collapsed={collapsed} />
+                  <NavLink href="/waiter-home" label="Service Home" icon={Home} onClose={onClose} accentColor={cfg.accentColor} collapsed={effectiveCollapsed} />
                 </ul>
               </div>
               <div className="mb-3">
-                <SectionLabel collapsed={collapsed}>Service</SectionLabel>
+                <SectionLabel collapsed={effectiveCollapsed}>Service</SectionLabel>
                 <ul className="space-y-0.5">
                   {navWaiter.map((item) => (
-                    <NavLink key={item.href} {...item} onClose={onClose} accentColor={cfg.accentColor} collapsed={collapsed} />
+                    <NavLink key={item.href} {...item} onClose={onClose} accentColor={cfg.accentColor} collapsed={effectiveCollapsed} />
                   ))}
                 </ul>
               </div>
@@ -437,29 +472,29 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
           {isAdmin && (
             <>
               <div className="mb-3">
-                <SectionLabel collapsed={collapsed}>Management</SectionLabel>
+                <SectionLabel collapsed={effectiveCollapsed}>Management</SectionLabel>
                 <ul className="space-y-0.5">
                   {navAdmin.map((item) => (
-                    <NavLink key={item.href} {...item} onClose={onClose} collapsed={collapsed} />
+                    <NavLink key={item.href} {...item} onClose={onClose} collapsed={effectiveCollapsed} />
                   ))}
                 </ul>
               </div>
 
               {canUseKitchen && (
                 <div className="mb-3">
-                  <SectionLabel collapsed={collapsed}>Kitchen</SectionLabel>
+                  <SectionLabel collapsed={effectiveCollapsed}>Kitchen</SectionLabel>
                   <ul className="space-y-0.5">
                     {navKitchen.map((item) => (
-                      <NavLink key={item.href} {...item} onClose={onClose} collapsed={collapsed} />
+                      <NavLink key={item.href} {...item} onClose={onClose} collapsed={effectiveCollapsed} />
                     ))}
                   </ul>
                 </div>
               )}
 
               <div className="mb-3">
-                <SectionLabel collapsed={collapsed}>System</SectionLabel>
+                <SectionLabel collapsed={effectiveCollapsed}>System</SectionLabel>
                 <ul className="space-y-0.5">
-                  <NavLink href="/settings" label="Settings" icon={Settings} onClose={onClose} collapsed={collapsed} />
+                  <NavLink href="/settings" label="Settings" icon={Settings} onClose={onClose} collapsed={effectiveCollapsed} />
                 </ul>
               </div>
             </>
@@ -470,7 +505,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
         <div className="border-t border-border p-2.5 shrink-0">
           <div className={cn(
             "flex items-center rounded-lg bg-surface-2 border border-border hover:border-border-strong transition-all duration-300 group",
-            collapsed ? "flex-col justify-center gap-2.5 p-2" : "gap-2.5 px-2.5 py-2"
+            effectiveCollapsed ? "flex-col justify-center gap-2.5 p-2" : "gap-2.5 px-2.5 py-2"
           )}>
             {/* Avatar with role-tint */}
             <div
@@ -480,7 +515,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
             </div>
 
             {/* Name & role */}
-            {!collapsed && (
+            {!effectiveCollapsed && (
               <div className="min-w-0 flex-1 transition-all duration-300">
                 <div className="truncate text-[12px] font-medium text-fg leading-tight">
                   {user?.firstName} {user?.lastName}
