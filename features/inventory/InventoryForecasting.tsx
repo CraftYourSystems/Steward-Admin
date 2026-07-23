@@ -103,7 +103,7 @@ export function InventoryForecasting() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {forecast.map((item) => (
+                  {forecast.map((item: ForecastData) => (
                     <tr key={item.ingredientId} className="hover:bg-white/[0.02] transition-colors">
                       <td className="p-3 text-[13px] font-medium text-fg">
                         {item.name}
