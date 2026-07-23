@@ -335,7 +335,7 @@ export function MenuItemForm({ item, categories, onSuccess, onCancel }: MenuItem
         <Button type="button" variant="outline" onClick={onCancel} className="border-white/10 hover:bg-white/5 text-fg">
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting || uploading} className="bg-accent hover:bg-accent/90 text-white">
+        <Button type="submit" disabled={isSubmitting || uploading} className="bg-accent hover:bg-accent/90 text-accent-foreground">
           {isSubmitting ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
           {item ? "Update Item" : "Create Item"}
         </Button>

@@ -512,7 +512,7 @@ export function CustomersView() {
                   />
                   <Button
                     onClick={() => handleSaveNote(selectedGuest.id, noteEditVal)}
-                    className="w-full bg-accent hover:bg-accent/90 text-white font-bold"
+                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold"
                   >
                     Save Preferences
                   </Button>

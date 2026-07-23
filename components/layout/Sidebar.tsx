@@ -7,9 +7,9 @@ import {
   ShoppingCart, UtensilsCrossed, Users,
   LogOut, X, Settings, ToggleLeft, WifiOff, Kanban,
   Soup, ClipboardList, BanknoteIcon, Home, ArrowLeft,
-  Megaphone, PackageOpen, Sparkles,
+  Megaphone, PackageOpen, Sparkles, Activity,
   PanelLeftClose, PanelLeftOpen, ChevronDown, ChevronRight, MapPin, Loader2, GitBranch,
-  Radio, Menu as MenuIcon, Briefcase
+  Menu as MenuIcon, Briefcase, LayoutDashboard
 } from "lucide-react";
 import { usePlatformStore } from "@/stores/platform.store";
 import { cn } from "@/lib/utils";
@@ -17,46 +17,46 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSettingsStore } from "@/stores/settings.store";
 import { hasPermission, Permissions } from "@/lib/permissions/permissions";
 
-// ─── Nav definitions matching reference layout ────────────────────────────────
+// ─── Nav definitions ────────────────────────────────────────────────────────
 
-const navPrimaryAdmin = [
-  { href: "/dashboard",    label: "Home",         icon: Home },
-  { href: "/orders",       label: "Orders",       icon: ShoppingCart },
-  { href: "/live-counter", label: "Live counter", icon: Radio },
-  { href: "/needle",       label: "Needle",       icon: Sparkles },
+const navOverview = [
+  { href: "/dashboard",    label: "Overview",     icon: LayoutDashboard },
+  { href: "/live-counter", label: "Live Counter", icon: Activity },
+  { href: "/needle",       label: "Needle AI",    icon: Sparkles },
 ];
 
-const navOperationsAdmin = [
-  { href: "/kitchen",              label: "Kitchen board", icon: UtensilsCrossed },
-  { href: "/pay-at-counter",       label: "Pay at counter",icon: BanknoteIcon },
-  { href: "/kitchen/availability", label: "Availability",  icon: ToggleLeft },
-  { href: "/menu",                 label: "Menu",          icon: MenuIcon },
-  { href: "/inventory",            label: "Inventory",     icon: PackageOpen },
+const navOperations = [
+  { href: "/orders",               label: "Orders",         icon: ShoppingCart },
+  { href: "/pay-at-counter",       label: "Pay at Counter", icon: BanknoteIcon },
+  { href: "/kitchen",              label: "Kitchen Board",  icon: Kanban },
+  { href: "/kitchen/availability", label: "Availability",   icon: ToggleLeft },
+  { href: "/menu",                 label: "Menu",           icon: MenuIcon },
+  { href: "/inventory",            label: "Inventory",      icon: PackageOpen },
 ];
 
-const navBusinessAdmin = [
+const navBusiness = [
   { href: "/finance",   label: "Finance",   icon: BanknoteIcon },
   { href: "/marketing", label: "Marketing", icon: Megaphone },
   { href: "/reports",   label: "Reports",   icon: ClipboardList },
   { href: "/customers", label: "Customers", icon: Users },
 ];
 
-const navTeamAdmin = [
+const navTeam = [
   { href: "/staff",   label: "Staff",   icon: Users },
   { href: "/logbook", label: "Logbook", icon: ClipboardList },
 ];
 
 const navKitchen = [
-  { href: "/kitchen",              label: "Kitchen board", icon: Kanban },
+  { href: "/kitchen",              label: "Kitchen Board", icon: Kanban },
   { href: "/kitchen/availability", label: "Availability",  icon: ToggleLeft },
-  { href: "/live-counter",         label: "Live counter",  icon: Soup },
+  { href: "/live-counter",         label: "Live Counter",  icon: Soup },
 ];
 
 const navWaiter = [
   { href: "/orders",         label: "Orders",         icon: ShoppingCart },
-  { href: "/pay-at-counter", label: "Pay at counter", icon: BanknoteIcon },
-  { href: "/kitchen",        label: "Kitchen board",  icon: Kanban },
-  { href: "/live-counter",   label: "Live counter",   icon: Soup },
+  { href: "/pay-at-counter", label: "Pay at Counter", icon: BanknoteIcon },
+  { href: "/kitchen",        label: "Kitchen Board",  icon: Kanban },
+  { href: "/live-counter",   label: "Live Counter",   icon: Soup },
 ];
 
 // ─── Role visual configs ──────────────────────────────────────────────────────
@@ -69,10 +69,10 @@ const ROLE_CONFIGS: Record<string, {
   statusText: string;
   accentColor: string;
 }> = {
-  ADMIN:         { logoGlow: "rgba(255,255,255,0.35)", logoBg: "bg-white",      logoText: "text-black", statusDot: "bg-white",    statusText: "Admin Mode",     accentColor: "#ffffff" },
-  SUPER_ADMIN:   { logoGlow: "rgba(255,255,255,0.35)", logoBg: "bg-white",      logoText: "text-black", statusDot: "bg-white",    statusText: "Super Admin",    accentColor: "#ffffff" },
-  KITCHEN_STAFF: { logoGlow: "rgba(217,184,114,0.35)", logoBg: "bg-[#D9B872]",  logoText: "text-black", statusDot: "bg-[#D9B872]", statusText: "Kitchen Active", accentColor: "#D9B872" },
-  WAITER:        { logoGlow: "rgba(59,130,246,0.35)",  logoBg: "bg-info",       logoText: "text-white", statusDot: "bg-info",      statusText: "On Floor",       accentColor: "hsl(217,91%,60%)" },
+  ADMIN:         { logoGlow: "rgba(255,255,255,0.2)", logoBg: "bg-white",      logoText: "text-black", statusDot: "bg-white",    statusText: "Admin Mode",     accentColor: "#ffffff" },
+  SUPER_ADMIN:   { logoGlow: "rgba(255,255,255,0.2)", logoBg: "bg-white",      logoText: "text-black", statusDot: "bg-white",    statusText: "Super Admin",    accentColor: "#ffffff" },
+  KITCHEN_STAFF: { logoGlow: "rgba(217,184,114,0.3)", logoBg: "bg-[#D9B872]",  logoText: "text-black", statusDot: "bg-[#D9B872]", statusText: "Kitchen Active", accentColor: "#D9B872" },
+  WAITER:        { logoGlow: "rgba(59,130,246,0.3)",  logoBg: "bg-info",       logoText: "text-white", statusDot: "bg-info",      statusText: "On Floor",       accentColor: "hsl(217,91%,60%)" },
 };
 
 // ─── NavLink ──────────────────────────────────────────────────────────────────
@@ -110,28 +110,28 @@ function NavLink({
         onClick={onClose}
         title={collapsed ? label : undefined}
         className={cn(
-          "group relative flex items-center h-9 rounded-lg text-[13px] font-medium transition-all duration-300 ease-out active:scale-[0.98]",
-          collapsed ? "justify-center gap-0 px-0" : "gap-3 px-3",
+          "group relative flex items-center h-10 rounded-xl text-[13.5px] font-medium transition-all duration-300 ease-out active:scale-[0.98]",
+          collapsed ? "justify-center gap-0 px-0 w-10 mx-auto" : "gap-3 px-3 mx-2 w-auto",
           active
-            ? "bg-surface-2 text-fg shadow-sm font-semibold"
-            : "text-fg-muted hover:bg-surface-2/50 hover:text-fg"
+            ? "bg-surface-3/50 text-fg shadow-sm border border-white/5"
+            : "text-fg-muted hover:bg-surface-2/60 hover:text-fg border border-transparent"
         )}
       >
         {active && (
           <span
-            className="absolute left-0 top-1/2 -translate-y-1/2 h-3.5 w-1 rounded-r-full shadow-[0_0_8px_currentColor]"
+            className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full shadow-[0_0_10px_currentColor]"
             style={{ backgroundColor: accentColor ?? "hsl(var(--accent))", color: accentColor ?? "hsl(var(--accent))" }}
           />
         )}
         <Icon
-          className={cn("h-4 w-4 shrink-0 transition-all duration-300", active ? "scale-110" : "text-fg-subtle group-hover:text-fg-muted")}
+          className={cn("h-4 w-4 shrink-0 transition-all duration-300", active ? "scale-110" : "text-fg-subtle group-hover:text-fg")}
           style={active ? { color: accentColor ?? "hsl(var(--accent))" } : undefined}
         />
         <span
           className={cn(
             "min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300",
             collapsed ? "w-0 opacity-0" : "w-auto opacity-100",
-            active && !collapsed && "translate-x-0.5"
+            active && !collapsed && "font-semibold translate-x-0.5"
           )}
         >
           {label}
@@ -159,25 +159,29 @@ function CollapsibleCategory({
   children: React.ReactNode;
 }) {
   if (collapsed) {
-    return <ul className="space-y-0.5">{children}</ul>;
+    return <ul className="space-y-1">{children}</ul>;
   }
 
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-1">
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between h-9 px-3 rounded-lg text-[13px] font-medium text-fg-muted hover:bg-surface-2/50 hover:text-fg transition-colors group cursor-pointer"
+        className="flex w-[calc(100%-16px)] mx-2 items-center justify-between h-10 px-3 rounded-xl text-[13.5px] font-medium text-fg-muted hover:bg-surface-2/60 hover:text-fg transition-all duration-300 group cursor-pointer border border-transparent"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <Icon className="h-4 w-4 shrink-0 text-fg-subtle group-hover:text-fg-muted" />
+          <Icon className="h-4 w-4 shrink-0 text-fg-subtle group-hover:text-fg transition-colors" />
           <span className="min-w-0 overflow-hidden whitespace-nowrap">{label}</span>
         </div>
         <ChevronRight
-          className={cn("h-4 w-4 shrink-0 text-fg-subtle transition-transform duration-200", isOpen && "rotate-90")}
+          className={cn("h-4 w-4 shrink-0 text-fg-subtle transition-transform duration-300", isOpen && "rotate-90")}
         />
       </button>
-      {isOpen && <ul className="pl-2.5 space-y-0.5 border-l border-white/10 ml-4 my-1">{children}</ul>}
+      <div className={cn("grid transition-all duration-300 ease-in-out", isOpen ? "grid-rows-[1fr] opacity-100 mt-1" : "grid-rows-[0fr] opacity-0")}>
+        <div className="overflow-hidden">
+          <ul className="pl-3 space-y-1 border-l border-white/10 ml-6 pb-1">{children}</ul>
+        </div>
+      </div>
     </div>
   );
 }
@@ -188,11 +192,11 @@ function SectionLabel({ children, collapsed = false }: { children: React.ReactNo
   return (
     <div
       className={cn(
-        "label-xs mb-1.5 mt-0.5 overflow-hidden whitespace-nowrap transition-all duration-300",
-        collapsed ? "h-px px-1 opacity-20" : "px-2.5 opacity-100"
+        "text-[10px] font-bold uppercase tracking-widest text-fg-subtle transition-all duration-300",
+        collapsed ? "h-0 opacity-0 overflow-hidden m-0" : "px-5 mt-5 mb-2 opacity-100"
       )}
     >
-      {collapsed ? <span className="block h-px bg-border" /> : children}
+      {children}
     </div>
   );
 }
@@ -227,7 +231,6 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
   const [isHoverSuppressed, setIsHoverSuppressed] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto-expand category if child path is active
   const isBusinessActive = ["/finance", "/marketing", "/reports", "/customers"].some(
     (path) => pathname === path || pathname.startsWith(path + "/")
   );
@@ -247,19 +250,17 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
   }, [isTeamActive]);
 
   const handleMouseEnter = () => {
-    if (isHoverSuppressed) return;
+    if (isHoverSuppressed) return; // Prevent expansion if recently collapsed
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     hoverTimeoutRef.current = setTimeout(() => {
       setIsHovered(true);
-    }, 100);
+    }, 150);
   };
 
   const handleMouseLeave = () => {
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-    hoverTimeoutRef.current = setTimeout(() => {
-      setIsHovered(false);
-      setIsHoverSuppressed(false);
-    }, 150);
+    setIsHovered(false);
+    // DO NOT reset isHoverSuppressed here to prevent glitchy re-expansion during collapse
   };
 
   const handleToggleCollapse = () => {
@@ -267,7 +268,11 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
     const nextCollapsed = !collapsed;
     if (nextCollapsed) {
       setIsHovered(false);
-      setIsHoverSuppressed(true);
+      setIsHoverSuppressed(true); // Suppress hover immediately on close click
+      // Wait for the complete shrink animation before allowing hover again
+      setTimeout(() => {
+        setIsHoverSuppressed(false);
+      }, 500);
     } else {
       setIsHoverSuppressed(false);
     }
@@ -280,7 +285,6 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
     };
   }, []);
 
-  // Close dropdown on outside click
   const dropdownRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -291,8 +295,6 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  const restaurantName = user?.role === "SUPER_ADMIN" ? selectedRestaurant?.name : (restaurant?.name || "");
 
   const initials = user
     ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase()
@@ -308,8 +310,6 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
   const isAdmin   = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
   const isKitchen = user?.role === "KITCHEN_STAFF";
   const isWaiter  = user?.role === "WAITER";
-
-  const canUseKitchen = hasPermission(user?.role, Permissions.KITCHEN_DASHBOARD);
   const canViewOrders = hasPermission(user?.role, Permissions.ORDER_VIEW);
 
   const cfg = ROLE_CONFIGS[user?.role ?? "ADMIN"] ?? ROLE_CONFIGS.ADMIN;
@@ -321,17 +321,17 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
       {/* Mobile overlay */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/70 backdrop-blur-[2px] lg:hidden"
+          className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden"
           onClick={onClose}
           aria-hidden
         />
       )}
 
-      {/* Desktop layout width spacer so main content position stays stable */}
+      {/* Desktop spacer */}
       <div
         className={cn(
           "hidden lg:block shrink-0 transition-[width] duration-300 ease-out",
-          collapsed ? "w-[72px]" : "w-[240px]"
+          collapsed ? "w-[72px]" : "w-[260px]"
         )}
       />
 
@@ -342,59 +342,55 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
           "fixed left-0 top-0 z-50 flex h-full flex-col",
           "transition-[width,transform,box-shadow,background-color] duration-300 ease-out",
           "border-r",
-          effectiveCollapsed ? "w-[72px] bg-bg/90 border-white/5" : "w-[240px] bg-bg/95 backdrop-blur-md border-border",
-          collapsed && isHovered && !isHoverSuppressed && "shadow-[8px_0_32px_rgba(0,0,0,0.6)] bg-bg border-border-strong",
+          effectiveCollapsed 
+            ? "w-[72px] bg-bg border-white/5" 
+            : "w-[260px] bg-bg/95 backdrop-blur-xl border-border/50",
+          collapsed && isHovered && !isHoverSuppressed 
+            ? "shadow-[8px_0_40px_rgba(0,0,0,0.4)] bg-bg/95 backdrop-blur-xl border-border" 
+            : "",
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        {/* Brand */}
-        <div className={cn("flex h-14 items-center justify-between border-b border-border shrink-0 transition-all duration-300", effectiveCollapsed ? "px-3" : "px-4")}>
-          <div className={cn("flex min-w-0 items-center transition-all duration-300", effectiveCollapsed ? "gap-0" : "gap-2.5")}>
-            {/* Logo mark — role-tinted */}
+        {/* Brand Header */}
+        <div className={cn(
+          "flex h-16 items-center shrink-0 transition-all duration-300 border-b border-border/50",
+          effectiveCollapsed ? "justify-center px-0" : "justify-between px-5"
+        )}>
+          <div className={cn("flex items-center transition-all duration-300", effectiveCollapsed ? "gap-0" : "gap-3 min-w-0")}>
             <div
-              className={cn("flex h-7 w-7 items-center justify-center rounded-md shrink-0", cfg.logoBg)}
-              style={{ boxShadow: `0 0 12px ${cfg.logoGlow}` }}
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-xl shrink-0 transition-all duration-300", 
+                cfg.logoBg,
+                !effectiveCollapsed && "shadow-lg"
+              )}
+              style={{ boxShadow: !effectiveCollapsed ? `0 4px 16px ${cfg.logoGlow}` : undefined }}
             >
-              <span className={cn("text-[11px] font-bold", cfg.logoText ?? "text-white")}>S</span>
+              <span className={cn("text-[14px] font-bold", cfg.logoText ?? "text-white")}>S</span>
             </div>
-            <div className={cn("min-w-0 overflow-hidden leading-none transition-all duration-300", effectiveCollapsed ? "w-0 opacity-0" : "w-[140px] opacity-100")}>
-              <div className="text-[13px] font-semibold text-fg">Startup</div>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse shrink-0", cfg.statusDot)} />
-                <span
-                  className="text-[9px] font-semibold uppercase tracking-wider truncate"
-                  style={{ color: cfg.accentColor }}
-                >
+            
+            <div className={cn("min-w-0 overflow-hidden leading-none transition-all duration-300", effectiveCollapsed ? "w-0 opacity-0" : "w-[120px] opacity-100")}>
+              <div className="text-[14px] font-bold text-fg tracking-tight">Steward</div>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="text-[9px] font-bold uppercase tracking-widest truncate" style={{ color: cfg.accentColor }}>
                   {cfg.statusText}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center shrink-0">
             {onCollapsedChange && !effectiveCollapsed && (
               <button
                 onClick={handleToggleCollapse}
-                className="hidden lg:grid h-7 w-7 place-items-center rounded-md text-fg-muted hover:bg-surface-2 transition-colors"
-                title={collapsed ? "Pin sidebar open" : "Unpin sidebar (hover mode)"}
+                className="hidden lg:flex h-8 w-8 items-center justify-center rounded-lg text-fg-muted hover:bg-surface-2 hover:text-fg transition-all active:scale-95"
+                title={collapsed ? "Pin sidebar open" : "Unpin sidebar (auto-collapse)"}
               >
                 {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
               </button>
             )}
-            <span title={wsConnected ? "Connected — live updates active" : "Disconnected — check network"} className="shrink-0">
-              {wsConnected ? (
-                <div className="flex items-center gap-1">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inset-0 rounded-full bg-success live-dot" />
-                  </span>
-                </div>
-              ) : (
-                <WifiOff className="h-3 w-3 text-fg-subtle" />
-              )}
-            </span>
             <button
               onClick={onClose}
-              className="lg:hidden h-9 w-9 grid place-items-center rounded-md text-fg-muted hover:bg-surface-2 transition-colors touch-target"
+              className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg text-fg-muted hover:bg-surface-2 transition-all active:scale-95"
               aria-label="Close sidebar"
             >
               <X className="h-4 w-4" />
@@ -403,13 +399,13 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto px-2 py-3 scrollbar-thin space-y-0">
+        <nav className="flex-1 overflow-y-auto py-4 scrollbar-none space-y-1">
 
-          {/* Branch Selector (if multi branch) */}
+          {/* Branch Selector */}
           {(() => {
             if (effectiveCollapsed) {
               return (
-                <div className="flex justify-center py-2 text-fg-subtle border-b border-white/5 mb-3" title={currentBranch?.name ?? "Branch"}>
+                <div className="flex justify-center pb-4 text-fg-subtle border-b border-white/5 mb-2" title={currentBranch?.name ?? "Branch"}>
                   <GitBranch className="h-4 w-4" />
                 </div>
               );
@@ -421,112 +417,106 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
             if (!hasMultiple && !isBranchScoped) return null;
 
             return (
-              <div className="mx-1 mb-3 p-2 rounded-xl border border-white/5 bg-surface-2/40 backdrop-blur-sm">
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle mb-1">Active Branch</div>
-                  {isBranchScoped || !hasMultiple ? (
-                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-surface-3/50 text-xs font-medium text-fg-muted border border-border">
-                      <MapPin className="h-3.5 w-3.5 text-accent shrink-0" />
-                      <span className="truncate">{currentBranch?.name ?? "Main Branch"}</span>
-                    </div>
-                  ) : (
-                    <div className="relative" ref={dropdownRef}>
-                      <button
-                        type="button"
-                        disabled={isSwitchingBranch}
-                        onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
-                        className="flex w-full items-center justify-between gap-1.5 px-2 py-1.5 rounded-lg bg-surface-3 hover:bg-surface-3/80 text-xs font-medium text-fg border border-border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          {isSwitchingBranch ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin text-accent shrink-0" />
-                          ) : (
-                            <MapPin className="h-3.5 w-3.5 text-accent shrink-0" />
-                          )}
-                          <span className="truncate">{currentBranch?.name ?? "Select Branch"}</span>
-                        </div>
-                        <ChevronDown className="h-3.5 w-3.5 text-fg-subtle shrink-0" />
-                      </button>
+              <div className="mx-4 mb-4">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle mb-2">Branch</div>
+                {isBranchScoped || !hasMultiple ? (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-2/50 text-[13px] font-medium text-fg-muted border border-border">
+                    <MapPin className="h-4 w-4 text-accent shrink-0" />
+                    <span className="truncate">{currentBranch?.name ?? "Main Branch"}</span>
+                  </div>
+                ) : (
+                  <div className="relative" ref={dropdownRef}>
+                    <button
+                      type="button"
+                      disabled={isSwitchingBranch}
+                      onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
+                      className="flex w-full items-center justify-between gap-2 px-3 py-2 rounded-xl bg-surface-2 hover:bg-surface-3 text-[13px] font-medium text-fg border border-border transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {isSwitchingBranch ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-accent shrink-0" />
+                        ) : (
+                          <MapPin className="h-4 w-4 text-accent shrink-0" />
+                        )}
+                        <span className="truncate">{currentBranch?.name ?? "Select Branch"}</span>
+                      </div>
+                      <ChevronDown className="h-4 w-4 text-fg-subtle shrink-0" />
+                    </button>
 
-                      {branchDropdownOpen && (
-                        <div className="absolute left-0 right-0 mt-1 z-50 rounded-lg border border-border bg-surface shadow-[0_4px_16px_rgba(0,0,0,0.5)] max-h-48 overflow-y-auto scrollbar-thin">
-                          <div className="p-1 space-y-0.5">
-                            {accessibleBranches.map((br) => {
-                              const isCurrent = br.id === currentBranch?.id;
-                              return (
-                                <button
-                                  key={br.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setBranchDropdownOpen(false);
-                                    if (br.id !== currentBranch?.id) {
-                                      switchBranch(br.id);
-                                    }
-                                  }}
-                                  className={cn(
-                                    "flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs text-left transition-colors",
-                                    isCurrent
-                                      ? "bg-accent/15 text-accent font-semibold"
-                                      : "text-fg-muted hover:bg-surface-2 hover:text-fg"
-                                  )}
-                                >
-                                  <span className="truncate">{br.name}</span>
-                                  {isCurrent && <span className="h-1.5 w-1.5 rounded-full bg-accent" />}
-                                </button>
-                              );
-                            })}
-                          </div>
+                    {branchDropdownOpen && (
+                      <div className="absolute left-0 right-0 mt-2 z-50 rounded-xl border border-border bg-surface shadow-[0_8px_32px_rgba(0,0,0,0.6)] max-h-48 overflow-y-auto scrollbar-thin backdrop-blur-xl">
+                        <div className="p-1.5 space-y-0.5">
+                          {accessibleBranches.map((br) => {
+                            const isCurrent = br.id === currentBranch?.id;
+                            return (
+                              <button
+                                key={br.id}
+                                type="button"
+                                onClick={() => {
+                                  setBranchDropdownOpen(false);
+                                  if (br.id !== currentBranch?.id) {
+                                    switchBranch(br.id);
+                                  }
+                                }}
+                                className={cn(
+                                  "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] text-left transition-colors",
+                                  isCurrent
+                                    ? "bg-accent/10 text-accent font-semibold"
+                                    : "text-fg-muted hover:bg-surface-2 hover:text-fg"
+                                )}
+                              >
+                                <span className="truncate">{br.name}</span>
+                                {isCurrent && <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_8px_currentColor]" />}
+                              </button>
+                            );
+                          })}
                         </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })()}
 
-          {/* Super Admin restaurant context banner */}
+          {/* Super Admin context banner */}
           {user?.role === "SUPER_ADMIN" && selectedRestaurant && !effectiveCollapsed && (
-            <div className="mx-1 mb-3 rounded-lg bg-violet-500/10 border border-violet-500/20 p-2.5">
-              <p className="text-[10px] font-medium text-violet-400 uppercase tracking-wider mb-1">Viewing Restaurant</p>
-              <p className="text-xs font-semibold text-fg truncate">{selectedRestaurant.name}</p>
+            <div className="mx-4 mb-4 rounded-xl bg-violet-500/10 border border-violet-500/20 p-3 shadow-inner">
+              <p className="text-[10px] font-bold text-violet-400/80 uppercase tracking-widest mb-1">Viewing Restaurant</p>
+              <p className="text-[13px] font-bold text-fg truncate">{selectedRestaurant.name}</p>
               <button
                 onClick={() => {
                   exitRestaurant();
                   router.push("/platform");
                 }}
-                className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-violet-400 hover:text-violet-300 transition-colors"
+                className="mt-2.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-violet-400 hover:text-violet-300 transition-colors"
               >
-                <ArrowLeft className="h-3 w-3" />
+                <ArrowLeft className="h-3.5 w-3.5" />
                 Back to Platform
               </button>
             </div>
           )}
 
-          {/* ── Kitchen Staff Navigation ──────────────────────── */}
+          {/* ── Kitchen Navigation ──────────────────────── */}
           {isKitchen && (
             <>
-              <div className="mb-3">
-                <SectionLabel collapsed={effectiveCollapsed}>Home</SectionLabel>
-                <ul className="space-y-0.5">
-                  <NavLink href="/kitchen-home" label="Kitchen Home" icon={Home} onClose={onClose} accentColor={cfg.accentColor} collapsed={effectiveCollapsed} />
-                </ul>
-              </div>
-              <div className="mb-3">
-                <SectionLabel collapsed={effectiveCollapsed}>Kitchen</SectionLabel>
-                <ul className="space-y-0.5">
-                  {navKitchen.map((item) => (
-                    <NavLink key={item.href} {...item} onClose={onClose} accentColor={cfg.accentColor} collapsed={effectiveCollapsed} />
-                  ))}
-                </ul>
-              </div>
+              <SectionLabel collapsed={effectiveCollapsed}>Overview</SectionLabel>
+              <ul className="space-y-1">
+                <NavLink href="/kitchen-home" label="Dashboard" icon={Home} onClose={onClose} accentColor={cfg.accentColor} collapsed={effectiveCollapsed} />
+              </ul>
+              <SectionLabel collapsed={effectiveCollapsed}>Operations</SectionLabel>
+              <ul className="space-y-1">
+                {navKitchen.map((item) => (
+                  <NavLink key={item.href} {...item} onClose={onClose} accentColor={cfg.accentColor} collapsed={effectiveCollapsed} />
+                ))}
+              </ul>
               {canViewOrders && (
-                <div className="mb-3">
+                <>
                   <SectionLabel collapsed={effectiveCollapsed}>Records</SectionLabel>
-                  <ul className="space-y-0.5">
+                  <ul className="space-y-1">
                     <NavLink href="/orders" label="Order History" icon={ShoppingCart} onClose={onClose} accentColor={cfg.accentColor} collapsed={effectiveCollapsed} />
                   </ul>
-                </div>
+                </>
               )}
             </>
           )}
@@ -534,47 +524,37 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
           {/* ── Waiter Navigation ─────────────────────────────── */}
           {isWaiter && (
             <>
-              <div className="mb-3">
-                <SectionLabel collapsed={effectiveCollapsed}>Home</SectionLabel>
-                <ul className="space-y-0.5">
-                  <NavLink href="/waiter-home" label="Service Home" icon={Home} onClose={onClose} accentColor={cfg.accentColor} collapsed={effectiveCollapsed} />
-                </ul>
-              </div>
-              <div className="mb-3">
-                <SectionLabel collapsed={effectiveCollapsed}>Service</SectionLabel>
-                <ul className="space-y-0.5">
-                  {navWaiter.map((item) => (
-                    <NavLink key={item.href} {...item} onClose={onClose} accentColor={cfg.accentColor} collapsed={effectiveCollapsed} />
-                  ))}
-                </ul>
-              </div>
+              <SectionLabel collapsed={effectiveCollapsed}>Overview</SectionLabel>
+              <ul className="space-y-1">
+                <NavLink href="/waiter-home" label="Service Home" icon={Home} onClose={onClose} accentColor={cfg.accentColor} collapsed={effectiveCollapsed} />
+              </ul>
+              <SectionLabel collapsed={effectiveCollapsed}>Service</SectionLabel>
+              <ul className="space-y-1">
+                {navWaiter.map((item) => (
+                  <NavLink key={item.href} {...item} onClose={onClose} accentColor={cfg.accentColor} collapsed={effectiveCollapsed} />
+                ))}
+              </ul>
             </>
           )}
 
-          {/* ── Admin / Super Admin Navigation ────────────────── */}
+          {/* ── Admin Navigation ────────────────── */}
           {isAdmin && (
             <div className="space-y-1">
-              {/* 1. Primary Top Core Group */}
-              <ul className="space-y-0.5">
-                {navPrimaryAdmin.map((item) => (
+              <SectionLabel collapsed={effectiveCollapsed}>Overview</SectionLabel>
+              <ul className="space-y-1">
+                {navOverview.map((item) => (
                   <NavLink key={item.href} {...item} onClose={onClose} collapsed={effectiveCollapsed} />
                 ))}
               </ul>
 
-              {/* Divider */}
-              <div className="h-px bg-white/10 my-2 mx-1" />
-
-              {/* 2. Operations Group */}
-              <ul className="space-y-0.5">
-                {navOperationsAdmin.map((item) => (
+              <SectionLabel collapsed={effectiveCollapsed}>Operations</SectionLabel>
+              <ul className="space-y-1">
+                {navOperations.map((item) => (
                   <NavLink key={item.href} {...item} onClose={onClose} collapsed={effectiveCollapsed} />
                 ))}
               </ul>
 
-              {/* Divider */}
-              <div className="h-px bg-white/10 my-2 mx-1" />
-
-              {/* 3. Collapsible Business Category */}
+              <SectionLabel collapsed={effectiveCollapsed}>Management</SectionLabel>
               <CollapsibleCategory
                 label="Business"
                 icon={Briefcase}
@@ -582,12 +562,11 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
                 isOpen={businessOpen}
                 onToggle={() => setBusinessOpen((prev) => !prev)}
               >
-                {navBusinessAdmin.map((item) => (
+                {navBusiness.map((item) => (
                   <NavLink key={item.href} {...item} onClose={onClose} collapsed={effectiveCollapsed} />
                 ))}
               </CollapsibleCategory>
 
-              {/* 4. Collapsible Team Category */}
               <CollapsibleCategory
                 label="Team"
                 icon={Users}
@@ -595,58 +574,69 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
                 isOpen={teamOpen}
                 onToggle={() => setTeamOpen((prev) => !prev)}
               >
-                {navTeamAdmin.map((item) => (
+                {navTeam.map((item) => (
                   <NavLink key={item.href} {...item} onClose={onClose} collapsed={effectiveCollapsed} />
                 ))}
               </CollapsibleCategory>
 
-              {/* Divider */}
-              <div className="h-px bg-white/10 my-2 mx-1" />
+              <div className="h-px bg-border/50 my-3 mx-4" />
 
-              {/* 5. System Section */}
-              <ul className="space-y-0.5">
+              <ul className="space-y-1">
                 <NavLink href="/settings" label="Settings" icon={Settings} onClose={onClose} collapsed={effectiveCollapsed} />
               </ul>
             </div>
           )}
         </nav>
 
-        {/* Profile footer */}
-        <div className="border-t border-white/10 p-2.5 shrink-0">
+        {/* Profile & Status Footer */}
+        <div className="p-3 border-t border-border/50 bg-surface-1/30 shrink-0">
           <div className={cn(
-            "flex items-center rounded-lg bg-surface-2/60 border border-white/5 hover:border-white/10 transition-all duration-300 group",
-            effectiveCollapsed ? "flex-col justify-center gap-2.5 p-2" : "gap-2.5 px-2.5 py-2"
+            "flex items-center rounded-xl transition-all duration-300 border border-transparent",
+            effectiveCollapsed 
+              ? "flex-col justify-center gap-0 p-1" 
+              : "gap-3 px-3 py-2.5 bg-surface-2/40 hover:bg-surface-3/60 hover:border-white/5 cursor-pointer shadow-sm"
           )}>
-            {/* Avatar */}
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-white/10 text-[11px] font-bold text-white shrink-0 bg-surface-3"
-              style={{ boxShadow: `0 0 10px ${cfg.logoGlow}` }}
-            >
-              {initials}
+            {/* Avatar & Online Dot */}
+            <div className="relative shrink-0 flex items-center justify-center">
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-[12px] font-bold text-white bg-gradient-to-b from-surface-3 to-surface-2"
+                style={{ boxShadow: !effectiveCollapsed ? `0 2px 10px ${cfg.logoGlow}` : undefined }}
+              >
+                {initials}
+              </div>
+              <div 
+                className={cn(
+                  "absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-[2.5px] border-bg transition-colors",
+                  wsConnected ? "bg-emerald-500" : "bg-zinc-500"
+                )}
+                title={wsConnected ? "System Online" : "System Offline"}
+              />
             </div>
 
-            {/* Name & role */}
+            {/* Expanded Content */}
             {!effectiveCollapsed && (
-              <div className="min-w-0 flex-1 transition-all duration-300">
-                <div className="truncate text-[13px] font-semibold text-fg leading-tight">
-                  {user?.firstName ? `${user.firstName} ${user.lastName ?? ""}` : "Karthik Sai"}
+              <>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] font-bold text-fg leading-tight">
+                    {user?.firstName ? `${user.firstName} ${user.lastName ?? ""}` : "User Profile"}
+                  </div>
+                  <div className="truncate text-[11px] font-medium mt-0.5 text-fg-subtle">{roleLabel}</div>
                 </div>
-                <div className="truncate text-[10px] mt-0.5 text-fg-subtle">{roleLabel}</div>
-              </div>
-            )}
 
-            {/* Logout */}
-            <button
-              onClick={logout}
-              title="Sign out"
-              className="h-7 w-7 grid place-items-center rounded-md text-fg-subtle hover:bg-surface-3 hover:text-danger transition-colors shrink-0"
-              aria-label="Sign out"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-            </button>
+                <button
+                  onClick={logout}
+                  title="Sign out"
+                  className="h-8 w-8 flex items-center justify-center rounded-lg text-fg-subtle hover:bg-danger/10 hover:text-danger transition-colors shrink-0 active:scale-95"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </>
+            )}
           </div>
         </div>
       </aside>
     </>
   );
 }
+

@@ -295,7 +295,7 @@ export function InventoryView() {
           {activeTab === "levels" && (
             <Button
               size="sm"
-              className="gap-1.5 bg-accent hover:bg-accent/90 text-white cursor-pointer"
+              className="gap-1.5 bg-accent hover:bg-accent/90 text-accent-foreground cursor-pointer"
               onClick={handleOpenCreate}
             >
               <Plus className="h-3.5 w-3.5" /> Add Ingredient
@@ -493,7 +493,7 @@ export function InventoryView() {
                 <PackageOpen className="w-10 h-10 text-fg-subtle opacity-50 mb-1" />
                 <p className="text-[13px] font-medium text-fg">Your inventory is empty.</p>
                 <p className="text-[11px] text-fg-subtle font-normal">Start by adding your first inventory item.</p>
-                <Button size="sm" className="mt-2 gap-1.5 bg-accent hover:bg-accent/90 text-white cursor-pointer" onClick={handleOpenCreate}>
+                <Button size="sm" className="mt-2 gap-1.5 bg-accent hover:bg-accent/90 text-accent-foreground cursor-pointer" onClick={handleOpenCreate}>
                   <Plus className="h-3.5 w-3.5" /> Add Ingredient
                 </Button>
               </div>
@@ -846,7 +846,7 @@ export function InventoryView() {
               <Button type="button" variant="outline" onClick={() => setSheetOpen(false)} className="border-white/10 hover:bg-white/5 text-fg animate-scale-in cursor-pointer">
                 Cancel
               </Button>
-              <Button type="submit" className="bg-accent hover:bg-accent/90 text-white cursor-pointer" disabled={createMutation.isPending || updateMutation.isPending}>
+              <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground cursor-pointer" disabled={createMutation.isPending || updateMutation.isPending}>
                 {editItem ? "Save changes" : "Add ingredient"}
               </Button>
             </div>
@@ -910,7 +910,7 @@ export function InventoryView() {
                         setAdjustVal("");
                       }
                     }}
-                    className="bg-accent hover:bg-accent/90 text-white h-9 text-[12px] px-3 cursor-pointer"
+                    className="bg-accent hover:bg-accent/90 text-accent-foreground h-9 text-[12px] px-3 cursor-pointer"
                   >
                     Set
                   </Button>

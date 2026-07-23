@@ -76,7 +76,7 @@ function NotificationPanel({
         <div className="flex items-center gap-2">
           <span className="text-[13px] font-semibold text-fg">Recent Orders</span>
           {orders && orders.length > 0 && (
-            <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 text-[9px] font-bold text-white">
+            <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 text-[9px] font-bold text-accent-foreground">
               {orders.filter((o) => o.status === "NEW").length || ""}
             </span>
           )}
@@ -581,7 +581,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               >
                 <Bell className="h-3.5 w-3.5" />
                 {newOrderCount > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 h-3.5 min-w-[14px] px-0.5 rounded-full bg-accent text-[8px] font-bold text-white grid place-items-center tabular-nums">
+                  <span className="absolute -right-0.5 -top-0.5 h-3.5 min-w-[14px] px-0.5 rounded-full bg-accent text-[8px] font-bold text-accent-foreground grid place-items-center tabular-nums">
                     {newOrderCount > 9 ? "9+" : newOrderCount}
                   </span>
                 )}

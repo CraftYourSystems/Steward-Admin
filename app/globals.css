@@ -38,7 +38,7 @@
     --secondary-foreground: 0 0% 98%;
     --muted: 240 6% 14%;
     --muted-foreground: 240 5% 65%;
-    --accent-foreground: 0 0% 100%;
+    --accent-foreground: 0 0% 0%;
     --destructive: var(--danger);
     --destructive-foreground: 0 0% 98%;
     --input: var(--border);

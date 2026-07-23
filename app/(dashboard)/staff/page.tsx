@@ -365,7 +365,7 @@ function CreateStaffSheet({
                 <Button type="button" variant="outline" onClick={handleClose} className="border-white/10 hover:bg-white/5 text-fg">
                   Cancel
                 </Button>
-                <Button type="submit" disabled={inviteSubmitting} className="bg-accent hover:bg-accent/90 text-white">
+                <Button type="submit" disabled={inviteSubmitting} className="bg-accent hover:bg-accent/90 text-accent-foreground">
                   {inviteSubmitting ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
                   Send Invitation
                 </Button>
@@ -491,7 +491,7 @@ function CreateStaffSheet({
               <Button type="button" variant="outline" onClick={handleClose} className="border-white/10 hover:bg-white/5 text-fg">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-accent hover:bg-accent/90 text-white">
+              <Button type="submit" disabled={isSubmitting} className="bg-accent hover:bg-accent/90 text-accent-foreground">
                 {isSubmitting ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
                 Create Account
               </Button>
@@ -722,7 +722,7 @@ function EditStaffSheet({
             <Button type="button" variant="outline" onClick={handleClose} className="border-white/10 hover:bg-white/5 text-fg">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-accent hover:bg-accent/90 text-white">
+            <Button type="submit" disabled={isSubmitting} className="bg-accent hover:bg-accent/90 text-accent-foreground">
               {isSubmitting ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
               Save Changes
             </Button>
@@ -825,7 +825,7 @@ export default function StaffPage() {
           >
             <RefreshCw className="h-3.5 w-3.5" /> Refresh
           </Button>
-          <Button size="sm" className="gap-1.5 bg-accent hover:bg-accent/90 text-white" onClick={() => setCreateOpen(true)}>
+          <Button size="sm" className="gap-1.5 bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => setCreateOpen(true)}>
             <Plus className="h-3.5 w-3.5" /> Invite Staff
           </Button>
         </div>
@@ -942,7 +942,7 @@ export default function StaffPage() {
             <p className="text-[11px] text-fg-subtle font-normal">
               Invite your first employee to start assigning operational roles.
             </p>
-            <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1.5 mt-2 bg-accent hover:bg-accent/90 text-white">
+            <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1.5 mt-2 bg-accent hover:bg-accent/90 text-accent-foreground">
               <Plus className="h-3.5 w-3.5" /> Invite Staff
             </Button>
           </div>

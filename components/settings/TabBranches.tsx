@@ -574,7 +574,7 @@ export function TabBranches() {
                         "flex-1 h-8 text-[11px] font-semibold cursor-pointer",
                         isCurrent
                           ? "bg-white/5 text-fg-subtle border border-white/10 hover:bg-white/5"
-                          : "bg-accent hover:bg-accent/90 text-white"
+                          : "bg-accent hover:bg-accent/90 text-accent-foreground"
                       )}
                     >
                       {isCurrent ? "Current Outlet" : "Open Branch"}
@@ -707,7 +707,7 @@ export function TabBranches() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={createMutation.isPending} className="bg-accent hover:bg-accent/90 text-white h-9 text-[12px]">
+                <Button type="submit" disabled={createMutation.isPending} className="bg-accent hover:bg-accent/90 text-accent-foreground h-9 text-[12px]">
                   {createMutation.isPending ? "Creating..." : "Create Outlet"}
                 </Button>
               </div>
@@ -848,7 +848,7 @@ export function TabBranches() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={editMutation.isPending} className="bg-accent hover:bg-accent/90 text-white h-9 text-[12px]">
+                <Button type="submit" disabled={editMutation.isPending} className="bg-accent hover:bg-accent/90 text-accent-foreground h-9 text-[12px]">
                   {editMutation.isPending ? "Saving..." : "Save changes"}
                 </Button>
               </div>
