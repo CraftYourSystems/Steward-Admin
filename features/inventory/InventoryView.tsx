@@ -11,6 +11,7 @@ import {
   useDeleteInventoryItem,
   InventoryItem,
 } from "@/hooks/useInventoryAnalytics";
+import { InventoryForecasting } from "./InventoryForecasting";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   PackageOpen,
@@ -310,6 +311,7 @@ export function InventoryView() {
           {[
             { value: "levels", label: "Stock Levels" },
             { value: "health", label: "Health & Spoilage" },
+            { value: "forecast", label: "Smart Forecasting" },
           ].map((tab) => (
             <TabsTrigger
               key={tab.value}
@@ -740,6 +742,10 @@ export function InventoryView() {
               )}
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="forecast" className="space-y-5">
+          <InventoryForecasting />
         </TabsContent>
       </Tabs>
 
