@@ -49,25 +49,18 @@ export function ConfigurationOverview({ settings, branchName, activeQrCount = 1 
 
   return (
     <div className="mb-6 rounded-2xl border border-border bg-surface/90 p-5 shadow-sm space-y-4">
-      {/* ── Top Header Anchor & Setup Status Banner ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border/60">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-md border border-accent/20">
-              Restaurant Configuration Center
-            </span>
+      {/* ── Setup Progress Banner ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/60">
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col">
+            <span className="text-[13px] font-semibold text-fg">Setup Progress</span>
+            <span className="text-[11px] text-fg-subtle mt-0.5">Configure your restaurant to unlock all Steward features.</span>
           </div>
-          <h3 className="text-base font-semibold text-fg tracking-tight">Restaurant Configuration</h3>
-          <p className="text-[12px] text-fg-subtle mt-0.5">
-            Review and manage how your restaurant is configured across Steward.
-          </p>
         </div>
-
-        {/* ── Setup Status Progress Pill ── */}
         <div className="shrink-0 flex flex-col sm:flex-row sm:items-center gap-3 bg-surface-2/80 border border-border px-4 py-2.5 rounded-xl">
           <div>
-            <div className="text-[10px] font-semibold text-fg-subtle uppercase tracking-wider">Restaurant Setup</div>
-            <div className="text-[13px] font-bold text-fg">{completionPercentage}% Complete</div>
+            <div className="text-[10px] font-semibold text-fg-subtle uppercase tracking-wider">Completion</div>
+            <div className="text-[13px] font-bold text-fg">{completionPercentage}%</div>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap border-t sm:border-t-0 sm:border-l border-border pt-2 sm:pt-0 sm:pl-3">
             {setupItems.map((item) => (
