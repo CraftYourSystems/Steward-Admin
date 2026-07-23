@@ -169,9 +169,11 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
 
   const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isHoverSuppressed, setIsHoverSuppressed] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
+    if (isHoverSuppressed) return;
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     hoverTimeoutRef.current = setTimeout(() => {
       setIsHovered(true);
@@ -182,7 +184,20 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     hoverTimeoutRef.current = setTimeout(() => {
       setIsHovered(false);
+      setIsHoverSuppressed(false);
     }, 150);
+  };
+
+  const handleToggleCollapse = () => {
+    if (!onCollapsedChange) return;
+    const nextCollapsed = !collapsed;
+    if (nextCollapsed) {
+      setIsHovered(false);
+      setIsHoverSuppressed(true);
+    } else {
+      setIsHoverSuppressed(false);
+    }
+    onCollapsedChange(nextCollapsed);
   };
 
   useEffect(() => {
@@ -227,7 +242,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
 
   const cfg = ROLE_CONFIGS[user?.role ?? "ADMIN"] ?? ROLE_CONFIGS.ADMIN;
 
-  const effectiveCollapsed = collapsed && !isHovered;
+  const effectiveCollapsed = collapsed && (!isHovered || isHoverSuppressed);
 
   return (
     <>
@@ -256,7 +271,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
           "transition-[width,transform,box-shadow,background-color] duration-300 ease-out",
           "border-r",
           effectiveCollapsed ? "w-[72px] bg-bg/90 border-white/5" : "w-[240px] bg-bg/95 backdrop-blur-md border-border",
-          collapsed && isHovered && "shadow-[8px_0_32px_rgba(0,0,0,0.6)] bg-bg border-border-strong",
+          collapsed && isHovered && !isHoverSuppressed && "shadow-[8px_0_32px_rgba(0,0,0,0.6)] bg-bg border-border-strong",
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
@@ -285,9 +300,9 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {onCollapsedChange && (
+            {onCollapsedChange && !effectiveCollapsed && (
               <button
-                onClick={() => onCollapsedChange(!collapsed)}
+                onClick={handleToggleCollapse}
                 className="hidden lg:grid h-7 w-7 place-items-center rounded-md text-fg-muted hover:bg-surface-2 transition-colors"
                 title={collapsed ? "Pin sidebar open" : "Unpin sidebar (hover mode)"}
               >
