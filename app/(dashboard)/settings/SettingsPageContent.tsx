@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  Save, RotateCcw, Loader2, Check, Clock,
+  Save, RotateCcw, Loader2, Check, Clock, ChevronDown,
   Settings2, Building2, Zap, ShoppingCart, CreditCard, Users, Palette, Shield, Puzzle, QrCode, Timer, Star, Lock,
 } from "lucide-react";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
@@ -54,6 +54,7 @@ export default function SettingsPageContent() {
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
 
   const isDirty = useMemo(() => {
     if (!draft || !serverSettings) return false;
@@ -82,6 +83,13 @@ export default function SettingsPageContent() {
   useEffect(() => {
     if (serverSettings && !draft) setDraft(serverSettings);
   }, [serverSettings, draft]);
+
+  // Click outside to close dropdowns
+  useEffect(() => {
+    const closeDropdown = () => setOpenGroup(null);
+    window.addEventListener("click", closeDropdown);
+    return () => window.removeEventListener("click", closeDropdown);
+  }, []);
 
   const patch = (partial: Partial<RestaurantSettings>) => {
     setDraft((prev) => (prev ? { ...prev, ...partial } : prev));
@@ -122,7 +130,7 @@ export default function SettingsPageContent() {
       ],
     },
     {
-      name: "Business",
+      name: "Businesses",
       items: [
         { value: "payments", label: "Payments", icon: <CreditCard className="h-3.5 w-3.5" /> },
         { value: "customer", label: "Customer Experience", icon: <Star className="h-3.5 w-3.5" /> },
@@ -146,6 +154,10 @@ export default function SettingsPageContent() {
 
   const isSelfManaging = SELF_MANAGING_TABS.includes(activeTab);
   const isComingSoon = COMING_SOON_TABS.includes(activeTab);
+
+  const activeGroup = useMemo(() => {
+    return tabGroups.find(g => g.items.some(t => t.value === activeTab));
+  }, [activeTab, tabGroups]);
 
   if (isError) {
     return (
@@ -176,12 +188,18 @@ export default function SettingsPageContent() {
   return (
     <div className="flex h-[calc(100vh-48px)] flex-col bg-transparent">
 
-      {/* ── Sticky Top Bar ── */}
-      <div className="sticky top-0 z-10 w-full border-b border-white/5 bg-bg/80 backdrop-blur-md">
+      {/* ── Sticky Top Bar with Breadcrumb, Actions, & Dropdown Nav ── */}
+      <div className="sticky top-0 z-10 w-full border-b border-white/5 bg-bg/85 backdrop-blur-md">
+        {/* Breadcrumbs & Actions Row */}
         <div className="px-5 py-3 lg:px-8 max-w-[1100px] mx-auto flex items-center justify-between gap-4">
-          {/* Left: breadcrumb-style label */}
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-[11px] font-semibold text-fg-subtle uppercase tracking-widest shrink-0">Settings</span>
+            {activeGroup && (
+              <>
+                <span className="text-[11px] text-fg-muted shrink-0">/</span>
+                <span className="text-[12px] font-semibold text-fg-muted shrink-0">{activeGroup.name}</span>
+              </>
+            )}
             {activeTab && (
               <>
                 <span className="text-[11px] text-fg-muted shrink-0">/</span>
@@ -197,7 +215,6 @@ export default function SettingsPageContent() {
             )}
           </div>
 
-          {/* Right: actions */}
           <div className="flex items-center gap-2 shrink-0">
             {lastSavedAt && !isDirty && (
               <span className="text-[11px] text-fg-subtle flex items-center gap-1 mr-1 bg-surface-2/80 px-2.5 py-1 rounded-md border border-border">
@@ -235,176 +252,172 @@ export default function SettingsPageContent() {
             )}
           </div>
         </div>
+
+        {/* ── Dropdown Top Navigation ── */}
+        <div className="border-t border-white/5">
+          <nav className="relative flex flex-wrap items-center gap-1.5 py-2 px-5 lg:px-8 max-w-[1100px] mx-auto">
+            {tabGroups.map((group) => {
+              const isCurrent = activeGroup?.name === group.name;
+              const isOpen = openGroup === group.name;
+              return (
+                <div
+                  key={group.name}
+                  className="relative"
+                  onMouseEnter={() => setOpenGroup(group.name)}
+                  onMouseLeave={() => setOpenGroup(null)}
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenGroup(isOpen ? null : group.name);
+                    }}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all",
+                      isCurrent
+                        ? "bg-white/10 text-fg"
+                        : "text-fg-muted hover:bg-white/5 hover:text-fg"
+                    )}
+                  >
+                    <span>{group.name}</span>
+                    <ChevronDown className={cn("h-3 w-3 text-fg-subtle transition-transform duration-200", isOpen && "rotate-180")} />
+                  </button>
+
+                  {/* Dropdown Menu Popup */}
+                  {isOpen && (
+                    <div
+                      className="absolute top-full left-0 mt-1 w-56 rounded-xl border border-white/10 bg-surface/95 backdrop-blur-lg p-1.5 shadow-2xl z-50 flex flex-col gap-0.5 animate-in fade-in slide-in-from-top-1 duration-150"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {group.items.map((tab) => {
+                        const isActive = activeTab === tab.value;
+                        const disabled = tab.comingSoon;
+                        return (
+                          <button
+                            key={tab.value}
+                            disabled={disabled}
+                            onClick={() => {
+                              if (!disabled) {
+                                setActiveTab(tab.value);
+                                setOpenGroup(null);
+                              }
+                            }}
+                            className={cn(
+                              "flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[13px] font-medium transition-all text-left group",
+                              isActive
+                                ? "bg-white/10 text-fg"
+                                : disabled
+                                ? "text-fg-muted/40 cursor-not-allowed"
+                                : "text-fg-muted hover:bg-white/5 hover:text-fg"
+                            )}
+                          >
+                            <span className={cn(
+                              "shrink-0 transition-colors",
+                              isActive ? "text-accent" : disabled ? "text-fg-muted/30" : "text-fg-subtle group-hover:text-fg-muted"
+                            )}>
+                              {disabled ? <Lock className="h-3.5 w-3.5" /> : tab.icon}
+                            </span>
+                            <span className="flex-1 truncate">{tab.label}</span>
+                            {tab.comingSoon && (
+                              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide text-fg-muted/50 bg-white/5 border border-white/5 px-1.5 py-0.5 rounded-full">
+                                Soon
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+        </div>
       </div>
 
-      {/* ── Main Layout: Sidebar Nav + Content ── */}
-      <div className="flex flex-1 overflow-hidden max-w-[1100px] mx-auto w-full">
+      {/* ── Main Layout: Content Area ── */}
+      <div className="flex-1 overflow-y-auto scrollbar-thin max-w-[1100px] mx-auto w-full">
+        <div className="p-5 lg:p-8">
 
-        {/* ── Left Sidebar Navigation ── */}
-        <aside className="hidden md:flex flex-col w-52 shrink-0 border-r border-white/5 py-6 px-3 gap-6 overflow-y-auto scrollbar-thin">
-          {tabGroups.map((group) => (
-            <div key={group.name}>
-              <div className="px-2 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-fg-muted">
-                {group.name}
-              </div>
-              <div className="flex flex-col gap-0.5">
-                {group.items.map((tab) => {
-                  const isActive = activeTab === tab.value;
-                  const disabled = tab.comingSoon;
-                  return (
-                    <button
-                      key={tab.value}
-                      disabled={disabled}
-                      onClick={() => !disabled && setActiveTab(tab.value)}
-                      className={cn(
-                        "flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[13px] font-medium transition-all text-left group",
-                        isActive
-                          ? "bg-white/10 text-fg shadow-sm"
-                          : disabled
-                          ? "text-fg-muted/40 cursor-not-allowed"
-                          : "text-fg-muted hover:bg-white/5 hover:text-fg"
-                      )}
-                    >
-                      <span className={cn(
-                        "shrink-0 transition-colors",
-                        isActive ? "text-accent" : disabled ? "text-fg-muted/30" : "text-fg-subtle group-hover:text-fg-muted"
-                      )}>
-                        {disabled ? <Lock className="h-3.5 w-3.5" /> : tab.icon}
-                      </span>
-                      <span className="flex-1 truncate">{tab.label}</span>
-                      {tab.comingSoon && (
-                        <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide text-fg-muted/50 bg-white/5 border border-white/5 px-1.5 py-0.5 rounded-full">
-                          Soon
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+          {/* Configuration Overview — only on general tab */}
+          {activeTab === "general" && (
+            <ConfigurationOverview
+              settings={draft}
+              branchName={currentBranch?.name}
+              activeQrCount={12}
+            />
+          )}
+
+          {isDirty && !isSelfManaging && !isComingSoon && (
+            <div className="mb-6 flex items-center gap-3 rounded-xl border border-warning/20 bg-warning/5 px-4 py-3">
+              <span className="h-2 w-2 rounded-full bg-warning shrink-0 animate-pulse" />
+              <span className="text-[13px] text-warning font-medium">
+                You have unsaved changes. Save to apply them across Steward.
+              </span>
             </div>
-          ))}
-        </aside>
+          )}
 
-        {/* ── Mobile Tab Bar (horizontal scroll) ── */}
-        <div className="md:hidden border-b border-white/5 w-full overflow-x-auto scrollbar-none">
-          <div className="flex gap-1 px-4 py-2 w-max">
-            {tabGroups.map((group, gi) => (
-              <React.Fragment key={group.name}>
-                {gi > 0 && <div className="h-6 w-px bg-white/10 mx-1 self-center shrink-0" />}
-                {group.items.map((tab) => {
-                  const isActive = activeTab === tab.value;
-                  const disabled = tab.comingSoon;
-                  return (
-                    <button
-                      key={tab.value}
-                      disabled={disabled}
-                      onClick={() => !disabled && setActiveTab(tab.value)}
-                      className={cn(
-                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium whitespace-nowrap transition-all shrink-0",
-                        isActive
-                          ? "bg-white/10 text-fg"
-                          : disabled
-                          ? "text-fg-muted/40 cursor-not-allowed"
-                          : "text-fg-muted hover:bg-white/5 hover:text-fg"
-                      )}
-                    >
-                      {tab.label}
-                      {tab.comingSoon && (
-                        <span className="text-[9px] font-bold text-fg-muted/40">Soon</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Tab Content Area ── */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin">
-          <div className="p-5 lg:p-8">
-
-            {/* Configuration Overview — only on general tab */}
-            {activeTab === "general" && (
-              <ConfigurationOverview
-                settings={draft}
-                branchName={currentBranch?.name}
-                activeQrCount={12}
-              />
-            )}
-
-            {isDirty && !isSelfManaging && !isComingSoon && (
-              <div className="mb-6 flex items-center gap-3 rounded-xl border border-warning/20 bg-warning/5 px-4 py-3">
-                <span className="h-2 w-2 rounded-full bg-warning shrink-0 animate-pulse" />
-                <span className="text-[13px] text-warning font-medium">
-                  You have unsaved changes. Save to apply them across Steward.
-                </span>
+          {/* Coming Soon Placeholder */}
+          {isComingSoon && (
+            <div className="flex flex-col items-center justify-center py-24 gap-5 text-center">
+              <div className="h-16 w-16 rounded-2xl bg-surface-2 border border-border flex items-center justify-center">
+                <Lock className="h-7 w-7 text-fg-subtle" />
               </div>
-            )}
-
-            {/* Coming Soon Placeholder */}
-            {isComingSoon && (
-              <div className="flex flex-col items-center justify-center py-24 gap-5 text-center">
-                <div className="h-16 w-16 rounded-2xl bg-surface-2 border border-border flex items-center justify-center">
-                  <Lock className="h-7 w-7 text-fg-subtle" />
-                </div>
-                <div>
-                  <h3 className="text-[16px] font-semibold text-fg mb-1">
-                    {tabGroups.flatMap(g => g.items).find(t => t.value === activeTab)?.label} — Coming Soon
-                  </h3>
-                  <p className="text-[13px] text-fg-subtle max-w-sm mx-auto">
-                    This feature is currently in development and will be available in a future update.
-                  </p>
-                </div>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 border border-accent/20 px-3 py-1.5 text-[11px] font-semibold text-accent">
-                  <Zap className="h-3.5 w-3.5" />
-                  Available in the next release
-                </span>
+              <div>
+                <h3 className="text-[16px] font-semibold text-fg mb-1">
+                  {tabGroups.flatMap(g => g.items).find(t => t.value === activeTab)?.label} — Coming Soon
+                </h3>
+                <p className="text-[13px] text-fg-subtle max-w-sm mx-auto">
+                  This feature is currently in development and will be available in a future update.
+                </p>
               </div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 border border-accent/20 px-3 py-1.5 text-[11px] font-semibold text-accent">
+                <Zap className="h-3.5 w-3.5" />
+                Available in the next release
+              </span>
+            </div>
+          )}
+
+          <Tabs value={activeTab} className="w-full">
+            <TabsList className="hidden" />
+
+            <TabsContent value="general" className="mt-0 focus-visible:outline-none">
+              <TabGeneral settings={draft} onChange={patch} />
+            </TabsContent>
+            <TabsContent value="operations" className="mt-0 focus-visible:outline-none">
+              <TabOperations settings={draft} onChange={patch} />
+            </TabsContent>
+            <TabsContent value="team" className="mt-0 focus-visible:outline-none">
+              <TabStaffNotifications settings={draft} onChange={patch} />
+            </TabsContent>
+            <TabsContent value="payments" className="mt-0 focus-visible:outline-none">
+              <TabPayments settings={draft} onChange={patch} />
+            </TabsContent>
+            <TabsContent value="ordering" className="mt-0 focus-visible:outline-none">
+              <TabOrderTypes settings={draft} onChange={patch} />
+            </TabsContent>
+            <TabsContent value="customer" className="mt-0 focus-visible:outline-none">
+              <TabCustomerExperience settings={draft} onChange={patch} />
+            </TabsContent>
+            <TabsContent value="shifts" className="mt-0 focus-visible:outline-none">
+              <TabShifts />
+            </TabsContent>
+            <TabsContent value="integrations" className="mt-0 focus-visible:outline-none">
+              <TabIntegrations />
+            </TabsContent>
+            {isAdmin && (
+              <>
+                <TabsContent value="branches" className="mt-0 focus-visible:outline-none">
+                  <TabBranches />
+                </TabsContent>
+                <TabsContent value="qrcodes" className="mt-0 focus-visible:outline-none">
+                  <TabQRCodes />
+                </TabsContent>
+                <TabsContent value="security" className="mt-0 focus-visible:outline-none">
+                  <TabSecurity />
+                </TabsContent>
+              </>
             )}
-
-            <Tabs value={activeTab} className="w-full">
-              <TabsList className="hidden" />
-
-              <TabsContent value="general" className="mt-0 focus-visible:outline-none">
-                <TabGeneral settings={draft} onChange={patch} />
-              </TabsContent>
-              <TabsContent value="operations" className="mt-0 focus-visible:outline-none">
-                <TabOperations settings={draft} onChange={patch} />
-              </TabsContent>
-              <TabsContent value="team" className="mt-0 focus-visible:outline-none">
-                <TabStaffNotifications settings={draft} onChange={patch} />
-              </TabsContent>
-              <TabsContent value="payments" className="mt-0 focus-visible:outline-none">
-                <TabPayments settings={draft} onChange={patch} />
-              </TabsContent>
-              <TabsContent value="ordering" className="mt-0 focus-visible:outline-none">
-                <TabOrderTypes settings={draft} onChange={patch} />
-              </TabsContent>
-              <TabsContent value="customer" className="mt-0 focus-visible:outline-none">
-                <TabCustomerExperience settings={draft} onChange={patch} />
-              </TabsContent>
-              <TabsContent value="shifts" className="mt-0 focus-visible:outline-none">
-                <TabShifts />
-              </TabsContent>
-              <TabsContent value="integrations" className="mt-0 focus-visible:outline-none">
-                <TabIntegrations />
-              </TabsContent>
-              {isAdmin && (
-                <>
-                  <TabsContent value="branches" className="mt-0 focus-visible:outline-none">
-                    <TabBranches />
-                  </TabsContent>
-                  <TabsContent value="qrcodes" className="mt-0 focus-visible:outline-none">
-                    <TabQRCodes />
-                  </TabsContent>
-                  <TabsContent value="security" className="mt-0 focus-visible:outline-none">
-                    <TabSecurity />
-                  </TabsContent>
-                </>
-              )}
-            </Tabs>
-          </div>
+          </Tabs>
         </div>
       </div>
     </div>
