@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, addDays } from "date-fns";
 import { Brain, Calendar, PackageOpen, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
-import { api } from "@/lib/api";
+import { api } from "@/lib/axios";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,7 +32,7 @@ export function InventoryForecasting() {
     },
   });
 
-  const totalReorders = forecast.filter((f) => f.reorderRecommendation > 0).length;
+  const totalReorders = forecast.filter((f: ForecastData) => f.reorderRecommendation > 0).length;
 
   return (
     <div className="space-y-5 animate-fade-in">
