@@ -71,7 +71,7 @@ export default function SettingsPageContent() {
     }
     closeTimeoutRef.current = setTimeout(() => {
       setOpenGroup(null);
-    }, 250);
+    }, 100);
   };
 
   const isDirty = useMemo(() => {
