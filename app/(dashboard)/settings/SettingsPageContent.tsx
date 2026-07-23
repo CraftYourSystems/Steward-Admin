@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Save, RotateCcw, Loader2, Check, Clock, ChevronDown,
@@ -55,6 +55,24 @@ export default function SettingsPageContent() {
   const [isSaved, setIsSaved] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const closeTimeoutRef = useRef<any>(null);
+
+  const handleMouseEnter = (groupName: string) => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setOpenGroup(groupName);
+  };
+
+  const handleMouseLeave = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpenGroup(null);
+    }, 500);
+  };
 
   const isDirty = useMemo(() => {
     if (!draft || !serverSettings) return false;
@@ -84,11 +102,20 @@ export default function SettingsPageContent() {
     if (serverSettings && !draft) setDraft(serverSettings);
   }, [serverSettings, draft]);
 
-  // Click outside to close dropdowns
+  // Click outside and unmount cleanup
   useEffect(() => {
-    const closeDropdown = () => setOpenGroup(null);
+    const closeDropdown = () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = null;
+      }
+      setOpenGroup(null);
+    };
     window.addEventListener("click", closeDropdown);
-    return () => window.removeEventListener("click", closeDropdown);
+    return () => {
+      window.removeEventListener("click", closeDropdown);
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
   }, []);
 
   const patch = (partial: Partial<RestaurantSettings>) => {
@@ -263,12 +290,16 @@ export default function SettingsPageContent() {
                 <div
                   key={group.name}
                   className="relative"
-                  onMouseEnter={() => setOpenGroup(group.name)}
-                  onMouseLeave={() => setOpenGroup(null)}
+                  onMouseEnter={() => handleMouseEnter(group.name)}
+                  onMouseLeave={handleMouseLeave}
                 >
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (closeTimeoutRef.current) {
+                        clearTimeout(closeTimeoutRef.current);
+                        closeTimeoutRef.current = null;
+                      }
                       setOpenGroup(isOpen ? null : group.name);
                     }}
                     className={cn(
@@ -287,6 +318,8 @@ export default function SettingsPageContent() {
                     <div
                       className="absolute top-full left-0 mt-1 w-56 rounded-xl border border-white/10 bg-surface/95 backdrop-blur-lg p-1.5 shadow-2xl z-50 flex flex-col gap-0.5 animate-in fade-in slide-in-from-top-1 duration-150"
                       onClick={(e) => e.stopPropagation()}
+                      onMouseEnter={() => handleMouseEnter(group.name)}
+                      onMouseLeave={handleMouseLeave}
                     >
                       {group.items.map((tab) => {
                         const isActive = activeTab === tab.value;
