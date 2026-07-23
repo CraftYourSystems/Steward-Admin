@@ -4,11 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  LayoutDashboard, ShoppingCart, UtensilsCrossed, Users,
+  ShoppingCart, UtensilsCrossed, Users,
   LogOut, X, Settings, ToggleLeft, WifiOff, Kanban,
-  Soup, ClipboardList, BanknoteIcon, Home, BarChart3, ArrowLeft,
-  Megaphone, PackageOpen, Activity, Sparkles, BrainCircuit,
-  PanelLeftClose, PanelLeftOpen, ChevronDown, MapPin, Loader2, GitBranch
+  Soup, ClipboardList, BanknoteIcon, Home, ArrowLeft,
+  Megaphone, PackageOpen, Sparkles,
+  PanelLeftClose, PanelLeftOpen, ChevronDown, ChevronRight, MapPin, Loader2, GitBranch,
+  Radio, Menu as MenuIcon, Briefcase
 } from "lucide-react";
 import { usePlatformStore } from "@/stores/platform.store";
 import { cn } from "@/lib/utils";
@@ -16,33 +17,46 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSettingsStore } from "@/stores/settings.store";
 import { hasPermission, Permissions } from "@/lib/permissions/permissions";
 
-// ─── Nav definitions ──────────────────────────────────────────────────────────
+// ─── Nav definitions matching reference layout ────────────────────────────────
 
-const navAdmin = [
-  { href: "/needle",         label: "Needle",          icon: BrainCircuit },
-  { href: "/finance",        label: "Finance",         icon: BanknoteIcon },
-  { href: "/marketing",      label: "Marketing",       icon: Megaphone },
-  { href: "/customers",      label: "Customers",       icon: Users },
-  { href: "/reports",        label: "Reports",         icon: ClipboardList },
-  { href: "/orders",         label: "Orders",          icon: ShoppingCart },
-  { href: "/pay-at-counter", label: "Pay at Counter",  icon: BanknoteIcon },
-  { href: "/menu",           label: "Menu",            icon: UtensilsCrossed },
-  { href: "/staff",          label: "Staff",           icon: Users },
-  { href: "/inventory",      label: "Inventory",       icon: PackageOpen },
-  { href: "/logbook",        label: "Logbook",         icon: ClipboardList },
+const navPrimaryAdmin = [
+  { href: "/dashboard",    label: "Home",         icon: Home },
+  { href: "/orders",       label: "Orders",       icon: ShoppingCart },
+  { href: "/live-counter", label: "Live counter", icon: Radio },
+  { href: "/needle",       label: "Needle",       icon: Sparkles },
+];
+
+const navOperationsAdmin = [
+  { href: "/kitchen",              label: "Kitchen board", icon: UtensilsCrossed },
+  { href: "/pay-at-counter",       label: "Pay at counter",icon: BanknoteIcon },
+  { href: "/kitchen/availability", label: "Availability",  icon: ToggleLeft },
+  { href: "/menu",                 label: "Menu",          icon: MenuIcon },
+  { href: "/inventory",            label: "Inventory",     icon: PackageOpen },
+];
+
+const navBusinessAdmin = [
+  { href: "/finance",   label: "Finance",   icon: BanknoteIcon },
+  { href: "/marketing", label: "Marketing", icon: Megaphone },
+  { href: "/reports",   label: "Reports",   icon: ClipboardList },
+  { href: "/customers", label: "Customers", icon: Users },
+];
+
+const navTeamAdmin = [
+  { href: "/staff",   label: "Staff",   icon: Users },
+  { href: "/logbook", label: "Logbook", icon: ClipboardList },
 ];
 
 const navKitchen = [
-  { href: "/kitchen",              label: "Kitchen Board", icon: Kanban },
+  { href: "/kitchen",              label: "Kitchen board", icon: Kanban },
   { href: "/kitchen/availability", label: "Availability",  icon: ToggleLeft },
-  { href: "/live-counter",         label: "Live Counter",  icon: Soup },
+  { href: "/live-counter",         label: "Live counter",  icon: Soup },
 ];
 
 const navWaiter = [
   { href: "/orders",         label: "Orders",         icon: ShoppingCart },
-  { href: "/pay-at-counter", label: "Pay at Counter", icon: BanknoteIcon },
-  { href: "/kitchen",        label: "Kitchen Board",  icon: Kanban },
-  { href: "/live-counter",   label: "Live Counter",   icon: Soup },
+  { href: "/pay-at-counter", label: "Pay at counter", icon: BanknoteIcon },
+  { href: "/kitchen",        label: "Kitchen board",  icon: Kanban },
+  { href: "/live-counter",   label: "Live counter",   icon: Soup },
 ];
 
 // ─── Role visual configs ──────────────────────────────────────────────────────
@@ -99,7 +113,7 @@ function NavLink({
           "group relative flex items-center h-9 rounded-lg text-[13px] font-medium transition-all duration-300 ease-out active:scale-[0.98]",
           collapsed ? "justify-center gap-0 px-0" : "gap-3 px-3",
           active
-            ? "bg-surface-2 text-fg shadow-sm"
+            ? "bg-surface-2 text-fg shadow-sm font-semibold"
             : "text-fg-muted hover:bg-surface-2/50 hover:text-fg"
         )}
       >
@@ -124,6 +138,47 @@ function NavLink({
         </span>
       </Link>
     </li>
+  );
+}
+
+// ─── Collapsible Category Header ──────────────────────────────────────────────
+
+function CollapsibleCategory({
+  label,
+  icon: Icon,
+  collapsed,
+  isOpen,
+  onToggle,
+  children,
+}: {
+  label: string;
+  icon: React.ElementType;
+  collapsed: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  if (collapsed) {
+    return <ul className="space-y-0.5">{children}</ul>;
+  }
+
+  return (
+    <div className="space-y-0.5">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between h-9 px-3 rounded-lg text-[13px] font-medium text-fg-muted hover:bg-surface-2/50 hover:text-fg transition-colors group cursor-pointer"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <Icon className="h-4 w-4 shrink-0 text-fg-subtle group-hover:text-fg-muted" />
+          <span className="min-w-0 overflow-hidden whitespace-nowrap">{label}</span>
+        </div>
+        <ChevronRight
+          className={cn("h-4 w-4 shrink-0 text-fg-subtle transition-transform duration-200", isOpen && "rotate-90")}
+        />
+      </button>
+      {isOpen && <ul className="pl-2.5 space-y-0.5 border-l border-white/10 ml-4 my-1">{children}</ul>}
+    </div>
   );
 }
 
@@ -171,6 +226,25 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
   const [isHovered, setIsHovered] = useState(false);
   const [isHoverSuppressed, setIsHoverSuppressed] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-expand category if child path is active
+  const isBusinessActive = ["/finance", "/marketing", "/reports", "/customers"].some(
+    (path) => pathname === path || pathname.startsWith(path + "/")
+  );
+  const isTeamActive = ["/staff", "/logbook"].some(
+    (path) => pathname === path || pathname.startsWith(path + "/")
+  );
+
+  const [businessOpen, setBusinessOpen] = useState(isBusinessActive);
+  const [teamOpen, setTeamOpen] = useState(isTeamActive);
+
+  useEffect(() => {
+    if (isBusinessActive) setBusinessOpen(true);
+  }, [isBusinessActive]);
+
+  useEffect(() => {
+    if (isTeamActive) setTeamOpen(true);
+  }, [isTeamActive]);
 
   const handleMouseEnter = () => {
     if (isHoverSuppressed) return;
@@ -238,8 +312,6 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
   const canUseKitchen = hasPermission(user?.role, Permissions.KITCHEN_DASHBOARD);
   const canViewOrders = hasPermission(user?.role, Permissions.ORDER_VIEW);
 
-  const settingsActive = pathname === "/settings" || pathname.startsWith("/settings/");
-
   const cfg = ROLE_CONFIGS[user?.role ?? "ADMIN"] ?? ROLE_CONFIGS.ADMIN;
 
   const effectiveCollapsed = collapsed && (!isHovered || isHoverSuppressed);
@@ -286,7 +358,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
               <span className={cn("text-[11px] font-bold", cfg.logoText ?? "text-white")}>S</span>
             </div>
             <div className={cn("min-w-0 overflow-hidden leading-none transition-all duration-300", effectiveCollapsed ? "w-0 opacity-0" : "w-[140px] opacity-100")}>
-              <div className="text-[13px] font-semibold text-fg">Steward</div>
+              <div className="text-[13px] font-semibold text-fg">Startup</div>
               <div className="flex items-center gap-1 mt-0.5">
                 <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse shrink-0", cfg.statusDot)} />
                 <span
@@ -333,7 +405,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-2 py-3 scrollbar-thin space-y-0">
 
-          {/* Branch Selector */}
+          {/* Branch Selector (if multi branch) */}
           {(() => {
             if (effectiveCollapsed) {
               return (
@@ -346,22 +418,18 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
             const isBranchScoped = user?.role === "KITCHEN_STAFF" || user?.role === "WAITER";
             const hasMultiple = accessibleBranches && accessibleBranches.length > 1;
 
+            if (!hasMultiple && !isBranchScoped) return null;
+
             return (
-              <div className="mx-1 mb-4 p-2.5 rounded-xl border border-white/5 bg-surface-2/40 backdrop-blur-sm">
-                <div className="mb-2">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">Restaurant</div>
-                  <div className="text-xs font-semibold text-fg truncate">{restaurantName || "Steward Restaurant"}</div>
-                </div>
+              <div className="mx-1 mb-3 p-2 rounded-xl border border-white/5 bg-surface-2/40 backdrop-blur-sm">
                 <div>
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle mb-1">Active Branch</div>
                   {isBranchScoped || !hasMultiple ? (
-                    // Static Branch Context
-                    <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-surface-3/50 text-xs font-medium text-fg-muted border border-border">
+                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-surface-3/50 text-xs font-medium text-fg-muted border border-border">
                       <MapPin className="h-3.5 w-3.5 text-accent shrink-0" />
                       <span className="truncate">{currentBranch?.name ?? "Main Branch"}</span>
                     </div>
                   ) : (
-                    // Multi-Branch Selector
                     <div className="relative" ref={dropdownRef}>
                       <button
                         type="button"
@@ -435,7 +503,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
             </div>
           )}
 
-          {/* ── Kitchen Staff ────────────────────────────────── */}
+          {/* ── Kitchen Staff Navigation ──────────────────────── */}
           {isKitchen && (
             <>
               <div className="mb-3">
@@ -463,7 +531,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
             </>
           )}
 
-          {/* ── Waiter ──────────────────────────────────────── */}
+          {/* ── Waiter Navigation ─────────────────────────────── */}
           {isWaiter && (
             <>
               <div className="mb-3">
@@ -483,48 +551,76 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
             </>
           )}
 
-          {/* ── Admin / Super Admin ──────────────────────────── */}
+          {/* ── Admin / Super Admin Navigation ────────────────── */}
           {isAdmin && (
-            <>
-              <div className="mb-3">
-                <SectionLabel collapsed={effectiveCollapsed}>Management</SectionLabel>
-                <ul className="space-y-0.5">
-                  {navAdmin.map((item) => (
-                    <NavLink key={item.href} {...item} onClose={onClose} collapsed={effectiveCollapsed} />
-                  ))}
-                </ul>
-              </div>
+            <div className="space-y-1">
+              {/* 1. Primary Top Core Group */}
+              <ul className="space-y-0.5">
+                {navPrimaryAdmin.map((item) => (
+                  <NavLink key={item.href} {...item} onClose={onClose} collapsed={effectiveCollapsed} />
+                ))}
+              </ul>
 
-              {canUseKitchen && (
-                <div className="mb-3">
-                  <SectionLabel collapsed={effectiveCollapsed}>Kitchen</SectionLabel>
-                  <ul className="space-y-0.5">
-                    {navKitchen.map((item) => (
-                      <NavLink key={item.href} {...item} onClose={onClose} collapsed={effectiveCollapsed} />
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {/* Divider */}
+              <div className="h-px bg-white/10 my-2 mx-1" />
 
-              <div className="mb-3">
-                <SectionLabel collapsed={effectiveCollapsed}>System</SectionLabel>
-                <ul className="space-y-0.5">
-                  <NavLink href="/settings" label="Settings" icon={Settings} onClose={onClose} collapsed={effectiveCollapsed} />
-                </ul>
-              </div>
-            </>
+              {/* 2. Operations Group */}
+              <ul className="space-y-0.5">
+                {navOperationsAdmin.map((item) => (
+                  <NavLink key={item.href} {...item} onClose={onClose} collapsed={effectiveCollapsed} />
+                ))}
+              </ul>
+
+              {/* Divider */}
+              <div className="h-px bg-white/10 my-2 mx-1" />
+
+              {/* 3. Collapsible Business Category */}
+              <CollapsibleCategory
+                label="Business"
+                icon={Briefcase}
+                collapsed={effectiveCollapsed}
+                isOpen={businessOpen}
+                onToggle={() => setBusinessOpen((prev) => !prev)}
+              >
+                {navBusinessAdmin.map((item) => (
+                  <NavLink key={item.href} {...item} onClose={onClose} collapsed={effectiveCollapsed} />
+                ))}
+              </CollapsibleCategory>
+
+              {/* 4. Collapsible Team Category */}
+              <CollapsibleCategory
+                label="Team"
+                icon={Users}
+                collapsed={effectiveCollapsed}
+                isOpen={teamOpen}
+                onToggle={() => setTeamOpen((prev) => !prev)}
+              >
+                {navTeamAdmin.map((item) => (
+                  <NavLink key={item.href} {...item} onClose={onClose} collapsed={effectiveCollapsed} />
+                ))}
+              </CollapsibleCategory>
+
+              {/* Divider */}
+              <div className="h-px bg-white/10 my-2 mx-1" />
+
+              {/* 5. System Section */}
+              <ul className="space-y-0.5">
+                <NavLink href="/settings" label="Settings" icon={Settings} onClose={onClose} collapsed={effectiveCollapsed} />
+              </ul>
+            </div>
           )}
         </nav>
 
         {/* Profile footer */}
-        <div className="border-t border-border p-2.5 shrink-0">
+        <div className="border-t border-white/10 p-2.5 shrink-0">
           <div className={cn(
-            "flex items-center rounded-lg bg-surface-2 border border-border hover:border-border-strong transition-all duration-300 group",
+            "flex items-center rounded-lg bg-surface-2/60 border border-white/5 hover:border-white/10 transition-all duration-300 group",
             effectiveCollapsed ? "flex-col justify-center gap-2.5 p-2" : "gap-2.5 px-2.5 py-2"
           )}>
-            {/* Avatar with role-tint */}
+            {/* Avatar */}
             <div
-              className="flex h-7 w-7 items-center justify-center rounded-md border border-border-strong text-[11px] font-semibold text-fg shrink-0 bg-surface-3"
+              className="flex h-8 w-8 items-center justify-center rounded-md border border-white/10 text-[11px] font-bold text-white shrink-0 bg-surface-3"
+              style={{ boxShadow: `0 0 10px ${cfg.logoGlow}` }}
             >
               {initials}
             </div>
@@ -532,10 +628,10 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
             {/* Name & role */}
             {!effectiveCollapsed && (
               <div className="min-w-0 flex-1 transition-all duration-300">
-                <div className="truncate text-[12px] font-medium text-fg leading-tight">
-                  {user?.firstName} {user?.lastName}
+                <div className="truncate text-[13px] font-semibold text-fg leading-tight">
+                  {user?.firstName ? `${user.firstName} ${user.lastName ?? ""}` : "Karthik Sai"}
                 </div>
-                <div className="truncate text-[10px] mt-0.5" style={{ color: cfg.accentColor }}>{roleLabel}</div>
+                <div className="truncate text-[10px] mt-0.5 text-fg-subtle">{roleLabel}</div>
               </div>
             )}
 
