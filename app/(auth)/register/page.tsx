@@ -63,6 +63,7 @@ export default function RegisterPage() {
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSent, setResendSent] = useState(false);
+  const [googleBaseUrl, setGoogleBaseUrl] = useState('');
 
   const {
     register,
