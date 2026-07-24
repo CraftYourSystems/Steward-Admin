@@ -11,18 +11,18 @@ export default function NeedlePage() {
   useEffect(() => {
     if (isLoading) return;
 
-    // During active service, land on Live Health
-    // All other phases land on Briefing
+    // During active service, land on Operations
+    // All other phases land on Today
     if (phase === "active-service") {
-      router.replace("/needle/live-health");
+      router.replace("/needle/operations");
     } else {
-      router.replace("/needle/briefing");
+      router.replace("/needle/today");
     }
   }, [phase, isLoading, router]);
 
   return (
     <div className="p-6 text-center text-fg-muted animate-pulse">
-      Preparing your briefing...
+      Loading your intelligence...
     </div>
   );
 }

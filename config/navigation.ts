@@ -121,7 +121,7 @@ export const navigationConfig: NavGroup[] = [
     label: "",
     items: [
       {
-        label: "Needle AI",
+        label: "Needle",
         href: "/needle",
         icon: Sparkles,
         isSparkle: true,
