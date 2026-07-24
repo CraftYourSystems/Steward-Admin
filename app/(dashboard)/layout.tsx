@@ -13,6 +13,7 @@ import { hasPermission, Permissions } from "@/lib/permissions/permissions";
 import { getRedirectPath } from "@/constants/auth";
 import { usePlatformStore } from "@/stores/platform.store";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+import { Logo } from "@/components/ui/Logo";
 
 const ALLOWED_ROLES = ["ADMIN", "SUPER_ADMIN", "KITCHEN_STAFF", "WAITER"];
 // All paths where the kitchen socket should be active
@@ -116,8 +117,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!isReady || !isAuthenticated || !user) {
     return (
       <div className="flex h-screen items-center justify-center bg-bg">
-        <div className="flex flex-col items-center gap-2.5">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-fg-subtle border-t-fg" />
+        <div className="flex flex-col items-center gap-3">
+          <Logo imgClassName="h-8" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-fg-subtle border-t-fg mt-1" />
           <p className="text-[11px] font-medium text-fg-subtle tracking-wide uppercase">Loading</p>
           {isSlowConnection && (
             <p className="text-[11px] text-fg-subtle mt-1 max-w-[220px] text-center">

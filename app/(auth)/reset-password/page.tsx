@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import api from "@/lib/axios";
 import Link from "next/link";
+import { Logo } from "@/components/ui/Logo";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -72,6 +73,7 @@ function ResetPasswordForm() {
   return (
     <div className="flex flex-col space-y-6">
       <div className="flex flex-col space-y-2">
+        <Logo imgClassName="h-8 mb-2" />
         <h1 className="text-2xl font-semibold tracking-tight text-fg">Set new password</h1>
         <p className="text-[13px] text-fg-muted">
           Please enter your new password below.

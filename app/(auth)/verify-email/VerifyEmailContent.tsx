@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Loader2, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/axios';
+import { Logo } from '@/components/ui/Logo';
 
 export default function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -40,6 +41,7 @@ export default function VerifyEmailContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg text-fg px-4">
       <div className="w-full max-w-[420px] rounded-2xl border border-border bg-surface p-8 shadow-sm space-y-6 text-center">
+        <Logo imgClassName="h-8 mx-auto" />
         {status === 'verifying' && (
           <div className="flex flex-col items-center gap-4 py-4">
             <Loader2 className="h-10 w-10 animate-spin text-accent" />

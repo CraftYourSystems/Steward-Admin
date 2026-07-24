@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/axios";
 import { useAuthStore } from "@/stores/auth.store";
 import { usePlatformStore, type PlatformRestaurant } from "@/stores/platform.store";
+import { Logo } from "@/components/ui/Logo";
 import {
   Shield, Store, Users, ShoppingCart, IndianRupee,
   Search, ArrowRight, LogOut, ChevronLeft, ChevronRight,
@@ -117,9 +118,8 @@ export default function PlatformPage() {
       <header className="border-b border-[#27272a] bg-[#18181b]/60 backdrop-blur-md sticky top-0 z-10">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/15 border border-violet-500/20">
-              <Shield className="h-5 w-5 text-violet-400" />
-            </div>
+            <Logo imgClassName="h-7" />
+            <div className="h-4 w-px bg-white/10 mx-1" />
             <div>
               <h1 className="text-lg font-semibold text-fg">Platform Overview</h1>
               <p className="text-[12px] text-[#a1a1aa]">

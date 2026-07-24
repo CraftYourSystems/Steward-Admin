@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useSettingsStore } from "@/stores/settings.store";
 import { hasPermission, Permissions } from "@/lib/permissions/permissions";
+import { Logo } from "@/components/ui/Logo";
 
 // ─── Nav definitions ──────────────────────────────────────────────────────────
 
@@ -48,17 +49,14 @@ const navWaiter = [
 // ─── Role visual configs ──────────────────────────────────────────────────────
 
 const ROLE_CONFIGS: Record<string, {
-  logoGlow: string;
-  logoBg: string;
-  logoText?: string;
   statusDot: string;
   statusText: string;
   accentColor: string;
 }> = {
-  ADMIN:         { logoGlow: "rgba(255,255,255,0.35)", logoBg: "bg-white",      logoText: "text-black", statusDot: "bg-white",    statusText: "Admin Mode",     accentColor: "#ffffff" },
-  SUPER_ADMIN:   { logoGlow: "rgba(255,255,255,0.35)", logoBg: "bg-white",      logoText: "text-black", statusDot: "bg-white",    statusText: "Super Admin",    accentColor: "#ffffff" },
-  KITCHEN_STAFF: { logoGlow: "rgba(217,184,114,0.35)", logoBg: "bg-[#D9B872]",  logoText: "text-black", statusDot: "bg-[#D9B872]", statusText: "Kitchen Active", accentColor: "#D9B872" },
-  WAITER:        { logoGlow: "rgba(59,130,246,0.35)",  logoBg: "bg-info",       logoText: "text-white", statusDot: "bg-info",      statusText: "On Floor",       accentColor: "hsl(217,91%,60%)" },
+  ADMIN:         { statusDot: "bg-white",    statusText: "Admin Mode",     accentColor: "#ffffff" },
+  SUPER_ADMIN:   { statusDot: "bg-white",    statusText: "Super Admin",    accentColor: "#ffffff" },
+  KITCHEN_STAFF: { statusDot: "bg-[#D9B872]", statusText: "Kitchen Active", accentColor: "#D9B872" },
+  WAITER:        { statusDot: "bg-info",      statusText: "On Floor",       accentColor: "hsl(217,91%,60%)" },
 };
 
 // ─── NavLink ──────────────────────────────────────────────────────────────────
@@ -228,16 +226,9 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
         {/* Brand */}
         <div className={cn("flex h-14 items-center justify-between border-b border-border shrink-0 transition-all duration-300", collapsed ? "px-3" : "px-4")}>
           <div className={cn("flex min-w-0 items-center transition-all duration-300", collapsed ? "gap-0" : "gap-2.5")}>
-            {/* Logo mark — role-tinted */}
-            <div
-              className={cn("flex h-7 w-7 items-center justify-center rounded-md shrink-0", cfg.logoBg)}
-              style={{ boxShadow: `0 0 12px ${cfg.logoGlow}` }}
-            >
-              <span className={cn("text-[11px] font-bold", cfg.logoText ?? "text-white")}>S</span>
-            </div>
-            <div className={cn("min-w-0 overflow-hidden leading-none transition-all duration-300", collapsed ? "w-0 opacity-0" : "w-[140px] opacity-100")}>
-              <div className="text-[13px] font-semibold text-fg">Steward</div>
-              <div className="flex items-center gap-1 mt-0.5">
+            <Logo collapsed={collapsed} imgClassName="h-7" />
+            {!collapsed && (
+              <div className="flex items-center gap-1.5 ml-1 transition-all duration-300">
                 <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse shrink-0", cfg.statusDot)} />
                 <span
                   className="text-[9px] font-semibold uppercase tracking-wider truncate"
@@ -246,7 +237,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
                   {cfg.statusText}
                 </span>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useRequireAuth } from "@/hooks/useAuth";
 import { getRedirectPath } from "@/constants/auth";
+import { Logo } from "@/components/ui/Logo";
 
 export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -19,8 +20,9 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   if (!isReady || !isAuthenticated || !user || user.role !== "SUPER_ADMIN") {
     return (
       <div className="flex h-screen items-center justify-center bg-bg">
-        <div className="flex flex-col items-center gap-2.5">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-fg-subtle border-t-fg" />
+        <div className="flex flex-col items-center gap-3">
+          <Logo imgClassName="h-8" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-fg-subtle border-t-fg mt-1" />
           <p className="text-[11px] font-medium text-fg-subtle tracking-wide uppercase">Loading</p>
           {isSlowConnection && (
             <p className="text-[11px] text-fg-subtle mt-1 max-w-[220px] text-center">

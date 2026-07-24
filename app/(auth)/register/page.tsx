@@ -1,6 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getOAuthErrorMessage } from '@/lib/auth/oauthError';
@@ -18,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { ApiSuccess, User } from '@/types';
 import { API_URL } from '@/lib/config/env';
+import { Logo } from '@/components/ui/Logo';
 
 const registerSchema = z.object({
   restaurantName: z.string().min(2, 'Restaurant name must be at least 2 characters').max(255),
@@ -60,6 +64,7 @@ export default function RegisterPage() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleBaseUrl, setGoogleBaseUrl] = useState<string>('');
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSent, setResendSent] = useState(false);
@@ -203,12 +208,7 @@ export default function RegisterPage() {
     <div className="grid min-h-screen lg:grid-cols-2 bg-bg text-fg">
       <div className="flex flex-col px-6 py-8 lg:px-16 lg:py-12">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 grid place-items-center rounded-md bg-accent">
-              <span className="text-[11px] font-bold text-white">S</span>
-            </div>
-            <div className="text-[13px] font-semibold tracking-tight">Steward</div>
-          </div>
+          <Logo imgClassName="h-8" />
           <Link href="/login" className="flex items-center gap-1 text-[12px] text-fg-muted hover:text-fg transition-colors">
             <ChevronLeft className="h-3 w-3" />
             Back to sign in

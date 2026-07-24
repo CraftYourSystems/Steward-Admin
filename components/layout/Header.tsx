@@ -16,6 +16,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import type { Order, ApiSuccess } from "@/types";
 import { hasPermission, Permissions } from "@/lib/permissions/permissions";
+import { Logo } from "@/components/ui/Logo";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -527,6 +528,9 @@ export function Header({ onMenuClick }: HeaderProps) {
           >
             <Menu className="h-4 w-4" />
           </button>
+          <div className="lg:hidden flex items-center ml-1">
+            <Logo imgClassName="h-6" />
+          </div>
         </div>
 
         <div className="flex justify-center flex-1">

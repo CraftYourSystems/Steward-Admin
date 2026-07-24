@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import api from "@/lib/axios";
+import { Logo } from "@/components/ui/Logo";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -31,6 +32,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="flex flex-col space-y-6">
       <div className="flex flex-col space-y-2">
+        <Logo imgClassName="h-8 mb-2" />
         <h1 className="text-2xl font-semibold tracking-tight text-fg">Reset password</h1>
         <p className="text-[13px] text-fg-muted">
           Enter your email address and we&apos;ll send you a link to reset your password.

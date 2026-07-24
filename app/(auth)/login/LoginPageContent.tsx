@@ -16,6 +16,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { setCsrfToken } from '@/lib/auth/csrf';
 import type { ApiSuccess, LoginResponse } from '@/types';
 import { getOAuthErrorMessage } from '@/lib/auth/oauthError';
+import { Logo } from '@/components/ui/Logo';
 
 type AuthTab = 'ADMIN' | 'STAFF';
 const AUTH_TABS: Record<AuthTab, AuthTab> = { ADMIN: 'ADMIN', STAFF: 'STAFF' };
@@ -379,10 +380,7 @@ export default function LoginPageContent() {
     <div className="grid min-h-screen lg:grid-cols-2 bg-bg text-fg">
       <div className="flex flex-col px-6 py-8 lg:px-16 lg:py-12">
         <div className="flex items-center gap-2.5">
-          <div className="h-7 w-7 grid place-items-center rounded-md bg-accent shadow-[0_0_12px_rgba(139,92,246,0.35)]">
-            <span className="text-[11px] font-bold text-white">S</span>
-          </div>
-          <div className="text-[14px] font-semibold tracking-tight">Steward</div>
+          <Logo imgClassName="h-8" />
         </div>
 
         <div className="flex-1 flex items-center justify-center">

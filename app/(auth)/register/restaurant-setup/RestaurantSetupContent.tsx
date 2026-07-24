@@ -15,6 +15,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { setCsrfToken } from '@/lib/auth/csrf';
 import api from '@/lib/axios';
 import type { ApiSuccess } from '@/types';
+import { Logo } from '@/components/ui/Logo';
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
@@ -208,12 +209,7 @@ export default function RestaurantSetupContent() {
       <div className="flex flex-col px-6 py-8 lg:px-16 lg:py-12">
         {/* Brand */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 grid place-items-center rounded-md bg-accent">
-              <span className="text-[11px] font-bold text-white">S</span>
-            </div>
-            <div className="text-[13px] font-semibold tracking-tight">Steward</div>
-          </div>
+          <Logo imgClassName="h-8" />
           <Link
             href="/register"
             className="flex items-center gap-1 text-[12px] text-fg-muted hover:text-fg transition-colors"
