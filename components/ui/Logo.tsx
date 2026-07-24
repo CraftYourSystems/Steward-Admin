@@ -2,7 +2,7 @@
 
 import React from "react";
 import stewardLogo from "@/assets/logos/Steward_Logo.png";
-import stewardSymbol from "@/assets/logos/Steward_Symbol.png";
+import stewardNeedle from "@/assets/logos/Steward_Needle.png";
 import { cn } from "@/lib/utils";
 
 export interface LogoProps {
@@ -48,7 +48,7 @@ export function Logo({
 }: LogoProps) {
   const isIconOnly = variant === "icon" || collapsed;
   const fullLogoSrc = typeof stewardLogo === "string" ? stewardLogo : stewardLogo.src ?? "/assets/steward-logo.png";
-  const symbolSrc = typeof stewardSymbol === "string" ? stewardSymbol : stewardSymbol.src ?? "/symbol-white.png";
+  const needleSrc = typeof stewardNeedle === "string" ? stewardNeedle : stewardNeedle.src ?? "/symbol-white.png";
 
   if (isIconOnly) {
     return (
@@ -60,7 +60,7 @@ export function Logo({
         title="Steward"
       >
         <img
-          src={symbolSrc}
+          src={needleSrc}
           alt={decorative ? "" : alt}
           aria-hidden={decorative ? "true" : undefined}
           className={cn("h-full w-full object-contain shrink-0 select-none", imgClassName)}
