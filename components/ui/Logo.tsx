@@ -2,6 +2,7 @@
 
 import React from "react";
 import stewardLogo from "@/assets/logos/Steward_Logo.png";
+import stewardSymbol from "@/assets/logos/Steward_Symbol.png";
 import { cn } from "@/lib/utils";
 
 export interface LogoProps {
@@ -46,23 +47,23 @@ export function Logo({
   decorative = false,
 }: LogoProps) {
   const isIconOnly = variant === "icon" || collapsed;
-  const logoSrc = typeof stewardLogo === "string" ? stewardLogo : stewardLogo.src ?? "/assets/steward-logo.png";
+  const fullLogoSrc = typeof stewardLogo === "string" ? stewardLogo : stewardLogo.src ?? "/assets/steward-logo.png";
+  const symbolSrc = typeof stewardSymbol === "string" ? stewardSymbol : stewardSymbol.src ?? "/symbol-white.png";
 
   if (isIconOnly) {
     return (
       <div
         className={cn(
-          "relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-2/80 border border-white/10 p-0.5 shadow-sm transition-all duration-300",
+          "relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-2/80 border border-white/10 p-1 shadow-sm transition-all duration-300",
           className
         )}
         title="Steward"
       >
         <img
-          src={logoSrc}
+          src={symbolSrc}
           alt={decorative ? "" : alt}
           aria-hidden={decorative ? "true" : undefined}
-          className={cn("h-full w-auto max-w-none object-cover shrink-0 select-none", imgClassName)}
-          style={{ objectPosition: "2% 50%" }}
+          className={cn("h-full w-full object-contain shrink-0 select-none", imgClassName)}
           decoding="async"
         />
       </div>
@@ -72,7 +73,7 @@ export function Logo({
   return (
     <div className={cn("flex items-center shrink-0 select-none", className)}>
       <img
-        src={logoSrc}
+        src={fullLogoSrc}
         alt={decorative ? "" : alt}
         aria-hidden={decorative ? "true" : undefined}
         className={cn("h-7 w-auto object-contain shrink-0 transition-all duration-300", imgClassName)}

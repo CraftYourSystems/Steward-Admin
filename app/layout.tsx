@@ -5,8 +5,15 @@ import { Providers } from "@/providers/providers";
 console.log("[DIAGNOSTIC] app/layout.tsx module loaded");
 
 export const metadata: Metadata = {
-  title: "SpiceAdmin — Restaurant Dashboard",
-  description: "Admin dashboard for restaurant management",
+  title: "Steward — Restaurant Operating System",
+  description: "Modern admin dashboard for restaurant operating system and management",
+  icons: {
+    icon: [
+      { url: "/symbol-white.png", type: "image/png" },
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
