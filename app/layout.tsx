@@ -9,10 +9,13 @@ export const metadata: Metadata = {
   description: "Modern admin dashboard for restaurant operating system and management",
   icons: {
     icon: [
-      { url: "/symbol-white.png", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
       { url: "/favicon.png", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
     ],
     apple: "/apple-touch-icon.png",
+    shortcut: "/favicon.ico",
   },
 };
 
