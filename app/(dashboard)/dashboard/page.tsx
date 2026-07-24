@@ -1,29 +1,32 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, Suspense, lazy, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { subDays, startOfDay, endOfDay } from "date-fns";
+import { subDays, startOfDay, endOfDay, format } from "date-fns";
 import {
   IndianRupee, ShoppingBag, CheckCircle2, XCircle, Clock,
-  ArrowRight, X, RefreshCw, Zap,
+  ArrowRight, RefreshCw, Zap,
 } from "lucide-react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { HealthSummary } from "@/components/analytics/HealthSummary";
-import { RevenueRing } from "@/components/analytics/RevenueRing";
-import { KitchenThroughput } from "@/components/analytics/KitchenThroughput";
-import { OrderVelocityHeatmap } from "@/components/analytics/OrderVelocityHeatmap";
-import { RecentOrdersTable } from "@/components/analytics/RecentOrdersTable";
+import { DashboardKpiCard } from "@/components/analytics/DashboardKpiCard";
+import { DashboardRecentOrdersTable } from "@/components/analytics/DashboardRecentOrdersTable";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  useAnalyticsSummary,
-  usePeakHour,
+  useAnalyticsSummary, useRevenueData, useTopItems,
 } from "@/hooks/useAnalytics";
 import { useAuthStore } from "@/stores/auth.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import api from "@/lib/axios";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+
+// Lazy-load charts
+const DashboardRevenueChart = lazy(() =>
+  import("@/components/analytics/DashboardRevenueChart").then((m) => ({ default: m.DashboardRevenueChart }))
+);
+const DashboardTopItemsChart = lazy(() =>
+  import("@/components/analytics/DashboardTopItemsChart").then((m) => ({ default: m.DashboardTopItemsChart }))
+);
 
 type QuickRange = "today" | "yesterday" | "7d" | "30d";
 const ISO = (d: Date) => d.toISOString();
@@ -59,7 +62,6 @@ function getGreeting(): string {
   return "Good evening";
 }
 
-// Persist onboarding dismissal in localStorage so it survives page reloads.
 const ONBOARDING_KEY = "steward-onboarding-dismissed";
 
 function readDismissed(): boolean {
@@ -72,34 +74,27 @@ function writeDismissed() {
   try { localStorage.setItem(ONBOARDING_KEY, "true"); } catch { /* quota */ }
 }
 
+const ChartSkeleton = () => <Skeleton className="h-56 w-full rounded-xl bg-surface-2" />;
+
 export default function DashboardPage() {
   const user       = useAuthStore((s) => s.user);
   const restaurant = useAuthStore((s) => s.restaurant);
   const { wsConnected } = useSettingsStore();
   const queryClient = useQueryClient();
 
-  // ORDER_CREATED toast notification is handled by useSocket({ enabled: isAdmin && isDashboard })
-  // called in the dashboard layout — no duplicate listener needed here (FIX 7.5).
-
-  // ── Onboarding: persisted dismissal ───────────────────────────────────────
-  // Initialise synchronously from localStorage so there's no flash.
   const [onboardingDismissed, setOnboardingDismissed] = useState(readDismissed);
-
   const dismissOnboarding = useCallback(() => {
     writeDismissed();
     setOnboardingDismissed(true);
   }, []);
 
-  // ── Date range ─────────────────────────────────────────────────────────────
-  // Default to "today" so the live dashboard is the first thing admins see.
-  const [activeRange, setActiveRange] = useState<QuickRange>("today");
+  const [activeRange, setActiveRange] = useState<QuickRange>("30d");
   const params  = useMemo(() => getRange(activeRange), [activeRange]);
 
-  // Pass activeRange to hooks so they can use a shorter staleTime + auto-poll.
   const summary  = useAnalyticsSummary(params, activeRange);
-  const peakHourQuery = usePeakHour(params, activeRange);
+  const revenue  = useRevenueData(params, activeRange);
+  const topItems = useTopItems(params, activeRange);
 
-  // ── Menu items (for onboarding check) ─────────────────────────────────────
   const menuQuery = useQuery({
     queryKey: ["admin-menu-items"],
     queryFn: async () => {
@@ -109,14 +104,6 @@ export default function DashboardPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  /**
-   * All-time orders check — range-independent.
-   *
-   * Bug fixed: previously `orderCount` came from the date-range analytics
-   * summary, so switching to "today" with zero orders (but past orders
-   * existing) would re-show the onboarding banner incorrectly.
-   * Now we do a single, separate query that isn't tied to the active range.
-   */
   const allTimeOrdersQuery = useQuery({
     queryKey: ["all-time-orders-check"],
     queryFn: async () => {
@@ -124,7 +111,6 @@ export default function DashboardPage() {
       return (res.data?.data?.length ?? 0) > 0;
     },
     staleTime: 60_000,
-    // Skip fetching if the user has already dismissed the banner.
     enabled: !onboardingDismissed,
   });
 
@@ -134,7 +120,6 @@ export default function DashboardPage() {
   const menuItemCount  = (menuQuery.data as any)?.length ?? 0;
   const hasAnyOrders   = allTimeOrdersQuery.data ?? false;
 
-  // Live active order count (for header badge)
   const { data: liveActiveCount = 0 } = useQuery<number>({
     queryKey: ["dashboard-live-active-count"],
     queryFn: async () => {
@@ -150,30 +135,27 @@ export default function DashboardPage() {
   const stepsCompletedCount = (menuItemCount > 0 ? 1 : 0) + (!!restaurant?.slug ? 1 : 0) + (hasAnyOrders ? 1 : 0);
   const isOnboardingComplete = stepsCompletedCount === 3;
   const [onboardingMinimized, setOnboardingMinimized] = useState(false);
-
-  /**
-   * Show onboarding banner when not already dismissed and not still loading.
-   */
   const showOnboarding = !onboardingDismissed && !loading;
 
-  // ── Refresh handler ────────────────────────────────────────────────────────
   const [isRefreshing, setIsRefreshing] = useState(false);
   const handleManualRefresh = useCallback(async () => {
     setIsRefreshing(true);
     await queryClient.invalidateQueries({ queryKey: ["analytics-summary"] });
-    await queryClient.invalidateQueries({ queryKey: ["recent-orders-table"] });
+    await queryClient.invalidateQueries({ queryKey: ["analytics-revenue"] });
+    await queryClient.invalidateQueries({ queryKey: ["analytics-top-items"] });
+    await queryClient.invalidateQueries({ queryKey: ["dashboard-recent-orders-table"] });
     setIsRefreshing(false);
   }, [queryClient]);
 
   function RangeToggle() {
     return (
-      <div className="inline-flex items-center rounded-full border border-border bg-surface p-0.5">
+      <div className="inline-flex items-center rounded-lg border border-border bg-surface p-0.5">
         {QUICK_RANGES.map((r) => (
           <button
             key={r.value}
             onClick={() => setActiveRange(r.value)}
             className={cn(
-              "h-7 px-3.5 rounded-full text-[11px] font-semibold uppercase tracking-wider transition-all duration-150",
+              "h-7 px-3 rounded-md text-[11px] font-semibold uppercase tracking-wider transition-all duration-150 cursor-pointer",
               activeRange === r.value
                 ? "bg-surface-3 text-fg border border-border-strong shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
                 : "text-fg-muted hover:text-fg"
@@ -187,15 +169,14 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="px-3 py-6 sm:px-5 sm:py-6 lg:px-6 lg:py-8 space-y-8 max-w-[1400px] mx-auto">
-
-      {/* ── 1. Header ─────────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-border">
-        <div className="min-w-0">
-          <div className="label-xs mb-1">{restaurant?.name ?? "Restaurant"}</div>
+    <div className="px-5 py-5 lg:px-6 lg:py-6 space-y-5 max-w-[1400px] mx-auto">
+      {/* Header */}
+      <div className="flex flex-wrap items-end justify-between gap-4 pb-1 border-b border-border">
+        <div>
+          <div className="label-xs mb-1.5 uppercase tracking-wider">{restaurant?.name ?? "Restaurant"}</div>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg sm:text-xl font-semibold tracking-tight text-fg truncate">
-              {getGreeting()}, {user?.firstName ?? "there"}.
+            <h2 className="text-xl font-semibold tracking-tight text-fg">
+              {getGreeting()}, {user?.firstName ?? "Admin"}.
             </h2>
             {liveActiveCount > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-[10px] font-bold text-warning animate-pulse shrink-0">
@@ -204,42 +185,36 @@ export default function DashboardPage() {
               </span>
             )}
           </div>
+          <p className="text-[12px] text-fg-subtle mt-1 num">
+            {format(new Date(params.from), "dd MMM")} — {format(new Date(params.to), "dd MMM yyyy")}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Manual refresh button */}
+        <div className="flex items-center gap-2.5">
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing || summary.isFetching}
             title="Refresh analytics"
-            className="hidden sm:flex items-center justify-center h-8 w-8 rounded-full border border-border bg-surface text-fg-muted hover:text-fg hover:border-border-strong transition-colors disabled:opacity-40"
+            className="flex items-center justify-center h-7 w-7 rounded-lg border border-border bg-surface text-fg-muted hover:text-fg hover:border-border-strong transition-colors disabled:opacity-40"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", (isRefreshing || summary.isFetching) && "animate-spin")} />
           </button>
+          <div className={cn(
+            "hidden sm:flex items-center gap-1.5 h-7 px-2.5 rounded-md border text-[11px] font-medium",
+            wsConnected
+              ? "border-success/30 bg-success/10 text-success"
+              : "border-border bg-surface text-fg-subtle"
+          )}>
+            <span className={cn(
+              "h-1.5 w-1.5 rounded-full",
+              wsConnected ? "bg-success live-dot" : "bg-fg-subtle"
+            )} />
+            {wsConnected ? "Live" : "Offline"}
+          </div>
           <RangeToggle />
         </div>
       </div>
 
-      {/* ── Live Status Strip ── */}
-      {liveActiveCount > 0 && (
-        <div className="flex items-center gap-2 card-premium px-4 py-2.5 text-[12px] text-fg-muted">
-          <span className="relative flex h-2 w-2 shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
-          </span>
-          <span>
-            <span className="font-semibold text-fg">{liveActiveCount}</span>
-            {" "}active {liveActiveCount === 1 ? "order" : "orders"} in kitchen right now
-          </span>
-          <Link
-            href="/orders"
-            className="ml-auto text-[11px] text-accent hover:underline underline-offset-2"
-          >
-            View →
-          </Link>
-        </div>
-      )}
-
-      {/* ── 2. Onboarding Checklist ───────────────────────────────────────────── */}
+      {/* Onboarding Checklist */}
       {showOnboarding && (
         <div className="relative rounded-xl border border-accent/20 bg-accent/5 p-4 sm:p-5">
           {isOnboardingComplete || onboardingMinimized ? (
@@ -355,43 +330,33 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── 3. Live Pulse Section ───────────────────────────────────────────── */}
-      <div className="space-y-4">
-        <motion.p 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
-          transition={{ delay: 0.2 }}
-          className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle"
-        >
-          Live Pulse
-        </motion.p>
-        <HealthSummary data={summary.data} loading={loading} activeRange={activeRange} />
+      {/* KPI Cards */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <DashboardKpiCard title="REVENUE" value={d ? formatCurrency(d.totalRevenue) : "—"} icon={IndianRupee} loading={loading} accent="accent" description={activeRange === "today" ? "today so far" : undefined} />
+        <DashboardKpiCard title="ORDERS" value={d ? String(d.totalOrders) : "—"} icon={ShoppingBag} loading={loading} accent="info" />
+        <DashboardKpiCard title="COMPLETED" value={d ? String(d.completedOrders) : "—"} icon={CheckCircle2} loading={loading} accent="success" description={d && d.totalOrders > 0 ? `${((d.completedOrders / d.totalOrders) * 100).toFixed(0)}% completion` : undefined} />
+        <DashboardKpiCard title="CANCEL RATE" value={cancelRate ? `${cancelRate}%` : "—"} icon={XCircle} loading={loading} accent="danger" />
+        <DashboardKpiCard title="AVG PREP TIME" value={d ? `${d.avgPrepTimeMins.toFixed(0)}m` : "—"} icon={Clock} loading={loading} accent="warning" />
       </div>
 
-      {/* ── 4. KPI Cards Section ────────────────────────────────────────────── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <RevenueRing current={Number(d?.totalRevenue || 0)} loading={loading} activeRange={activeRange} />
-        <KitchenThroughput avgPrepTimeMins={d?.avgPrepTimeMins || 0} loading={loading} />
-        <OrderVelocityHeatmap totalOrders={d?.totalOrders || 0} loading={loading} heatmap={peakHourQuery.data?.heatmap} activeRange={activeRange} />
+      {/* Charts */}
+      <div className="grid gap-3 lg:grid-cols-2">
+        <Suspense fallback={<ChartSkeleton />}>
+          <DashboardRevenueChart data={revenue.data} loading={revenue.isLoading} />
+        </Suspense>
+        <Suspense fallback={<ChartSkeleton />}>
+          <DashboardTopItemsChart data={topItems.data} loading={topItems.isLoading} />
+        </Suspense>
       </div>
 
-      {/* ── 5. Recent Activity Section ───────────────────────────────────────── */}
-      <div className="space-y-4">
-        <motion.p 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
-          transition={{ delay: 0.3 }}
-          className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-subtle"
-        >
-          Recent Activity
-        </motion.p>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
-        >
-          <RecentOrdersTable params={params} activeRange={activeRange} />
-        </motion.div>
+      {/* Order List */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-[15px] font-semibold text-fg">Order List</h3>
+          <RangeToggle />
+        </div>
+
+        <DashboardRecentOrdersTable params={params} activeRange={activeRange} />
       </div>
     </div>
   );
