@@ -134,7 +134,7 @@ export const navigationConfig: NavGroup[] = [
     items: [
       {
         label: "Organization",
-        href: "/business", 
+        href: "/organization", 
         icon: Briefcase,
         roles: ["ADMIN", "SUPER_ADMIN"],
       },
