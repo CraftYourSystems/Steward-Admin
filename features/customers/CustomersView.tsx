@@ -47,6 +47,7 @@ import { CohortRetentionGrid } from "@/components/customers/CohortRetentionGrid"
 import { AverageSpendChart } from "@/components/customers/AverageSpendChart";
 import { RFMSegmentationChart } from "@/components/customers/RFMSegmentationChart";
 import { CustomerJourneyFunnel } from "@/components/customers/CustomerJourneyFunnel";
+import { CustomerLeaderboards } from "@/components/customers/CustomerLeaderboards";
 
 import {
   useNewVsReturning,
@@ -237,6 +238,7 @@ export function CustomersView() {
             { value: "directory", label: "Guest Directory" },
             { value: "analytics", label: "Retention Analytics" },
             { value: "insights", label: "Customer Insights" },
+            { value: "leaderboards", label: "Leaderboards" },
           ].map((tab) => (
             <TabsTrigger
               key={tab.value}
@@ -423,6 +425,11 @@ export function CustomersView() {
             <CustomerJourneyFunnel data={journey.data} loading={journey.isLoading} />
           </div>
         </TabsContent>
+
+        {/* Tab 4: Leaderboards */}
+        <TabsContent value="leaderboards" className="space-y-4 sm:space-y-5 mt-4">
+          <CustomerLeaderboards customers={customers} isLoading={rfm.isLoading} />
+        </TabsContent>
       </Tabs>
 
       {/* ── Guest Profile Drawer Sheet ── */}
@@ -512,7 +519,7 @@ export function CustomersView() {
                   />
                   <Button
                     onClick={() => handleSaveNote(selectedGuest.id, noteEditVal)}
-                    className="w-full bg-accent hover:bg-accent/90 text-white font-bold"
+                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold"
                   >
                     Save Preferences
                   </Button>

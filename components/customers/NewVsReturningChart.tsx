@@ -31,7 +31,7 @@ const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: Cu
   const returningCount = payload.find(p => p.name === 'returningCustomers')?.value || 0;
   
   return (
-    <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 shadow-elevated">
+    <div className="rounded-lg border border-white/10 bg-[#121214] px-3 py-2 shadow-elevated">
       <p className="mb-2 text-[10px] uppercase tracking-wider font-semibold text-fg-subtle">{label}</p>
       <div className="space-y-1">
         <div className="flex items-center justify-between gap-4">

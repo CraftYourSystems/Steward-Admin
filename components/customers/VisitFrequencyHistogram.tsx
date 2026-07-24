@@ -26,7 +26,7 @@ interface CustomTooltipProps {
 const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 shadow-elevated">
+    <div className="rounded-lg border border-white/10 bg-[#121214] px-3 py-2 shadow-elevated">
       <p className="mb-1 text-[10px] uppercase tracking-wider font-semibold text-fg-subtle">{label} {label === '10+' ? 'Visits/mo' : 'Visits/mo'}</p>
       <p className="text-sm font-semibold text-fg num">{payload[0].value} customers</p>
     </div>

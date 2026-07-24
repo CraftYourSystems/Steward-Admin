@@ -58,7 +58,7 @@ export default function VerifyEmailContent() {
             <Link href="/login" className="w-full pt-2">
               <button
                 type="button"
-                className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-accent text-white px-4 py-2.5 text-[13px] font-semibold hover:bg-accent/90 transition-all cursor-pointer"
+                className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-accent text-accent-foreground px-4 py-2.5 text-[13px] font-semibold hover:bg-accent/90 transition-all cursor-pointer"
               >
                 Go to Sign In <ArrowRight className="h-4 w-4" />
               </button>

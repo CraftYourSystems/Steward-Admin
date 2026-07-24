@@ -7,20 +7,18 @@ import { resolveNeedleExperience } from "@/lib/needle";
 import { cn } from "@/lib/utils";
 
 const needleSections = [
-  { id: "briefing",    label: "Briefing",    href: "/needle/briefing",    released: true },
-  { id: "live-health", label: "Live Health", href: "/needle/live-health",  released: true },
-  { id: "bearings",    label: "Bearings",    href: "/needle/bearings",     released: false },
-  { id: "drift",       label: "Drift",       href: "/needle/drift",        released: false },
-  { id: "forecasts",   label: "Forecasts",   href: "/needle/forecasts",    released: false },
-  { id: "ask",         label: "Ask Needle",  href: "/needle/ask",          released: false },
+  { id: "today",       label: "Today",       href: "/needle/today",       released: true },
+  { id: "operations",  label: "Operations",  href: "/needle/operations",  released: true },
+  { id: "insights",    label: "Insights",    href: "/needle/insights",    released: true },
+  { id: "ask",         label: "Ask",         href: "/needle/ask",         released: true },
 ];
 
 // Map phase → which tab should show the experience badge
 const PHASE_BADGE_TAB: Record<string, string> = {
-  opening: "briefing",
-  "active-service": "live-health",
-  quiet: "briefing",
-  closing: "briefing",
+  opening: "today",
+  "active-service": "operations",
+  quiet: "today",
+  closing: "today",
 };
 
 export default function NeedleLayout({ children }: { children: React.ReactNode }) {
@@ -28,7 +26,7 @@ export default function NeedleLayout({ children }: { children: React.ReactNode }
   const { phase } = useOperationalPhase();
   const experience = resolveNeedleExperience(phase);
   const releasedSections = needleSections.filter((section) => section.released);
-  const badgeTabId = PHASE_BADGE_TAB[phase] || "briefing";
+  const badgeTabId = PHASE_BADGE_TAB[phase] || "today";
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -62,7 +60,7 @@ export default function NeedleLayout({ children }: { children: React.ReactNode }
       </div>
 
       {/* ── Content Area ────────────────────────────────────────────────── */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 bg-black/50">
         {children}
       </div>
     </div>

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://steward.com/sitemap.xml
+
+# Disallow admin/internal paths
+Disallow: /settings
+Disallow: /*.mjs$

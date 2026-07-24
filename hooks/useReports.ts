@@ -42,7 +42,7 @@ export function useReportsSummary(periodPreset = '30d', enabled = true) {
   return useQuery({
     queryKey: ["reports-summary", periodPreset],
     queryFn: async () => {
-      const { data } = await api.get(`/reports/summary?period=${periodPreset}`);
+      const { data } = await api.get(`/admin/reports/summary?period=${periodPreset}`);
       return data.data as ReportSummaryData;
     },
     enabled,
@@ -54,7 +54,7 @@ export function useCombinedReport(from: string, to: string, enabled = true) {
   return useQuery({
     queryKey: ["reports-combined", from, to],
     queryFn: async () => {
-      const { data } = await api.get(`/reports/generate?from=${from}&to=${to}`);
+      const { data } = await api.get(`/admin/reports/generate?from=${from}&to=${to}`);
       return data.data as ReportSummaryData;
     },
     enabled,

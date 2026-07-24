@@ -70,7 +70,7 @@ export function useRFMLoyalty() {
   return useQuery({
     queryKey: ["customer-rfm-loyalty"],
     queryFn: async () => {
-      const { data } = await api.get("/admin/customer-analytics/rfm-loyalty");
+      const { data } = await api.get("/customers/analytics/rfm-loyalty");
       return data.data as {
         segments: { champions: number; atRisk: number; new: number; lost: number };
         customers: {
@@ -94,7 +94,7 @@ export function useCustomerJourney() {
   return useQuery({
     queryKey: ["customer-journey"],
     queryFn: async () => {
-      const { data } = await api.get("/admin/customer-analytics/journey");
+      const { data } = await api.get("/customers/analytics/journey");
       return data.data as {
         stage: string;
         count: number;

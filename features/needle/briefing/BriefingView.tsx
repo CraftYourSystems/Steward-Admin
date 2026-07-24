@@ -561,7 +561,7 @@ export function BriefingView() {
             onClick={handleRunEngine}
             disabled={isGenerating || isLoading}
             size="sm"
-            className="gap-1.5 bg-accent hover:bg-accent/90 text-white font-semibold cursor-pointer h-9"
+            className="gap-1.5 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold cursor-pointer h-9"
           >
             <RefreshCw className={cn("w-3.5 h-3.5", isGenerating && "animate-spin")} />
             Refresh Insights

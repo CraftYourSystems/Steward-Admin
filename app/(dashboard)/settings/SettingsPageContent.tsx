@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { Save, RotateCcw, Loader2, Check, Clock } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Save, RotateCcw, Loader2, Check, Clock, ChevronDown,
+  Settings2, Building2, Zap, ShoppingCart, CreditCard, Users, Palette, Shield, Puzzle, QrCode, Timer, Star, Lock,
+} from "lucide-react";
+import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useRestaurantSettings, useUpdateRestaurantSettings } from "@/hooks/useRestaurantSettings";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,10 +27,26 @@ import { TabIntegrations } from "@/components/settings/TabIntegrations";
 import type { RestaurantSettings } from "@/types/settings";
 import { cn } from "@/lib/utils";
 
+// Tabs that have their own save mechanism or don't use the global draft
+const SELF_MANAGING_TABS = ["branches", "qrcodes", "integrations"];
+// Tabs that are coming soon (disabled)
+const COMING_SOON_TABS = ["branding", "theme"];
+
+interface TabGroup {
+  name: string;
+  items: {
+    value: string;
+    label: string;
+    icon: React.ReactNode;
+    adminOnly?: boolean;
+    comingSoon?: boolean;
+  }[];
+}
+
 export default function SettingsPageContent() {
   const searchParams = useSearchParams();
   const { user, currentBranch } = useAuth();
-  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
   const { data: serverSettings, isLoading, isError } = useRestaurantSettings();
   const { mutate: save, isPending: isSaving } = useUpdateRestaurantSettings();
 
@@ -35,44 +54,69 @@ export default function SettingsPageContent() {
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const closeTimeoutRef = useRef<any>(null);
 
-  // Accurate dirty state check comparing draft with serverSettings
+  const handleMouseEnter = (groupName: string) => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setOpenGroup(groupName);
+  };
+
+  const handleMouseLeave = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpenGroup(null);
+    }, 100);
+  };
+
   const isDirty = useMemo(() => {
     if (!draft || !serverSettings) return false;
     return JSON.stringify(draft) !== JSON.stringify(serverSettings);
   }, [draft, serverSettings]);
 
-  // Sync active tab from query parameters
   useEffect(() => {
     const t = searchParams.get("tab");
-    if (t) {
-      setActiveTab(t);
-    }
+    if (t) setActiveTab(t);
   }, [searchParams]);
 
-  // Warn the user before navigating away with unsaved changes
   useEffect(() => {
     if (!isDirty) return;
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
-      e.returnValue = '';
+      e.returnValue = "";
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty]);
 
   useEffect(() => {
-    if (activeTab === "security" && !isAdmin) {
-      setActiveTab("general");
-    }
+    if (activeTab === "security" && !isAdmin) setActiveTab("general");
   }, [activeTab, isAdmin]);
 
-  // Sync draft from server data when clean
   useEffect(() => {
-    if (serverSettings && !draft) {
-      setDraft(serverSettings);
-    }
+    if (serverSettings && !draft) setDraft(serverSettings);
   }, [serverSettings, draft]);
+
+  // Click outside and unmount cleanup
+  useEffect(() => {
+    const closeDropdown = () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = null;
+      }
+      setOpenGroup(null);
+    };
+    window.addEventListener("click", closeDropdown);
+    return () => {
+      window.removeEventListener("click", closeDropdown);
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, []);
 
   const patch = (partial: Partial<RestaurantSettings>) => {
     setDraft((prev) => (prev ? { ...prev, ...partial } : prev));
@@ -91,71 +135,62 @@ export default function SettingsPageContent() {
   };
 
   const handleReset = () => {
-    if (serverSettings) {
-      setDraft(serverSettings);
-    }
+    if (serverSettings) setDraft(serverSettings);
   };
 
-  // Conceptual grouping for tab navigation
-  const tabGroups = useMemo(() => {
-    return [
-      {
-        name: "Restaurant",
-        items: [
-          { value: "general", label: "General" },
-          { value: "branding", label: "Branding" },
-          ...(isAdmin ? [{ value: "branches", label: "Branches" }] : []),
-        ],
-      },
-      {
-        name: "Operations",
-        items: [
-          { value: "operations", label: "Operations" },
-          { value: "ordering", label: "Ordering & Tables" },
-          ...(isAdmin ? [{ value: "qrcodes", label: "QR Codes" }] : []),
-          { value: "shifts", label: "Shifts" },
-        ],
-      },
-      {
-        name: "Business",
-        items: [
-          { value: "payments", label: "Payments" },
-          { value: "customer", label: "Customer Experience" },
-        ],
-      },
-      {
-        name: "People",
-        items: [
-          { value: "team", label: "Team & Notifications" },
-        ],
-      },
-      {
-        name: "System",
-        items: [
-          { value: "theme", label: "Theme & Display" },
-          ...(isAdmin ? [{ value: "security", label: "Security" }] : []),
-        ],
-      },
-      {
-        name: "Ecosystem",
-        items: [
-          { value: "integrations", label: "Integrations" },
-        ],
-      },
-    ];
-  }, [isAdmin]);
+  const tabGroups: TabGroup[] = useMemo(() => [
+    {
+      name: "Restaurant",
+      items: [
+        { value: "general", label: "General", icon: <Settings2 className="h-3.5 w-3.5" /> },
+        { value: "branding", label: "Branding", icon: <Palette className="h-3.5 w-3.5" />, comingSoon: true },
+        ...(isAdmin ? [{ value: "branches", label: "Branches", icon: <Building2 className="h-3.5 w-3.5" />, adminOnly: true }] : []),
+      ],
+    },
+    {
+      name: "Operations",
+      items: [
+        { value: "operations", label: "Operations", icon: <Zap className="h-3.5 w-3.5" /> },
+        { value: "ordering", label: "Ordering & Tables", icon: <ShoppingCart className="h-3.5 w-3.5" /> },
+        ...(isAdmin ? [{ value: "qrcodes", label: "QR Codes", icon: <QrCode className="h-3.5 w-3.5" />, adminOnly: true }] : []),
+        { value: "shifts", label: "Shifts", icon: <Timer className="h-3.5 w-3.5" /> },
+      ],
+    },
+    {
+      name: "Businesses",
+      items: [
+        { value: "payments", label: "Payments", icon: <CreditCard className="h-3.5 w-3.5" /> },
+        { value: "customer", label: "Customer Experience", icon: <Star className="h-3.5 w-3.5" /> },
+      ],
+    },
+    {
+      name: "People & System",
+      items: [
+        { value: "team", label: "Team & Notifications", icon: <Users className="h-3.5 w-3.5" /> },
+        { value: "theme", label: "Theme & Display", icon: <Palette className="h-3.5 w-3.5" />, comingSoon: true },
+        ...(isAdmin ? [{ value: "security", label: "Security", icon: <Shield className="h-3.5 w-3.5" />, adminOnly: true }] : []),
+      ],
+    },
+    {
+      name: "Ecosystem",
+      items: [
+        { value: "integrations", label: "Integrations", icon: <Puzzle className="h-3.5 w-3.5" /> },
+      ],
+    },
+  ], [isAdmin]);
 
-  const allTabs = useMemo(() => {
-    return tabGroups.flatMap(g => g.items);
-  }, [tabGroups]);
+  const isSelfManaging = SELF_MANAGING_TABS.includes(activeTab);
+  const isComingSoon = COMING_SOON_TABS.includes(activeTab);
+
+  const activeGroup = useMemo(() => {
+    return tabGroups.find(g => g.items.some(t => t.value === activeTab));
+  }, [activeTab, tabGroups]);
 
   if (isError) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-3">
         <p className="text-[13px] text-fg-subtle">Failed to load settings.</p>
-        <Button size="sm" variant="secondary" onClick={() => window.location.reload()}>
-          Retry
-        </Button>
+        <Button size="sm" variant="secondary" onClick={() => window.location.reload()}>Retry</Button>
       </div>
     );
   }
@@ -172,33 +207,49 @@ export default function SettingsPageContent() {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-3">
         <p className="text-[13px] text-fg-subtle">Settings unavailable.</p>
-        <Button size="sm" variant="secondary" onClick={() => window.location.reload()}>
-          Retry
-        </Button>
+        <Button size="sm" variant="secondary" onClick={() => window.location.reload()}>Retry</Button>
       </div>
     );
   }
 
   return (
     <div className="flex h-[calc(100vh-48px)] flex-col bg-transparent">
-      {/* ── Sticky Header with Actions & Tabs ── */}
-      <div className="sticky top-0 z-10 w-full border-b border-white/5 bg-bg/80 backdrop-blur-md">
-        <div className="px-5 py-4 lg:px-8 lg:py-5 max-w-[950px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="label-xs mb-1">Steward Restaurant Operating System</div>
-            <h2 className="text-xl font-semibold tracking-tight text-fg">Restaurant Configuration</h2>
-            <p className="text-[12px] text-fg-subtle mt-0.5">
-              Review and manage how your restaurant is configured across Steward.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {lastSavedAt && !isDirty && (
-              <span className="text-[11px] text-fg-subtle flex items-center gap-1 mr-2 bg-surface-2/80 px-2.5 py-1 rounded-md border border-border">
-                <Clock className="h-3 w-3 text-fg-subtle" />
-                Last saved {lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+
+      {/* ── Sticky Top Bar with Breadcrumb, Actions, & Dropdown Nav ── */}
+      <div className="sticky top-0 z-10 w-full border-b border-white/5 bg-bg/85 backdrop-blur-md">
+        {/* Breadcrumbs & Actions Row */}
+        <div className="px-5 py-3 lg:px-8 max-w-[1100px] mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[11px] font-semibold text-fg-subtle uppercase tracking-widest shrink-0">Settings</span>
+            {activeGroup && (
+              <>
+                <span className="text-[11px] text-fg-muted shrink-0">/</span>
+                <span className="text-[12px] font-semibold text-fg-muted shrink-0">{activeGroup.name}</span>
+              </>
+            )}
+            {activeTab && (
+              <>
+                <span className="text-[11px] text-fg-muted shrink-0">/</span>
+                <span className="text-[13px] font-semibold text-fg truncate capitalize">
+                  {tabGroups.flatMap(g => g.items).find(t => t.value === activeTab)?.label ?? activeTab}
+                </span>
+              </>
+            )}
+            {isComingSoon && (
+              <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-accent/10 border border-accent/20 px-2 py-0.5 text-[10px] font-semibold text-accent uppercase tracking-wide shrink-0">
+                Coming Soon
               </span>
             )}
-            {isDirty && activeTab !== "branches" && activeTab !== "qrcodes" && (
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {lastSavedAt && !isDirty && (
+              <span className="text-[11px] text-fg-subtle flex items-center gap-1 mr-1 bg-surface-2/80 px-2.5 py-1 rounded-md border border-border">
+                <Clock className="h-3 w-3" />
+                Saved {lastSavedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
+            {isDirty && !isSelfManaging && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -210,12 +261,12 @@ export default function SettingsPageContent() {
                 Reset
               </Button>
             )}
-            {activeTab !== "branches" && activeTab !== "qrcodes" && activeTab !== "integrations" && (
+            {!isSelfManaging && !isComingSoon && (
               <Button
                 size="sm"
                 onClick={handleSave}
                 disabled={!isDirty || isSaving}
-                className={isSaved ? 'bg-success hover:bg-success/90 text-white' : ''}
+                className={isSaved ? "bg-success hover:bg-success/90 text-white" : ""}
               >
                 {isSaving ? (
                   <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Saving…</>
@@ -229,51 +280,132 @@ export default function SettingsPageContent() {
           </div>
         </div>
 
-        {/* ── Horizontal Tabs with Subtle Conceptual Group Dividers ── */}
-        <div className="px-5 lg:px-8 max-w-[950px] mx-auto pb-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="flex flex-wrap h-auto gap-1 bg-white/5 p-1 rounded-xl border border-white/5 justify-start items-center">
-              {tabGroups.map((group, groupIdx) => (
-                <React.Fragment key={group.name}>
-                  {groupIdx > 0 && (
-                    <div className="h-4 w-px bg-white/10 mx-1 shrink-0" title={`${group.name} Section`} />
-                  )}
-                  {group.items.map((tab) => (
-                    <TabsTrigger
-                      key={tab.value}
-                      value={tab.value}
-                      className={cn(
-                        "text-[12px] font-medium rounded-lg px-3 py-1.5 transition-colors shadow-none data-[state=active]:shadow-none",
-                        activeTab === tab.value 
-                          ? "bg-white/10 text-fg" 
-                          : "text-fg-muted hover:bg-white/5 hover:text-fg"
-                      )}
+        {/* ── Dropdown Top Navigation ── */}
+        <div className="border-t border-white/5">
+          <nav className="relative flex flex-wrap items-center gap-1.5 py-2 px-5 lg:px-8 max-w-[1100px] mx-auto">
+            {tabGroups.map((group) => {
+              const isCurrent = activeGroup?.name === group.name;
+              const isOpen = openGroup === group.name;
+              return (
+                <div
+                  key={group.name}
+                  className="relative"
+                  onMouseEnter={() => handleMouseEnter(group.name)}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (closeTimeoutRef.current) {
+                        clearTimeout(closeTimeoutRef.current);
+                        closeTimeoutRef.current = null;
+                      }
+                      setOpenGroup(isOpen ? null : group.name);
+                    }}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all",
+                      isCurrent
+                        ? "bg-white/10 text-fg"
+                        : "text-fg-muted hover:bg-white/5 hover:text-fg"
+                    )}
+                  >
+                    <span>{group.name}</span>
+                    <ChevronDown className={cn("h-3 w-3 text-fg-subtle transition-transform duration-200", isOpen && "rotate-180")} />
+                  </button>
+
+                  {/* Dropdown Menu Popup */}
+                  {isOpen && (
+                    <div
+                      className="absolute top-full left-0 mt-1 w-56 rounded-xl border border-white/10 bg-surface/95 backdrop-blur-lg p-1.5 shadow-2xl z-50 flex flex-col gap-0.5 animate-in fade-in slide-in-from-top-1 duration-150"
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseEnter={() => handleMouseEnter(group.name)}
+                      onMouseLeave={handleMouseLeave}
                     >
-                      {tab.label}
-                    </TabsTrigger>
-                  ))}
-                </React.Fragment>
-              ))}
-            </TabsList>
-          </Tabs>
+                      {group.items.map((tab) => {
+                        const isActive = activeTab === tab.value;
+                        const disabled = tab.comingSoon;
+                        return (
+                          <button
+                            key={tab.value}
+                            disabled={disabled}
+                            onClick={() => {
+                              if (!disabled) {
+                                setActiveTab(tab.value);
+                                setOpenGroup(null);
+                              }
+                            }}
+                            className={cn(
+                              "flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[13px] font-medium transition-all text-left group",
+                              isActive
+                                ? "bg-white/10 text-fg"
+                                : disabled
+                                ? "text-fg-muted/40 cursor-not-allowed"
+                                : "text-fg-muted hover:bg-white/5 hover:text-fg"
+                            )}
+                          >
+                            <span className={cn(
+                              "shrink-0 transition-colors",
+                              isActive ? "text-accent" : disabled ? "text-fg-muted/30" : "text-fg-subtle group-hover:text-fg-muted"
+                            )}>
+                              {disabled ? <Lock className="h-3.5 w-3.5" /> : tab.icon}
+                            </span>
+                            <span className="flex-1 truncate">{tab.label}</span>
+                            {tab.comingSoon && (
+                              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide text-fg-muted/50 bg-white/5 border border-white/5 px-1.5 py-0.5 rounded-full">
+                                Soon
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
         </div>
       </div>
 
-      {/* ── Main Detail Content ── */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin relative p-5 lg:p-8 max-w-[950px] mx-auto w-full">
-        <div className="w-full">
-          {/* Configuration Overview Banner at the Top */}
-          <ConfigurationOverview
-            settings={draft}
-            branchName={currentBranch?.name}
-            activeQrCount={12}
-          />
+      {/* ── Main Layout: Content Area ── */}
+      <div className="flex-1 overflow-y-auto scrollbar-thin max-w-[1100px] mx-auto w-full">
+        <div className="p-5 lg:p-8">
 
-          {isDirty && (
+          {/* Configuration Overview — only on general tab */}
+          {activeTab === "general" && (
+            <ConfigurationOverview
+              settings={draft}
+              branchName={currentBranch?.name}
+              activeQrCount={12}
+            />
+          )}
+
+          {isDirty && !isSelfManaging && !isComingSoon && (
             <div className="mb-6 flex items-center gap-3 rounded-xl border border-warning/20 bg-warning/5 px-4 py-3">
               <span className="h-2 w-2 rounded-full bg-warning shrink-0 animate-pulse" />
               <span className="text-[13px] text-warning font-medium">
-                You have unsaved changes in your restaurant configuration. Save changes to update Steward.
+                You have unsaved changes. Save to apply them across Steward.
+              </span>
+            </div>
+          )}
+
+          {/* Coming Soon Placeholder */}
+          {isComingSoon && (
+            <div className="flex flex-col items-center justify-center py-24 gap-5 text-center">
+              <div className="h-16 w-16 rounded-2xl bg-surface-2 border border-border flex items-center justify-center">
+                <Lock className="h-7 w-7 text-fg-subtle" />
+              </div>
+              <div>
+                <h3 className="text-[16px] font-semibold text-fg mb-1">
+                  {tabGroups.flatMap(g => g.items).find(t => t.value === activeTab)?.label} — Coming Soon
+                </h3>
+                <p className="text-[13px] text-fg-subtle max-w-sm mx-auto">
+                  This feature is currently in development and will be available in a future update.
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 border border-accent/20 px-3 py-1.5 text-[11px] font-semibold text-accent">
+                <Zap className="h-3.5 w-3.5" />
+                Available in the next release
               </span>
             </div>
           )}
@@ -283,9 +415,6 @@ export default function SettingsPageContent() {
 
             <TabsContent value="general" className="mt-0 focus-visible:outline-none">
               <TabGeneral settings={draft} onChange={patch} />
-            </TabsContent>
-            <TabsContent value="theme" className="mt-0 focus-visible:outline-none">
-              <TabTheme settings={draft} onChange={patch} />
             </TabsContent>
             <TabsContent value="operations" className="mt-0 focus-visible:outline-none">
               <TabOperations settings={draft} onChange={patch} />
@@ -301,9 +430,6 @@ export default function SettingsPageContent() {
             </TabsContent>
             <TabsContent value="customer" className="mt-0 focus-visible:outline-none">
               <TabCustomerExperience settings={draft} onChange={patch} />
-            </TabsContent>
-            <TabsContent value="branding" className="mt-0 focus-visible:outline-none">
-              <TabBranding settings={draft} onChange={patch} />
             </TabsContent>
             <TabsContent value="shifts" className="mt-0 focus-visible:outline-none">
               <TabShifts />

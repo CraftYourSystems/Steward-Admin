@@ -33,7 +33,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { isReady, isAuthenticated, isSlowConnection, user } = useRequireAuth();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
   const isKitchenPath = KITCHEN_PATHS.some((p) => pathname.startsWith(p));
   const isAdmin       = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
