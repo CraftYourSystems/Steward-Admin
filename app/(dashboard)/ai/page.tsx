@@ -1,5 +1,8 @@
-import { ForecastsView } from "@/features/needle/forecasts";
+import { redirect } from "next/navigation";
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default function AIPredictivePage() {
-  return <ForecastsView />;
+  redirect("/needle/insights");
 }

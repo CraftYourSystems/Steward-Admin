@@ -1,1 +1,0 @@
-export { BriefingView } from "./BriefingView";
