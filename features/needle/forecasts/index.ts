@@ -1,1 +1,0 @@
-export { ForecastsView } from "./ForecastsView";

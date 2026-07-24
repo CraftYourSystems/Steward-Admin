@@ -1,5 +1,8 @@
-import { BearingsView } from "@/features/needle/bearings";
+import { redirect } from "next/navigation";
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default function AnalyticsPage() {
-  return <BearingsView />;
+  redirect("/reports");
 }

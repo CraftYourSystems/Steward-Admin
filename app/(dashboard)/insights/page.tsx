@@ -1,5 +1,8 @@
-import { BriefingView } from "@/features/needle/briefing";
+import { redirect } from "next/navigation";
 
-export default function InsightsPage() {
-  return <BriefingView />;
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
+export default function InsightsRoutePage() {
+  redirect("/needle/insights");
 }

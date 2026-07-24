@@ -1,1 +1,0 @@
-export { BearingsView } from "./BearingsView";

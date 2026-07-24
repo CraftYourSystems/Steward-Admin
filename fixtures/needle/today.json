@@ -1,0 +1,81 @@
+{
+  "healthScore": {
+    "total": 96,
+    "breakdown": {
+      "inventory": 25,
+      "kitchen": 20,
+      "payments": 20,
+      "internet": 10,
+      "staff": 13,
+      "equipment": 8
+    }
+  },
+  "summaryText": "Yes. 1 hardware alert, 2 low-cost prep tasks.",
+  "quietModeForecast": {
+    "expectedOrders": 184,
+    "peakWindow": "12:15 PM – 2:00 PM",
+    "weather": "Cloudy (Rain @ 6 PM)"
+  },
+  "signals": [
+    {
+      "id": "dec_1",
+      "tenantId": "demo_restaurant",
+      "type": "ALERT",
+      "observation": "Kitchen thermal printer #2 disconnected.",
+      "evidence": ["No heartbeat signal received from Station #2 (Grill) in the last 15 minutes."],
+      "impact": "Orders sent to Grill station will fail to print tickets.",
+      "confidence": 99,
+      "recommendation": "Check power & Ethernet cable on Grill printer or restart unit.",
+      "action": {
+        "type": "NAVIGATE",
+        "label": "Troubleshoot Printer",
+        "destinationUrl": "/settings?tab=hardware"
+      },
+      "sourceModule": "hardware_monitor",
+      "urgency": "CRITICAL",
+      "status": "ACTIVE",
+      "createdAt": "2026-07-24T08:00:00.000Z",
+      "expiresAt": "2026-07-25T08:00:00.000Z"
+    },
+    {
+      "id": "dec_2",
+      "tenantId": "demo_restaurant",
+      "type": "WARNING",
+      "observation": "Tomatoes inventory reaching daily threshold.",
+      "evidence": ["Current stock: 4.2 kg. Expected lunch usage: 8.5 kg."],
+      "impact": "Risk of 86-ing Pasta & Salsa items during lunch peak.",
+      "confidence": 92,
+      "recommendation": "Approve quick restock from secondary vendor or local market.",
+      "action": {
+        "type": "NAVIGATE",
+        "label": "Approve Restock",
+        "destinationUrl": "/inventory"
+      },
+      "sourceModule": "inventory_monitor",
+      "urgency": "HIGH",
+      "status": "ACTIVE",
+      "createdAt": "2026-07-24T08:00:00.000Z",
+      "expiresAt": "2026-07-25T08:00:00.000Z"
+    },
+    {
+      "id": "dec_3",
+      "tenantId": "demo_restaurant",
+      "type": "TASK",
+      "observation": "Dosa Batter prep recommendation for lunch rush.",
+      "evidence": ["Rain forecasted for 1:00 PM (+35% increase in hot breakfast/tiffin items)."],
+      "impact": "Avoid 15-minute kitchen bottleneck during 1:00 PM peak.",
+      "confidence": 89,
+      "recommendation": "Prepare 10 additional batches of batter before 11:30 AM.",
+      "action": {
+        "type": "NAVIGATE",
+        "label": "Open Prep Sheet",
+        "destinationUrl": "/inventory?tab=prep"
+      },
+      "sourceModule": "prep_planner",
+      "urgency": "MEDIUM",
+      "status": "ACTIVE",
+      "createdAt": "2026-07-24T08:00:00.000Z",
+      "expiresAt": "2026-07-25T08:00:00.000Z"
+    }
+  ]
+}

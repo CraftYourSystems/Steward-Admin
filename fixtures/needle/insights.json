@@ -1,0 +1,44 @@
+{
+  "signals": [
+    {
+      "id": "dec_ins_1",
+      "tenantId": "demo_restaurant",
+      "type": "INSIGHT",
+      "observation": "Butter Chicken sold out twice during peak hours this week.",
+      "evidence": ["Stockout logs show 14 unfulfilled orders between 8 PM - 9 PM on Friday & Saturday."],
+      "impact": "Estimated ₹4,200 lost revenue per weekend shift.",
+      "confidence": 94,
+      "recommendation": "Consider increasing base batch prep by +20% for weekend evening shifts.",
+      "action": {
+        "type": "NAVIGATE",
+        "label": "Adjust Menu Prep Margins",
+        "destinationUrl": "/menu"
+      },
+      "sourceModule": "sales_analytics",
+      "urgency": "LOW",
+      "status": "ACTIVE",
+      "createdAt": "2026-07-24T08:00:00.000Z",
+      "expiresAt": "2026-07-31T08:00:00.000Z"
+    },
+    {
+      "id": "dec_ins_2",
+      "tenantId": "demo_restaurant",
+      "type": "INSIGHT",
+      "observation": "Labor cost trending 4.5% higher on Tuesdays.",
+      "evidence": ["Tuesday afternoon sales average ₹12,000, while 5 staff members are clocked in."],
+      "impact": "Unnecessary payroll overhead during low-volume hours.",
+      "confidence": 87,
+      "recommendation": "Review Tuesday afternoon shift scheduling to optimize labor ratio.",
+      "action": {
+        "type": "NAVIGATE",
+        "label": "Review Roster",
+        "destinationUrl": "/staff"
+      },
+      "sourceModule": "labor_analytics",
+      "urgency": "LOW",
+      "status": "ACTIVE",
+      "createdAt": "2026-07-24T08:00:00.000Z",
+      "expiresAt": "2026-07-31T08:00:00.000Z"
+    }
+  ]
+}
