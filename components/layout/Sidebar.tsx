@@ -9,10 +9,8 @@ import {
   PanelLeftOpen,
   MapPin,
   Loader2,
-  GitBranch,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { usePlatformStore } from "@/stores/platform.store";
 import { cn } from "@/lib/utils";
 import { navigationConfig } from "@/config/navigation";
 import { SidebarGroup, SidebarProfile } from "./sidebar/SidebarCore";
@@ -93,6 +91,9 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
   const cfg = ROLE_CONFIGS[user?.role ?? "ADMIN"] ?? ROLE_CONFIGS.ADMIN;
   const effectiveCollapsed = collapsed && (!isHovered || isHoverSuppressed);
 
+  const mainNavGroups = navigationConfig.slice(0, 5);
+  const bottomNavGroups = navigationConfig.slice(5);
+
   return (
     <>
       {/* Mobile overlay */}
@@ -108,7 +109,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
       <div
         className={cn(
           "hidden lg:block shrink-0 transition-[width] duration-150 ease-out",
-          collapsed ? "w-[72px]" : "w-[260px]"
+          collapsed ? "w-[76px]" : "w-[260px]"
         )}
       />
 
@@ -120,7 +121,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
           "transition-[width,transform,box-shadow,background-color] duration-150 ease-out",
           "border-r",
           effectiveCollapsed 
-            ? "w-[72px] bg-[#090909] border-[rgba(255,255,255,0.06)]" 
+            ? "w-[76px] bg-[#090909] border-[rgba(255,255,255,0.06)]" 
             : "w-[260px] bg-[#090909] border-[rgba(255,255,255,0.06)]",
           collapsed && isHovered && !isHoverSuppressed 
             ? "shadow-[8px_0_40px_rgba(0,0,0,0.4)]" 
@@ -130,7 +131,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
       >
         {/* Brand Header */}
         <div className={cn(
-          "flex h-16 items-center shrink-0 transition-all duration-150",
+          "flex h-14 items-center shrink-0 transition-all duration-150 border-b border-[rgba(255,255,255,0.04)]",
           effectiveCollapsed ? "justify-center px-0" : "justify-between px-5"
         )}>
           <div className={cn("flex items-center transition-all duration-150", effectiveCollapsed ? "gap-0" : "gap-3 min-w-0")}>
@@ -143,7 +144,7 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
               <span className={cn("text-[13px] font-bold", cfg.logoText ?? "text-white")}>S</span>
             </div>
             
-            <div className={cn("min-w-0 overflow-hidden leading-none transition-all duration-150", effectiveCollapsed ? "w-0 opacity-0" : "w-[120px] opacity-100")}>
+            <div className={cn("min-w-0 overflow-hidden leading-none transition-all duration-150", effectiveCollapsed ? "w-0 opacity-0 hidden" : "w-[120px] opacity-100")}>
               <div className="text-[14px] font-semibold text-[rgba(255,255,255,0.92)] tracking-tight">Steward</div>
             </div>
           </div>
@@ -152,14 +153,14 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
             {onCollapsedChange && !effectiveCollapsed && (
               <button
                 onClick={handleToggleCollapse}
-                className="hidden lg:flex h-8 w-8 items-center justify-center rounded-lg text-[rgba(255,255,255,0.55)] hover:bg-[#151515] hover:text-white transition-all"
+                className="hidden lg:flex h-7 w-7 items-center justify-center rounded-lg text-[rgba(255,255,255,0.45)] hover:bg-[#151515] hover:text-white transition-all"
               >
-                {collapsed ? <PanelLeftOpen className="h-[15px] w-[15px]" /> : <PanelLeftClose className="h-[15px] w-[15px]" />}
+                {collapsed ? <PanelLeftOpen className="h-[14px] w-[14px]" /> : <PanelLeftClose className="h-[14px] w-[14px]" />}
               </button>
             )}
             <button
               onClick={onClose}
-              className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg text-[rgba(255,255,255,0.55)] hover:bg-[#151515] transition-all"
+              className="lg:hidden flex h-7 w-7 items-center justify-center rounded-lg text-[rgba(255,255,255,0.45)] hover:bg-[#151515] transition-all"
             >
               <X className="h-4 w-4" />
             </button>
@@ -167,98 +168,117 @@ export function Sidebar({ open, onClose, collapsed = false, onCollapsedChange }:
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-2 scrollbar-none space-y-1">
+        <nav className="flex-1 overflow-y-auto py-3 scrollbar-none flex flex-col justify-between">
 
-          {/* Branch Selector */}
-          {(() => {
-            if (effectiveCollapsed) return null;
-            const isBranchScoped = user?.role === "KITCHEN_STAFF" || user?.role === "WAITER";
-            const hasMultiple = accessibleBranches && accessibleBranches.length > 1;
-            if (!hasMultiple && !isBranchScoped) return null;
+          {/* Top Section */}
+          <div>
+            {/* Branch Selector */}
+            {(() => {
+              if (effectiveCollapsed) return null;
+              const isBranchScoped = user?.role === "KITCHEN_STAFF" || user?.role === "WAITER";
+              const hasMultiple = accessibleBranches && accessibleBranches.length > 1;
+              if (!hasMultiple && !isBranchScoped) return null;
 
-            return (
-              <div className="px-5 mb-4 mt-2">
-                {isBranchScoped || !hasMultiple ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#151515] text-[13px] font-medium text-[rgba(255,255,255,0.55)] border border-[rgba(255,255,255,0.06)]">
-                    <MapPin className="h-[14px] w-[14px] text-accent shrink-0" />
-                    <span className="truncate">{currentBranch?.name ?? "Main Branch"}</span>
-                  </div>
-                ) : (
-                  <div className="relative" ref={dropdownRef}>
-                    <button
-                      type="button"
-                      disabled={isSwitchingBranch}
-                      onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
-                      className="flex w-full items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#151515] hover:bg-[#1C1C1C] text-[13px] font-medium text-white border border-[rgba(255,255,255,0.06)] transition-all cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        {isSwitchingBranch ? (
-                          <Loader2 className="h-[14px] w-[14px] animate-spin text-accent shrink-0" />
-                        ) : (
-                          <MapPin className="h-[14px] w-[14px] text-accent shrink-0" />
-                        )}
-                        <span className="truncate">{currentBranch?.name ?? "Select Branch"}</span>
-                      </div>
-                    </button>
-
-                    {branchDropdownOpen && (
-                      <div className="absolute left-0 right-0 mt-2 z-50 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#090909] shadow-lg max-h-48 overflow-y-auto">
-                        <div className="p-1 space-y-0.5">
-                          {accessibleBranches.map((br) => {
-                            const isCurrent = br.id === currentBranch?.id;
-                            return (
-                              <button
-                                key={br.id}
-                                onClick={() => {
-                                  if (!isCurrent) switchBranch(br.id);
-                                  setBranchDropdownOpen(false);
-                                }}
-                                className={cn(
-                                  "w-full text-left px-3 py-2 rounded-lg text-[13px] font-medium transition-colors",
-                                  isCurrent ? "bg-[#1C1C1C] text-white" : "text-[rgba(255,255,255,0.55)] hover:text-white hover:bg-[#151515]"
-                                )}
-                              >
-                                {br.name}
-                              </button>
-                            );
-                          })}
+              return (
+                <div className="px-5 mb-3 mt-1">
+                  {isBranchScoped || !hasMultiple ? (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#151515] text-[12.5px] font-medium text-[rgba(255,255,255,0.55)] border border-[rgba(255,255,255,0.06)]">
+                      <MapPin className="h-[13px] w-[13px] text-accent shrink-0" />
+                      <span className="truncate">{currentBranch?.name ?? "Main Branch"}</span>
+                    </div>
+                  ) : (
+                    <div className="relative" ref={dropdownRef}>
+                      <button
+                        type="button"
+                        disabled={isSwitchingBranch}
+                        onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
+                        className="flex w-full items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-[#151515] hover:bg-[#1C1C1C] text-[12.5px] font-medium text-white border border-[rgba(255,255,255,0.06)] transition-all cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {isSwitchingBranch ? (
+                            <Loader2 className="h-[13px] w-[13px] animate-spin text-accent shrink-0" />
+                          ) : (
+                            <MapPin className="h-[13px] w-[13px] text-accent shrink-0" />
+                          )}
+                          <span className="truncate">{currentBranch?.name ?? "Select Branch"}</span>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      </button>
+
+                      {branchDropdownOpen && (
+                        <div className="absolute left-0 right-0 mt-2 z-50 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#090909] shadow-lg max-h-48 overflow-y-auto">
+                          <div className="p-1 space-y-0.5">
+                            {accessibleBranches.map((br) => {
+                              const isCurrent = br.id === currentBranch?.id;
+                              return (
+                                <button
+                                  key={br.id}
+                                  onClick={() => {
+                                    if (!isCurrent) switchBranch(br.id);
+                                    setBranchDropdownOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-full text-left px-3 py-1.5 rounded-lg text-[12.5px] font-medium transition-colors",
+                                    isCurrent ? "bg-[#1C1C1C] text-white" : "text-[rgba(255,255,255,0.55)] hover:text-white hover:bg-[#151515]"
+                                  )}
+                                >
+                                  {br.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Primary Navigation Groups */}
+            {mainNavGroups.map((group, idx) => (
+              <SidebarGroup
+                key={group.label || idx}
+                group={group}
+                collapsed={effectiveCollapsed}
+                accentColor={cfg.accentColor}
+                userRole={user?.role}
+              />
+            ))}
+          </div>
+
+          {/* Bottom Section */}
+          <div className="pt-2 border-t border-[rgba(255,255,255,0.04)]">
+            {bottomNavGroups.map((group, idx) => (
+              <SidebarGroup
+                key={group.label || idx}
+                group={group}
+                collapsed={effectiveCollapsed}
+                accentColor={cfg.accentColor}
+                userRole={user?.role}
+              />
+            ))}
+
+            {/* Sign Out Button */}
+            <div className="mt-1">
+              <button
+                onClick={logout}
+                title={effectiveCollapsed ? "Sign out" : undefined}
+                className={cn(
+                  "group relative flex items-center rounded-lg text-[13.5px] font-medium transition-all duration-150 ease-in-out hover:bg-[#151515] active:scale-[0.98]",
+                  effectiveCollapsed 
+                    ? "h-[40px] w-[40px] justify-center px-0 mx-auto" 
+                    : "h-[38px] gap-2.5 px-3 mx-3 w-[calc(100%-24px)] text-[rgba(255,255,255,0.45)] hover:text-red-400"
                 )}
-              </div>
-            );
-          })()}
-
-          {/* Core Navigation Groups */}
-          {navigationConfig.map((group, idx) => (
-            <SidebarGroup
-              key={group.label || idx}
-              group={group}
-              collapsed={effectiveCollapsed}
-              accentColor={cfg.accentColor}
-              userRole={user?.role}
-            />
-          ))}
-
-          {/* Sign Out Button (Not in config as it's an action) */}
-          <div className="mt-2 mb-2">
-            <button
-              onClick={logout}
-              className={cn(
-                "group relative flex items-center rounded-xl text-[14.5px] font-medium transition-all duration-150 ease-in-out hover:bg-[#151515] active:scale-[0.98] h-[44px]",
-                effectiveCollapsed ? "justify-center gap-0 px-0 w-11 mx-auto" : "gap-3 px-3 mx-3 w-[calc(100%-24px)] text-[rgba(255,255,255,0.55)] hover:text-red-400"
-              )}
-            >
-              <LogOut className="h-[18px] w-[18px] shrink-0 text-[rgba(255,255,255,0.55)] group-hover:text-red-400" />
-              <span className={cn(
-                "min-w-0 overflow-hidden whitespace-nowrap transition-all duration-150",
-                effectiveCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
-              )}>
-                Sign out
-              </span>
-            </button>
+              >
+                <LogOut className="h-[16px] w-[16px] shrink-0 text-[rgba(255,255,255,0.45)] group-hover:text-red-400" />
+                <span className={cn(
+                  "min-w-0 overflow-hidden whitespace-nowrap transition-all duration-150",
+                  effectiveCollapsed ? "w-0 opacity-0 hidden" : "w-auto opacity-100"
+                )}>
+                  Sign out
+                </span>
+              </button>
+            </div>
           </div>
 
         </nav>

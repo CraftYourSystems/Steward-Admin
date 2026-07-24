@@ -1,5 +1,13 @@
 import {
   LayoutDashboard,
+  ShoppingCart,
+  Kanban,
+  BanknoteIcon,
+  Menu as MenuIcon,
+  PackageOpen,
+  ToggleLeft,
+  ClipboardList,
+  Users,
   Sparkles,
   Briefcase,
   Settings,
@@ -13,7 +21,7 @@ export interface NavItem {
   label: string;
   href: string;
   roles: Role[];
-  icon?: LucideIcon;
+  icon: LucideIcon;
   isSparkle?: boolean;
 }
 
@@ -46,16 +54,19 @@ export const navigationConfig: NavGroup[] = [
       {
         label: "Orders",
         href: "/orders",
+        icon: ShoppingCart,
         roles: ["ADMIN", "SUPER_ADMIN", "WAITER"],
       },
       {
         label: "Kitchen",
         href: "/kitchen",
+        icon: Kanban,
         roles: ["ADMIN", "SUPER_ADMIN", "KITCHEN_STAFF", "WAITER"],
       },
       {
         label: "Counter",
         href: "/pay-at-counter",
+        icon: BanknoteIcon,
         roles: ["ADMIN", "SUPER_ADMIN", "WAITER"],
       },
     ],
@@ -66,16 +77,19 @@ export const navigationConfig: NavGroup[] = [
       {
         label: "Menu",
         href: "/menu",
+        icon: MenuIcon,
         roles: ["ADMIN", "SUPER_ADMIN"],
       },
       {
         label: "Inventory",
         href: "/inventory",
+        icon: PackageOpen,
         roles: ["ADMIN", "SUPER_ADMIN"],
       },
       {
         label: "Availability",
         href: "/kitchen/availability",
+        icon: ToggleLeft,
         roles: ["ADMIN", "SUPER_ADMIN", "KITCHEN_STAFF"],
       },
     ],
@@ -86,16 +100,19 @@ export const navigationConfig: NavGroup[] = [
       {
         label: "Analytics",
         href: "/reports",
+        icon: ClipboardList,
         roles: ["ADMIN", "SUPER_ADMIN"],
       },
       {
         label: "Customers",
         href: "/customers",
+        icon: Users,
         roles: ["ADMIN", "SUPER_ADMIN"],
       },
       {
         label: "Finance",
         href: "/finance",
+        icon: BanknoteIcon,
         roles: ["ADMIN", "SUPER_ADMIN"],
       },
     ],
@@ -119,16 +136,6 @@ export const navigationConfig: NavGroup[] = [
         label: "Organization",
         href: "/business", 
         icon: Briefcase,
-        roles: ["ADMIN", "SUPER_ADMIN"],
-      },
-      {
-        label: "Staff",
-        href: "/staff",
-        roles: ["ADMIN", "SUPER_ADMIN"],
-      },
-      {
-        label: "Logbook",
-        href: "/logbook",
         roles: ["ADMIN", "SUPER_ADMIN"],
       },
       {
