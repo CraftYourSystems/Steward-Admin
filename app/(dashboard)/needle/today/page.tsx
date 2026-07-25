@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
-import { DecisionCard, Decision } from "@/components/needle/DecisionCard";
-import { useNeedleSignals } from "@/hooks/useNeedleSignals";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import React from "react";
+import { DecisionCard } from "@/components/needle/DecisionCard";
+import { useMorningBriefing } from "@/hooks/useMorningBriefing";
+import { ShieldCheck, Loader2, AlertTriangle, AlertCircle } from "lucide-react";
+import { translateBriefingItemToDecision } from "@/utils/needle-translator";
+import { BriefingStatus } from "@/lib/needle-api";
 
 export default function NeedleTodayPage() {
-  const { data, isLoading } = useNeedleSignals("today");
-  const [quietMode, setQuietMode] = useState(false);
+  const { data, isLoading } = useMorningBriefing();
 
   if (isLoading) {
     return (
@@ -18,84 +19,95 @@ export default function NeedleTodayPage() {
     );
   }
 
-  const signals = quietMode ? [] : (data?.signals || []);
-  const healthScore = data?.healthScore?.total || 100;
-  const breakdown = data?.healthScore?.breakdown || {};
-  const quietModeForecast = data?.quietModeForecast;
+  const priorityItems = data?.priorityItems || [];
+  const overallStatus = data?.overallStatus || "OPTIMAL";
+  const sections = data?.sections || [];
+
+  const getStatusColor = (status: BriefingStatus) => {
+    switch (status) {
+      case "CRITICAL": return "text-[#FF453A] bg-[#FF453A]/10 border-[#FF453A]/30";
+      case "WARNING": return "text-[#FF9F0A] bg-[#FF9F0A]/10 border-[#FF9F0A]/30";
+      default: return "text-[#30D158] bg-[#30D158]/15 border-[#30D158]/30";
+    }
+  };
+
+  const getStatusIcon = (status: BriefingStatus) => {
+    switch (status) {
+      case "CRITICAL": return <AlertTriangle className="w-6 h-6" />;
+      case "WARNING": return <AlertCircle className="w-6 h-6" />;
+      default: return <ShieldCheck className="w-6 h-6" />;
+    }
+  };
+
+  const getStatusText = (status: BriefingStatus) => {
+    switch (status) {
+      case "CRITICAL": return "Critical Action Required";
+      case "WARNING": return "Needs Attention";
+      default: return "Ready to Open";
+    }
+  };
+
+  const statusColorClass = getStatusColor(overallStatus);
 
   return (
     <div className="p-6 h-full flex flex-col gap-6 max-w-7xl mx-auto">
       
-      {/* Dev / Mode Indicator */}
-      <div className="flex justify-between items-center border-b border-white/5 pb-2">
-        <span className="text-xs text-gray-500 font-mono">
-          DATA MODE: <span className="uppercase text-accent font-semibold">{data?.mode || "MOCK"}</span>
-        </span>
-        <button 
-          onClick={() => setQuietMode(!quietMode)}
-          className="text-xs text-accent hover:underline font-medium"
-        >
-          {quietMode ? "Simulate Active Operational Signals" : "Simulate 'No News is Good News' (Quiet Mode)"}
-        </button>
-      </div>
-
-      {/* QUIET MODE STATE (No News is Good News) */}
-      {quietMode || signals.length === 0 ? (
+      {/* Empty State / Good Morning */}
+      {priorityItems.length === 0 ? (
         <div className="border border-white/10 bg-[#0D0D0D] rounded-2xl p-8 flex flex-col items-center text-center my-6 shadow-xl">
-          <div className="w-16 h-16 rounded-full bg-[#30D158]/10 border border-[#30D158]/20 flex items-center justify-center text-[#30D158] mb-4">
-            <ShieldCheck className="w-8 h-8" />
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${statusColorClass.split(' ')[1]} ${statusColorClass.split(' ')[0]} border ${statusColorClass.split(' ')[2]}`}>
+            {getStatusIcon(overallStatus)}
           </div>
           <h2 className="text-2xl font-semibold text-white mb-2">Good Morning 👋</h2>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#30D158]/15 text-[#30D158] text-xs font-bold uppercase tracking-wider mb-4 border border-[#30D158]/30">
-            🟢 Ready to Open • {healthScore}% Operational Health
+          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4 border ${statusColorClass}`}>
+            {overallStatus === 'OPTIMAL' ? '🟢' : (overallStatus === 'WARNING' ? '🟡' : '🔴')} {getStatusText(overallStatus)}
           </div>
           <p className="text-gray-400 text-sm max-w-md mb-8">
-            Everything looks healthy. No critical issues or bottleneck signals detected. Needle will notify you if anything needs attention.
+            {overallStatus === 'OPTIMAL' 
+              ? "Everything looks healthy. No critical issues or bottleneck signals detected. Needle will notify you if anything needs attention."
+              : "There are some minor alerts, but no priority signals require immediate intervention right now."}
           </p>
 
-          {quietModeForecast && (
-            <div className="w-full max-w-2xl border-t border-white/10 pt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-              <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                <span className="text-xs text-gray-500 font-medium block mb-1">Forecasted Orders</span>
-                <span className="text-xl font-bold text-white">{quietModeForecast.expectedOrders} Orders</span>
+          <div className="w-full max-w-2xl border-t border-white/10 pt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+            {sections.slice(0, 3).map((section: any) => (
+              <div key={section.type} className="bg-white/5 rounded-xl p-4 border border-white/5">
+                <span className="text-xs text-gray-500 font-medium block mb-1">{section.title}</span>
+                <span className={`text-sm font-bold ${section.status === 'OPTIMAL' ? 'text-white' : 'text-[#FF9F0A]'}`}>
+                  {section.status === 'OPTIMAL' ? 'Healthy' : 'Check Required'}
+                </span>
               </div>
-              <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                <span className="text-xs text-gray-500 font-medium block mb-1">Peak Shift Window</span>
-                <span className="text-xl font-bold text-white">{quietModeForecast.peakWindow}</span>
-              </div>
-              <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                <span className="text-xs text-gray-500 font-medium block mb-1">Weather Forecast</span>
-                <span className="text-xl font-bold text-white">{quietModeForecast.weather}</span>
-              </div>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
       ) : (
         <>
           {/* Morning Readiness Summary Banner */}
           <div className="border border-white/10 bg-[#0D0D0D] rounded-xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="p-2.5 rounded-lg bg-[#30D158]/10 text-[#30D158] border border-[#30D158]/20">
-                <ShieldCheck className="w-6 h-6" />
+              <div className={`p-2.5 rounded-lg border ${statusColorClass}`}>
+                {getStatusIcon(overallStatus)}
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold text-white">Restaurant Operational Status</h2>
-                  <span className="bg-[#30D158]/15 text-[#30D158] text-[11px] font-bold px-2 py-0.5 rounded-full border border-[#30D158]/30">
-                    {healthScore}% Operational
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${statusColorClass}`}>
+                    {getStatusText(overallStatus)}
                   </span>
                 </div>
-                <p className="text-sm text-gray-400">Can I operate today? <span className="text-white font-medium">{data?.summaryText ? String(data.summaryText) : "Operational checks passed."}</span></p>
+                <p className="text-sm text-gray-400">Can I operate today? <span className="text-white font-medium">{priorityItems.length} priority signals detected.</span></p>
               </div>
             </div>
 
             {/* Health Deterministic Breakdown */}
-            <div className="flex items-center gap-4 text-xs text-gray-400 border-t md:border-t-0 border-white/10 pt-3 md:pt-0 w-full md:w-auto">
-              {Object.entries(breakdown).map(([key, val], idx) => (
-                <React.Fragment key={key}>
-                  {idx > 0 && <div className="h-3 w-px bg-white/10" />}
+            <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400 border-t md:border-t-0 border-white/10 pt-3 md:pt-0 w-full md:w-auto">
+              {sections.map((section: any, idx: number) => (
+                <React.Fragment key={section.type}>
+                  {idx > 0 && <div className="hidden md:block h-3 w-px bg-white/10" />}
                   <div>
-                    <span className="text-white capitalize font-semibold">{key}:</span> {String(val)}%
+                    <span className="text-white capitalize font-semibold">{section.title.split(' ')[0]}:</span>{" "}
+                    <span className={section.status === 'OPTIMAL' ? 'text-[#30D158]' : (section.status === 'WARNING' ? 'text-[#FF9F0A]' : 'text-[#FF453A]')}>
+                      {section.status}
+                    </span>
                   </div>
                 </React.Fragment>
               ))}
@@ -106,15 +118,15 @@ export default function NeedleTodayPage() {
             <div className="flex justify-between items-end">
               <div>
                 <h1 className="text-xl font-semibold tracking-tight text-white">Morning Readiness & Low-Friction Tasks</h1>
-                <p className="text-sm text-gray-400">Surface only actionable signals. (Capped at 3 max per section).</p>
+                <p className="text-sm text-gray-400">Actionable signals generated by Needle rule engine.</p>
               </div>
-              <span className="text-xs text-gray-500 font-mono">Showing {signals.slice(0, 3).length} Signals</span>
+              <span className="text-xs text-gray-500 font-mono">Showing {priorityItems.length} Signals</span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-min">
-            {signals.slice(0, 3).map((decision: Decision) => (
-              <DecisionCard key={decision.id} decision={decision} />
+            {priorityItems.map((item: any) => (
+              <DecisionCard key={item.id} decision={translateBriefingItemToDecision(item)} />
             ))}
           </div>
         </>
