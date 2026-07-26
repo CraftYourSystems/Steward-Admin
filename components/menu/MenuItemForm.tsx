@@ -330,6 +330,10 @@ export function MenuItemForm({ item, categories, onSuccess, onCancel }: MenuItem
         </div>
       </div>
 
+      {item && (
+        <MenuItemModifiersWrapper menuItemId={item.id} />
+      )}
+
       {/* Form Actions */}
       <div className="flex justify-end gap-2 pt-4 border-t border-white/5 mt-6">
         <Button type="button" variant="outline" onClick={onCancel} className="border-white/10 hover:bg-white/5 text-fg">
@@ -341,5 +345,160 @@ export function MenuItemForm({ item, categories, onSuccess, onCancel }: MenuItem
         </Button>
       </div>
     </form>
+  );
+}
+
+// ─── Inline wrapper for MenuItem modifier associations ───────────────────────
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { MenuItemModifierForm } from "./MenuItemModifierForm";
+import { MenuItemModifiersSection } from "./MenuItemModifiersSection";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { DropResult } from "@hello-pangea/dnd";
+import type { ModifierGroup, MenuItemModifierGroup } from "@/types";
+
+interface MenuItemModifiersWrapperProps {
+  menuItemId: string;
+}
+
+function MenuItemModifiersWrapper({ menuItemId }: MenuItemModifiersWrapperProps) {
+  const queryClient = useQueryClient();
+  const [attachSheetOpen, setAttachSheetOpen] = useState(false);
+
+  // Fetch all available groups to select from
+  const { data: allGroups = [] } = useQuery<ModifierGroup[]>({
+    queryKey: ["modifier-groups"],
+    queryFn: async () => {
+      const { data } = await api.get<ApiSuccess<ModifierGroup[]>>("/admin/menu-modifiers/groups");
+      return data.data;
+    },
+  });
+
+  // Fetch groups already attached to this menu item
+  const { data: itemData, isLoading } = useQuery<MenuItem>({
+    queryKey: ["menu-items", menuItemId],
+    queryFn: async () => {
+      const { data } = await api.get<ApiSuccess<MenuItem>>(`/menu/admin/items/${menuItemId}`);
+      return data.data;
+    },
+  });
+
+  // Safe fallback list mapping
+  const attachedGroups: MenuItemModifierGroup[] = (itemData as any)?.modifierGroups || [];
+
+  const attachMutation = useMutation({
+    mutationFn: async (values: any) => {
+      await api.post("/admin/menu-modifiers/assign", {
+        menuItemId,
+        ...values,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Modifier group attached");
+      queryClient.invalidateQueries({ queryKey: ["menu-items", menuItemId] });
+      setAttachSheetOpen(false);
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || "Failed to attach modifier group");
+    },
+  });
+
+  const detachMutation = useMutation({
+    mutationFn: async (groupId: string) => {
+      await api.post("/admin/menu-modifiers/unassign", {
+        menuItemId,
+        modifierGroupId: groupId,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Modifier group detached");
+      queryClient.invalidateQueries({ queryKey: ["menu-items", menuItemId] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || "Failed to detach group");
+    },
+  });
+
+  const reorderMutation = useMutation({
+    mutationFn: async ({ groupId, order }: { groupId: string; order: number }) => {
+      await api.post("/admin/menu-modifiers/assign", {
+        menuItemId,
+        modifierGroupId: groupId,
+        displayOrder: order,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["menu-items", menuItemId] });
+    },
+  });
+
+  const handleReorder = async (result: DropResult) => {
+    if (!result.destination) return;
+    const items: MenuItemModifierGroup[] = Array.from(attachedGroups);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    // Optimistically update sort order values
+    const updated = items.map((item: MenuItemModifierGroup, index: number) => ({
+      ...item,
+      displayOrder: index,
+    }));
+
+    queryClient.setQueryData(["menu-items", menuItemId], (prev: any) => {
+      if (!prev) return prev;
+      return { ...prev, modifierGroups: updated };
+    });
+
+    try {
+      for (let i = 0; i < updated.length; i++) {
+        await reorderMutation.mutateAsync({
+          groupId: updated[i].modifierGroupId,
+          order: i,
+        });
+      }
+      toast.success("Reordered modifier groups");
+    } catch {
+      toast.error("Failed to persist new order");
+      queryClient.invalidateQueries({ queryKey: ["menu-items", menuItemId] });
+    }
+  };
+
+  const unusedGroups = allGroups.filter(
+    (g: ModifierGroup) => !attachedGroups.some((link: MenuItemModifierGroup) => link.modifierGroupId === g.id)
+  );
+
+  if (isLoading) {
+    return <div className="h-20 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-accent" /></div>;
+  }
+
+  return (
+    <div className="space-y-4 border-t border-white/5 pt-4">
+      <MenuItemModifiersSection
+        attachedGroups={attachedGroups}
+        onReorder={handleReorder}
+        onDetach={(gid) => detachMutation.mutate(gid)}
+        onAddClick={() => setAttachSheetOpen(true)}
+      />
+
+      <Sheet open={attachSheetOpen} onOpenChange={setAttachSheetOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto border-l border-white/5 bg-[#0F0F10]">
+          <SheetHeader className="mb-5">
+            <SheetTitle className="text-fg font-semibold">Attach Modifier Group</SheetTitle>
+          </SheetHeader>
+          {unusedGroups.length === 0 ? (
+            <div className="text-center py-6 text-[12px] text-fg-subtle">
+              All available modifier groups are already attached.
+            </div>
+          ) : (
+            <MenuItemModifierForm
+              groups={unusedGroups}
+              onSubmit={async (values) => {
+                await attachMutation.mutateAsync(values);
+              }}
+              onCancel={() => setAttachSheetOpen(false)}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+    </div>
   );
 }

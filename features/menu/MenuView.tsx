@@ -56,6 +56,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MenuItemForm } from "@/components/menu/MenuItemForm";
 import { CategoryForm } from "@/components/menu/CategoryForm";
+import { ModifiersTab } from "@/components/menu/ModifiersTab";
 import { formatCurrency, cn } from "@/lib/utils";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/stores/auth.store";
@@ -761,11 +762,12 @@ export function MenuView() {
           <p className="text-[12px] text-fg-subtle mt-0.5">Maintain items, prices, stations, and groups.</p>
         </div>
         <div className="flex items-center gap-2">
-          {activeTab === "items" ? (
+          {activeTab === "items" && (
             <Button size="sm" className="gap-1.5" onClick={() => itemAddRef.current?.()}>
               <Plus className="h-3.5 w-3.5" /> Add Item
             </Button>
-          ) : (
+          )}
+          {activeTab === "categories" && (
             <Button size="sm" className="gap-1.5" onClick={() => categoryAddRef.current?.()}>
               <Plus className="h-3.5 w-3.5" /> Add Category
             </Button>
@@ -779,6 +781,7 @@ export function MenuView() {
           {[
             { value: "items", label: "Menu Items" },
             { value: "categories", label: "Categories" },
+            { value: "modifiers", label: "Modifiers" },
           ].map((tab) => (
             <TabsTrigger
               key={tab.value}
@@ -795,6 +798,9 @@ export function MenuView() {
         </TabsContent>
         <TabsContent value="categories">
           <CategoriesTab onAddRef={categoryAddRef} />
+        </TabsContent>
+        <TabsContent value="modifiers">
+          <ModifiersTab />
         </TabsContent>
       </Tabs>
     </div>
