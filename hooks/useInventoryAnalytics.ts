@@ -32,15 +32,168 @@ export function useCostTrends() {
 }
 
 export interface InventoryItem {
-
   id: string;
   name: string;
-  category: string;
+  categoryId?: string;
+  categoryName?: string;
+  categoryColor?: string | null;
   currentStock: number;
   minStock: number;
   unit: string;
-  supplier: string;
-  lastUpdated: string;
+  supplierId?: string;
+  supplierName?: string;
+  status: "ACTIVE" | "ARCHIVED";
+  sku: string;
+  barcode: string;
+  storageLocation: string;
+  description: string;
+  createdById?: string | null;
+  updatedById?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  lastUpdated?: string;
+}
+
+export interface InventoryCategory {
+  id: string;
+  name: string;
+  color?: string | null;
+  description?: string | null;
+  sortOrder?: number;
+  isActive: boolean;
+  ingredientCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  notes?: string | null;
+  isActive: boolean;
+}
+
+export function useInventoryCategories() {
+  return useQuery<InventoryCategory[]>({
+    queryKey: ["inventory-categories"],
+    queryFn: async () => {
+      const { data } = await api.get("/admin/inventory-analytics/categories");
+      return (data.data || []) as InventoryCategory[];
+    }
+  });
+}
+
+export function useCreateInventoryCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (newCategory: Omit<InventoryCategory, "id" | "isActive" | "ingredientCount" | "createdAt" | "updatedAt">) => {
+      const { data } = await api.post("/admin/inventory-analytics/categories", newCategory);
+      return data.data as InventoryCategory;
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory-categories"] });
+    }
+  });
+}
+
+export function useUpdateInventoryCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updatedFields }: Partial<InventoryCategory> & { id: string }) => {
+      const { data } = await api.patch(`/admin/inventory-analytics/categories/${id}`, updatedFields);
+      return data.data as InventoryCategory;
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory-categories"] });
+    }
+  });
+}
+
+export function useDeleteInventoryCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/admin/inventory-analytics/categories/${id}`);
+      return id;
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory-categories"] });
+    }
+  });
+}
+
+export interface InventoryUnit {
+  id: string;
+  name: string;
+  symbol: string;
+  baseUnit?: string | null;
+  conversionFactor?: number | null;
+  isActive: boolean;
+  ingredientCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export function useInventoryUnits() {
+  return useQuery<InventoryUnit[]>({
+    queryKey: ["inventory-units"],
+    queryFn: async () => {
+      const { data } = await api.get("/admin/inventory-analytics/units");
+      return (data.data || []) as InventoryUnit[];
+    }
+  });
+}
+
+export function useCreateInventoryUnit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (newUnit: Omit<InventoryUnit, "id" | "isActive" | "ingredientCount" | "createdAt" | "updatedAt">) => {
+      const { data } = await api.post("/admin/inventory-analytics/units", newUnit);
+      return data.data as InventoryUnit;
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory-units"] });
+    }
+  });
+}
+
+export function useUpdateInventoryUnit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updatedFields }: Partial<InventoryUnit> & { id: string }) => {
+      const { data } = await api.patch(`/admin/inventory-analytics/units/${id}`, updatedFields);
+      return data.data as InventoryUnit;
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory-units"] });
+    }
+  });
+}
+
+export function useDeleteInventoryUnit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/admin/inventory-analytics/units/${id}`);
+      return id;
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory-units"] });
+    }
+  });
+}
+
+export function useSuppliers() {
+  return useQuery<Supplier[]>({
+    queryKey: ["inventory-suppliers"],
+    queryFn: async () => {
+      const { data } = await api.get("/admin/inventory-analytics/suppliers");
+      return (data.data || []) as Supplier[];
+    }
+  });
 }
 
 export function useInventoryItems() {
@@ -56,7 +209,7 @@ export function useInventoryItems() {
 export function useCreateInventoryItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (newItem: Omit<InventoryItem, "id" | "lastUpdated">) => {
+    mutationFn: async (newItem: Omit<InventoryItem, "id" | "lastUpdated" | "createdAt" | "updatedAt">) => {
       const { data } = await api.post("/admin/inventory-analytics/items", newItem);
       return data.data as InventoryItem;
     },
@@ -67,7 +220,7 @@ export function useCreateInventoryItem() {
         ...newItem,
         id: `temp-${Date.now()}`,
         lastUpdated: "Just now"
-      };
+      } as InventoryItem;
       queryClient.setQueryData<InventoryItem[]>(["inventory-items"], [...previousItems, optimisticItem]);
       return { previousItems };
     },
@@ -94,7 +247,7 @@ export function useUpdateInventoryItem() {
       const previousItems = queryClient.getQueryData<InventoryItem[]>(["inventory-items"]) || [];
       queryClient.setQueryData<InventoryItem[]>(
         ["inventory-items"],
-        previousItems.map((item) => (item.id === updatedItem.id ? { ...item, ...updatedItem, lastUpdated: "Just now" } : item))
+        previousItems.map((item) => (item.id === updatedItem.id ? { ...item, ...updatedItem, lastUpdated: "Just now" } as any : item))
       );
       return { previousItems };
     },
